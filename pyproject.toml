@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "wyckofftransformer"
+version = "0.1.0"
+description = ""
+authors = ["Nikita Kazeev <kazeevn@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<=3.12"
+pymatgen = "^2023.10.4"
+ipykernel = "^6.25.2"
+pandas = "^2.1.1"
+numpy = "^1.26.0"
+ase = "^3.22.1"
+nglview = "^3.0.8"
+pyxtal = "^0.6.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
