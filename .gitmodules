@@ -1,0 +1,3 @@
+[submodule "cdvae"]
+	path = cdvae
+	url = https://github.com/txie-93/cdvae.git
