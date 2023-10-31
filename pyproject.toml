@@ -14,6 +14,9 @@ numpy = "^1.26.0"
 ase = "^3.22.1"
 nglview = "^3.0.8"
 pyxtal = "^0.6.1"
+torch = "^2.1.0"
+torchvision = "^0.16.0"
+torchaudio = "^2.1.0"
 
 
 [build-system]
