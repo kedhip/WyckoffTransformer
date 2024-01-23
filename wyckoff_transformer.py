@@ -111,7 +111,7 @@ class WyckoffTrainer():
         self.criterion = nn.CrossEntropyLoss()
         self.lr = 5.0  # learning rate
         self.optimizer = torch.optim.SGD(model.parameters(), lr=self.lr)
-        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 20, gamma=0.95)
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 50, gamma=0.95)
         self.max_len = max_len
         self.model = model
         self.torch_datasets = torch_datasets
