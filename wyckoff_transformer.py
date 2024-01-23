@@ -1,4 +1,5 @@
 from typing import Tuple
+from random import randint
 import math
 import pathlib
 import datetime
@@ -134,10 +135,10 @@ class WyckoffTrainer():
     def train_step(self):
         self.model.train()
         known_seq_len = randint(1, self.max_len - 1)
-        loss = get_loss(self.model, self.torch_datasets["train"], known_seq_len)
+        loss = self.get_loss(self.model, self.torch_datasets["train"], known_seq_len)
         self.optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 0.5)
         self.optimizer.step()
         self.lr = self.scheduler.get_last_lr()[0]
         wandb.log({"train_loss_batch": loss, "known_seq_len": known_seq_len, "lr": self.lr})
@@ -166,7 +167,7 @@ class WyckoffTrainer():
             wandb.define_metric("epoch")
             wandb.define_metric("val_loss_epoch", step_metric="epoch")
             for epoch in range(1, epochs + 1):
-                self.train_step
+                self.train_step()
                 if epoch % val_period == 0:
                     val_loss_epoch = self.evaluate().item()
                     wandb.log({"val_loss_epoch": val_loss_epoch, "epoch": epoch})
@@ -175,5 +176,5 @@ class WyckoffTrainer():
                         best_val_loss = val_loss_epoch
                         wandb.save(best_model_params_path)
                         torch.save(self.model.state_dict(), best_model_params_path)
-                    print(f"Epoch {epoch} val_loss_epoch {val_loss_epoch} saved to {best_model_params_path}")
+                        print(f"Epoch {epoch} val_loss_epoch {val_loss_epoch} saved to {best_model_params_path}")
                 self.scheduler.step()
