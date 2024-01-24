@@ -2303,6 +2303,20 @@ files = [
 tests = ["pytest"]
 
 [[package]]
+name = "py3dmol"
+version = "2.0.4"
+description = "An IPython interface for embedding 3Dmol.js views in Jupyter notebooks"
+optional = false
+python-versions = "*"
+files = [
+    {file = "py3Dmol-2.0.4-py2.py3-none-any.whl", hash = "sha256:356a3a9fee9c48be9b010228790ce394bd4d90d3fd47448964fcbfa6dc5e0a84"},
+    {file = "py3Dmol-2.0.4.tar.gz", hash = "sha256:07909c587ba7e40d17e2ca9383193ead807af834f9569b108cff784ec4cfb525"},
+]
+
+[package.extras]
+ipython = ["IPython"]
+
+[[package]]
 name = "pyasn1"
 version = "0.5.1"
 description = "Pure-Python implementation of ASN.1 types and DER/BER/CER codecs (X.208)"
@@ -4049,4 +4063,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<=3.12"
-content-hash = "4be6d0c5da95be09e4c99340b4f6f7fcde832406d378e95f7794591abd682d14"
+content-hash = "4a5674f86ed2a69f3a9df52ced69e8b4c4fec93d78d4cf6d4d2768e73e6ac57d"
