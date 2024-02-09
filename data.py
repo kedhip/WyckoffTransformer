@@ -4,12 +4,13 @@ from pathlib import Path
 import logging
 from multiprocessing import Pool
 from pymatgen.io.cif import CifParser
-from pymatgen.core import Structure
+from pymatgen.core import Structure, Element
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from collections import Counter
 import numpy as np
 import pandas as pd
 from pymatgen.core import DummySpecie
+from pyxtal import pyxtal
 
 
 def conventional_standard_structure_from_cif(cif: str) -> Structure:
@@ -31,30 +32,33 @@ def structure_to_sites(structure: Structure) -> dict:
     # We lose information about coordinates (as expected)
     # We also can't disambiguate between different orbits with same site symmetry
     # while the absolute coordinates might depend wholly on the unit cell choice (TBC), relatively to each other they are not
-    analyzer = SpacegroupAnalyzer(structure)
+    pyxtal_structure = pyxtal()
+    # Tolerance per https://pymatgen.org/pymatgen.symmetry.html#pymatgen.symmetry.analyzer.SpacegroupAnalyzer
+    # For structures with slight deviations from their proper atomic positions
+    # (e.g., structures relaxed with electronic structure codes), a looser tolerance
+    # of 0.1 (the value used in Materials Project) is often needed.
+    pyxtal_structure.from_seed(structure, tol=0.1)
     
-    symmetry_dataset = analyzer.get_symmetry_dataset()
-    # Whitespace usage in site_symmetry_symbols is inconsistent, so we remove it
-    orbit_dict = dict(zip(symmetry_dataset['crystallographic_orbits'], map(lambda s: s.replace(" ", ""), symmetry_dataset['site_symmetry_symbols'])))
-    element_dict = dict(zip(symmetry_dataset['crystallographic_orbits'], structure.species))
-    
-    # Sort by electronegativity and then multiplicity
-    # The order allows us to do CSP
-    mutliplicity = Counter(symmetry_dataset['crystallographic_orbits']).values()
-    electronegativity = {orbit: element.X for orbit, element in element_dict.items()}
+    elements = [Element(site.specie) for site in pyxtal_structure.atom_sites]
+    electronegativity = [element.X for element in elements]
+    wyckoffs = [site.wp for site in pyxtal_structure.atom_sites]
+    for wp in wyckoffs:
+        wp.get_site_symmetry()
+    site_symmetries = [wp.site_symm for wp in wyckoffs]
+    multiplicity = [wp.multiplicity for wp in wyckoffs]
 
-    order = np.lexsort((list(mutliplicity), list(electronegativity.values())))
+    order = np.lexsort((multiplicity, electronegativity))
     
     return {
-        "symmetry_sites": [list(orbit_dict.values())[i] for i in order],
-        "symmetry_elements": [list(element_dict.values())[i] for i in order],
-        "spacegroup_number": analyzer.get_space_group_number(),
+        "symmetry_sites": [site_symmetries[i] for i in order],
+        "symmetry_elements": [elements[i] for i in order],
+        "spacegroup_number": pyxtal_structure.group.number,
     }
 
 
 def structure_from_cif(cif: str):
     raw_structure = CifParser.from_str(cif).get_structures()[0]
-    return SpacegroupAnalyzer(raw_structure).get_conventional_standard_structure()
+    return SpacegroupAnalyzer(raw_structure, symprec=0.1).get_conventional_standard_structure()
 
 
 def read_MP(MP_csv: Path|str):
@@ -63,33 +67,6 @@ def read_MP(MP_csv: Path|str):
         MP_df["structure"] = pool.map(structure_from_cif, MP_df["cif"])
     MP_df.drop(columns=["cif"], inplace=True)
     return MP_df
-
-
-def structure_to_sites(structure: Structure):
-    # Note(kazeevn):
-    # We lose information about coordinates (as expected)
-    # We also can't disambiguate between different orbits with same site symmetry
-    # while the absolute coordinates might depend wholly on the unit cell choice (TBC), relatively to each other they are not
-    analyzer = SpacegroupAnalyzer(structure)
-    
-    symmetry_dataset = analyzer.get_symmetry_dataset()
-    # Whitespace usage in site_symmetry_symbols is inconsistent, so we remove it
-    orbit_dict = dict(zip(symmetry_dataset['crystallographic_orbits'], map(lambda s: s.replace(" ", ""), symmetry_dataset['site_symmetry_symbols'])))
-    element_dict = dict(zip(symmetry_dataset['crystallographic_orbits'], structure.species))
-    
-    # Sort by electronegativity and then multiplicity
-    # The order allows us to do CSP
-    mutliplicity = Counter(symmetry_dataset['crystallographic_orbits']).values()
-    electronegativity = {orbit: element.X for orbit, element in element_dict.items()}
-
-    order = np.lexsort((list(mutliplicity), list(electronegativity.values())))
-    
-    return {
-        "symmetry_sites": [list(orbit_dict.values())[i] for i in order],
-        "symmetry_elements": [list(element_dict.values())[i] for i in order],
-        "spacegroup_number": analyzer.get_space_group_number(),
-    }
-
 
 def read_all_MP_csv(mp20_path=Path(__file__).parent.resolve() / "cdvae"/"data"/"mp_20"):
     datasets_pd = {
