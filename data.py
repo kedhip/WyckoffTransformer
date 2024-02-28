@@ -2,6 +2,7 @@ from itertools import chain
 from operator import itemgetter
 from pathlib import Path
 import logging
+import warnings
 from multiprocessing import Pool
 from pymatgen.io.cif import CifParser
 from pymatgen.core import Structure, Element
@@ -13,21 +14,30 @@ from pymatgen.core import DummySpecie
 from pyxtal import pyxtal
 
 
-def conventional_standard_structure_from_cif(cif: str) -> Structure:
+def conventional_standard_structure_from_cif(cif: str, symprec=0.1) -> Structure:
     raw_structure = CifParser.from_str(cif).get_structures()[0]
-    return SpacegroupAnalyzer(raw_structure).get_conventional_standard_structure()
+    return SpacegroupAnalyzer(raw_structure, symprec=symprec).get_conventional_standard_structure()
+
+
+def read_cif(cif: str) -> Structure:
+    return CifParser.from_str(cif).get_structures()[0]
 
 
 def read_one_MP(MP_csv: Path|str) -> pd.DataFrame:
     MP_df = pd.read_csv(MP_csv, index_col=0)
     with Pool() as pool:
-        MP_df["structure"] = pool.map(
-            conventional_standard_structure_from_cif, MP_df["cif"])
+        MP_df["structure"] = pool.map(read_cif, MP_df["cif"])
     MP_df.drop(columns=["cif"], inplace=True)
     return MP_df
 
 
-def structure_to_sites(structure: Structure) -> dict:
+def structure_to_sites(structure: Structure, tol: float = 0.1) -> dict:
+    """
+    Given a pymatgen structure, returns a dictionary with the following keys:
+    - symmetry_sites: list of lists of strings, where each string is a site symmetry
+    - symmetry_elements: list of pymatgen Element objects
+    - spacegroup_number: int
+    """
     # Note(kazeevn):
     # We lose information about coordinates (as expected)
     # We also can't disambiguate between different orbits with same site symmetry
@@ -37,7 +47,14 @@ def structure_to_sites(structure: Structure) -> dict:
     # For structures with slight deviations from their proper atomic positions
     # (e.g., structures relaxed with electronic structure codes), a looser tolerance
     # of 0.1 (the value used in Materials Project) is often needed.
-    pyxtal_structure.from_seed(structure, tol=0.1)
+    try:
+        pyxtal_structure.from_seed(structure, tol=tol)
+    except RuntimeError:
+        return {
+        "symmetry_sites": [],
+        "symmetry_elements": [],
+        "spacegroup_number": 0,
+    }
     
     elements = [Element(site.specie) for site in pyxtal_structure.atom_sites]
     electronegativity = [element.X for element in elements]
@@ -56,17 +73,17 @@ def structure_to_sites(structure: Structure) -> dict:
     }
 
 
-def structure_from_cif(cif: str):
-    raw_structure = CifParser.from_str(cif).get_structures()[0]
-    return SpacegroupAnalyzer(raw_structure, symprec=0.1).get_conventional_standard_structure()
-
-
 def read_MP(MP_csv: Path|str):
     MP_df = pd.read_csv(MP_csv, index_col=0)
-    with Pool() as pool:
-        MP_df["structure"] = pool.map(structure_from_cif, MP_df["cif"])
+    warnings.warn("Fractional coordinates will be silently rounded to ideal values to avoid issues with finite precision")
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning,
+        message=r".*fractional coordinates rounded to ideal values to avoid issues with finite precision")
+        with Pool() as pool:
+            MP_df["structure"] = pool.map(read_cif, MP_df["cif"])
     MP_df.drop(columns=["cif"], inplace=True)
     return MP_df
+
 
 def read_all_MP_csv(mp20_path=Path(__file__).parent.resolve() / "cdvae"/"data"/"mp_20"):
     datasets_pd = {
@@ -82,7 +99,6 @@ def read_all_MP_csv(mp20_path=Path(__file__).parent.resolve() / "cdvae"/"data"/"
 
     # Pad the lists to ease the batching
     # Maybe in the future we should use NestedTensor or EncoderLayer's buit-in padding
-
     max_len = max(map(len, chain.from_iterable(map(itemgetter("symmetry_sites"), datasets_pd.values())))) + 1
     for dataset in datasets_pd.values():
         dataset['symmetry_sites_padded'] = [x + ["STOP"] + ["PAD"] * (max_len - len(x)) for x in dataset['symmetry_sites']]
