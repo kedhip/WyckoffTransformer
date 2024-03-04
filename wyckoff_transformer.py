@@ -12,7 +12,8 @@ import wandb
 
 class WyckoffTransformerModel(nn.Module):
 
-    def __init__(self, n_space_groups: int, n_sites: int, n_elements: int, d_space_groups: int, d_sites: int, d_species: int, nhead: int, d_hid: int,
+    def __init__(self, n_space_groups: int, n_sites: int, n_elements: int,
+                 d_space_groups: int, d_sites: int, d_species: int, nhead: int, d_hid: int,
                  nlayers: int, dropout: float = 0.5):
         super().__init__()
         self.model_type = 'Transformer'
@@ -20,17 +21,15 @@ class WyckoffTransformerModel(nn.Module):
         self.d_model = d_sites + d_species + d_space_groups
         self.n_token = n_sites + n_elements
         self.n_elements = n_elements
-        encoder_layers = TransformerEncoderLayer(self.d_model, nhead, d_hid, dropout)
-        self.transformer_encoder = TransformerEncoder(encoder_layers, nlayers)
+        encoder_layers = TransformerEncoderLayer(self.d_model, nhead, d_hid, dropout, batch_first=True)
+        # Nested tensors are broken in the current version of PyTorch
+        # https://github.com/pytorch/pytorch/issues/97111
+        self.transformer_encoder = TransformerEncoder(encoder_layers, nlayers, enable_nested_tensor=False)
         self.sites_embedding = nn.Embedding(n_sites, d_sites)
         self.species_embedding = nn.Embedding(n_elements, d_species)
         self.space_groups_embedding = nn.Embedding(n_space_groups, d_space_groups)
         # We predict both the site and the element
-        # However! They can not be sampled independently!
-        # We are going to condition site on the element,
-        # so that we can attempt CSP
-        # The question of autoregressive construction order is still open though
-        # An option would be to first sort by element, and then by site multiplicity
+        # However, they can not be sampled independently!
         self.linear = nn.Linear(self.d_model, self.n_token)
         self.init_weights()
 
@@ -52,12 +51,12 @@ class WyckoffTransformerModel(nn.Module):
         """
         Arguments:
             space_group: Tensor of shape ``[batch_size]``
-            sites: Tensor, shape ``[seq_len, batch_size]``
-            species: Tensor, shape ``[seq_len, batch_size]``
+            sites: Tensor, shape ``[batch_size, seq_len]``
+            species: Tensor, shape ``[batch_size, seq_len]``
 
         Returns:
-            Tensor of shape ``[seq_len, batch_size, n_elements]``
-            Tensor of shape ``[seq_len, batch_size, n_sites]``
+            Tensor of shape ``[batch_size, seq_len, n_elements]``
+            Tensor of shape ``[batch_size, seq_len, n_sites]``
             Remember not to train via independent sampling!
         """
         # And here is a good question on masking
@@ -66,8 +65,11 @@ class WyckoffTransformerModel(nn.Module):
         # 2. Casual masking. We can't use it as is, as we need the model to attend on the element of the site
         # 3. While we output the whole sequence, we should only train on the last element, as we use MASK for marking the site under prediction
         # and since we do incremental batching, using the previous elements multiple time would unjustly increase their weight
+        #print(sites.shape, species.shape, space_group.shape, padding_mask.shape)
+        #print(self.sites_embedding(sites).shape, self.species_embedding(species).shape,
+        #      self.space_groups_embedding(torch.tile(space_group.view(-1, 1), (1, sites.shape[1]))).shape)
         src = torch.concat([self.sites_embedding(sites), self.species_embedding(species),
-                            self.space_groups_embedding(torch.tile(space_group, (sites.shape[0], 1)))], dim=2) * math.sqrt(self.d_model)
+                            self.space_groups_embedding(torch.tile(space_group.view(-1, 1), (1, sites.shape[1])))], dim=2) * math.sqrt(self.d_model)
         output = self.transformer_encoder(src, src_key_padding_mask=padding_mask)
         output = self.linear(output)
         return output[:, :, :self.n_elements], output[:, :, self.n_elements:]
@@ -75,7 +77,7 @@ class WyckoffTransformerModel(nn.Module):
 
 def get_batches(
     symmetry_sites: Tensor,
-    symmetry_elements:Tensor,
+    symmetry_elements: Tensor,
     element_seq_len: int,
     mask_id_tensor: Tensor) -> Tuple[Tensor, Tensor]:
     """
@@ -88,21 +90,21 @@ def get_batches(
         
     """
     # Can't predict past the last token
-    assert element_seq_len < symmetry_elements.shape[0]
+    assert element_seq_len < symmetry_elements.shape[1]
     # Predict element number element_seq_len + 1
     data_element = {
-        "sites": symmetry_sites[0:element_seq_len],
-        "species": symmetry_elements[0:element_seq_len]
+        "sites": symmetry_sites[:, 0:element_seq_len],
+        "species": symmetry_elements[:, 0:element_seq_len]
     }
-    target_element = symmetry_elements[element_seq_len]
+    target_element = symmetry_elements[:, element_seq_len]
 
     # Predict site number element_seq_len + 1
     # For sites, we condition on species, hence the + 1  in species
     data_site = {
-        "sites": torch.cat([symmetry_sites[0:element_seq_len], mask_id_tensor.expand(1, symmetry_sites.shape[1])], dim=0),
-        "species": symmetry_elements[0:element_seq_len + 1]
+        "sites": torch.cat([symmetry_sites[:, 0:element_seq_len], mask_id_tensor.expand(symmetry_sites.shape[0], 1)], dim=1),
+        "species": symmetry_elements[:, 0:element_seq_len + 1]
     }
-    target_site = symmetry_sites[element_seq_len]
+    target_site = symmetry_sites[:, element_seq_len]
     return ((data_element, target_element), (data_site, target_site))
 
 
@@ -123,11 +125,12 @@ class WyckoffTrainer():
                                                                                known_seq_len,
                                                                                self.mask_id_tensor)
         output_element = model(dataset["spacegroup_number"], **data_element,
-                            padding_mask=dataset["padding_mask"][:, :known_seq_len])[0]
-        loss_element = self.criterion(output_element[-1, :, :], target_element)
+                               padding_mask=dataset["padding_mask"][:, :known_seq_len])[0]
+        #print(output_element.shape, target_element.shape)
+        loss_element = self.criterion(output_element[:, -1, :], target_element)
         output_site = model(dataset["spacegroup_number"], **data_site,
                             padding_mask=dataset["padding_mask"][:, :known_seq_len + 1])[1]
-        loss_site = self.criterion(output_site[-1, :, :], target_site)
+        loss_site = self.criterion(output_site[:, -1, :], target_site)
         loss = loss_element + loss_site
         return loss
 
@@ -144,7 +147,6 @@ class WyckoffTrainer():
         wandb.log({"train_loss_batch": loss, "known_seq_len": known_seq_len, "lr": self.lr})
         return loss
         
-
     def evaluate(self) -> float:
         self.model.eval()
         total_loss = 0.
@@ -159,22 +161,21 @@ class WyckoffTrainer():
         best_val_loss = float('inf')
         run_path = pathlib.Path("checkpoints", datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         run_path.mkdir(parents=True)
-        best_model_params_path = os.path.join(run_path, "best_model_params.pt")
+        best_model_params_path = run_path / "best_model_params.pt"
 
         with wandb.init(
             project="WyckoffTransformer",
             job_type="train"):
-            wandb.define_metric("epoch")
-            wandb.define_metric("val_loss_epoch", step_metric="epoch")
+#            wandb.watch(self.model, criterion=self.criterion)
             for epoch in range(1, epochs + 1):
                 self.train_step()
                 if epoch % val_period == 0:
                     val_loss_epoch = self.evaluate().item()
-                    wandb.log({"val_loss_epoch": val_loss_epoch, "epoch": epoch})
+                    wandb.log({"val_loss_epoch": val_loss_epoch}, step=epoch)
                     if val_loss_epoch < best_val_loss:
                         print(f"New best val_loss_epoch {val_loss_epoch}, saving the model")
                         best_val_loss = val_loss_epoch
-                        wandb.save(best_model_params_path)
+                        wandb.save(str(best_model_params_path))
                         torch.save(self.model.state_dict(), best_model_params_path)
                         print(f"Epoch {epoch} val_loss_epoch {val_loss_epoch} saved to {best_model_params_path}")
                 self.scheduler.step()
