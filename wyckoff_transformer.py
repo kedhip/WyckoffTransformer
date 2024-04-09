@@ -112,9 +112,10 @@ class WyckoffTrainer():
     def __init__(self, model: nn.Module, torch_datasets: dict, max_len: int, mask_id_tensor: Tensor):
         self.criterion = nn.CrossEntropyLoss()
         self.lattice_criterion = nn.MSELoss()
-        self.lr = 5.0  # learning rate
+        self.lr = 5.0
         self.optimizer = torch.optim.SGD(model.parameters(), lr=self.lr)
-        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 50, gamma=0.95)
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            self.optimizer, 'min', factor=0.9, patience=5)
         self.max_len = max_len
         self.model = model
         self.torch_datasets = torch_datasets
@@ -182,9 +183,8 @@ class WyckoffTrainer():
                     val_loss_epoch = self.evaluate().item()
                     wandb.log({"val_loss_epoch": val_loss_epoch}, step=epoch)
                     if val_loss_epoch < best_val_loss:
-                        print(f"New best val_loss_epoch {val_loss_epoch}, saving the model")
                         best_val_loss = val_loss_epoch
                         wandb.save(str(best_model_params_path))
                         torch.save(self.model.state_dict(), best_model_params_path)
                         print(f"Epoch {epoch} val_loss_epoch {val_loss_epoch} saved to {best_model_params_path}")
-                self.scheduler.step()
+                    self.scheduler.step(val_loss_epoch)
