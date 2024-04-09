@@ -2,11 +2,13 @@
 This module provides functions for reading the structures and extracting the symmetry information.
 """
 
-from itertools import chain
+from itertools import chain, repeat
+from collections import Counter
 from operator import itemgetter
 from pathlib import Path
 import logging
 import warnings
+import pickle
 from multiprocessing import Pool
 import numpy as np
 import pandas as pd
@@ -27,7 +29,7 @@ def conventional_standard_structure_from_cif(cif: str, symprec=0.1) -> Structure
     Returns:
         Structure: The conventional standard structure.
     """
-    raw_structure = CifParser.from_str(cif).get_structures()[0]
+    raw_structure = CifParser.from_str(cif).parse_structures(primitive=False)[0]
     return SpacegroupAnalyzer(raw_structure, symprec=symprec).get_conventional_standard_structure()
 
 
@@ -41,10 +43,13 @@ def read_cif(cif: str) -> Structure:
     Returns:
         Structure: The structure.
     """
-    return CifParser.from_str(cif).get_structures()[0]
+    return CifParser.from_str(cif).parse_structures(primitive=False)[0]
 
 
-def structure_to_sites(structure: Structure, tol: float = 0.1) -> dict:
+def structure_to_sites(
+    structure: Structure,
+    wychoffs_enumerated_by_ss: dict,
+    tol: float = 0.1) -> dict:
     """
     Converts a pymatgen structure to a dictionary of symmetry sites.
 
@@ -67,13 +72,15 @@ def structure_to_sites(structure: Structure, tol: float = 0.1) -> dict:
     for wp in wyckoffs:
         wp.get_site_symmetry()
     site_symmetries = [wp.site_symm for wp in wyckoffs]
+    site_enumeration = [wychoffs_enumerated_by_ss[pyxtal_structure.group.number][wp.letter] for wp in wyckoffs]
     multiplicity = [wp.multiplicity for wp in wyckoffs]
 
-    order = np.lexsort((multiplicity, electronegativity))
+    order = np.lexsort((site_enumeration, multiplicity, electronegativity))
 
     return {
         "symmetry_sites": [site_symmetries[i] for i in order],
         "symmetry_elements": [elements[i] for i in order],
+        "symmetry_sites_enumeration": [site_enumeration[i] for i in order],
         "spacegroup_number": pyxtal_structure.group.number,
     }
 
@@ -100,7 +107,10 @@ def read_MP(MP_csv: Path|str):
     return MP_df
 
 
-def read_all_MP_csv(mp20_path=Path(__file__).parent.resolve() / "cdvae"/"data"/"mp_20"):
+def read_all_MP_csv(
+    mp20_path: Path = Path(__file__).parent.resolve() / "cdvae"/"data"/"mp_20",
+    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "wychoffs_enumerated_by_ss.pkl.gz"
+    ) -> tuple[dict[str, pd.DataFrame], int]:
     """
     Reads all Materials Project CSV files and returns a dictionary of DataFrames.
 
@@ -118,17 +128,21 @@ def read_all_MP_csv(mp20_path=Path(__file__).parent.resolve() / "cdvae"/"data"/"
         "test": read_MP(mp20_path/"test.csv"),
         "val": read_MP(mp20_path/"val.csv")
     }
+    with open(wychoffs_enumerated_by_ss_file, "rb") as f:
+        wychoffs_enumerated_by_ss = pickle.load(f)[0]
+    
     for dataset in datasets_pd.values():
         with Pool() as p:
             symmetry_dataset = pd.DataFrame.from_records(
-                p.map(structure_to_sites, dataset['structure'])).set_index(dataset.index)
+                p.starmap(structure_to_sites, zip(dataset['structure'], repeat(wychoffs_enumerated_by_ss)))).set_index(dataset.index)
         dataset.loc[:, symmetry_dataset.columns] = symmetry_dataset
 
     max_len = max(map(len, chain.from_iterable(map(itemgetter("symmetry_sites"), datasets_pd.values())))) + 1
     for dataset in datasets_pd.values():
         dataset["lattice_volume"] = [s.get_primitive_structure().lattice.volume for s in dataset['structure']]
-        dataset['symmetry_sites_padded'] = [x + ["STOP"] + ["PAD"] * (max_len - len(x)) for x in dataset['symmetry_sites']]
-        dataset['symmetry_elements_padded'] = [x + ["STOP"] + [DummySpecie()] * (max_len - len(x)) for x in dataset['symmetry_elements']]
+        dataset['symmetry_sites_padded'] = [x + ["PAD"] * (max_len - len(x) + 1) for x in dataset['symmetry_sites']]
+        dataset['symmetry_elements_padded'] = [x + ["STOP"] + ["PAD"] * (max_len - len(x)) for x in dataset['symmetry_elements']]
+        dataset['symmetry_sites_enumeration_padded'] = [x + [-1] * (max_len - len(x) + 1) for x in dataset['symmetry_sites_enumeration']]
         dataset['padding_mask'] = [[False] * (len(x) + 1) + [True] * (max_len - len(x)) for x in dataset['symmetry_sites']]
     logging.info("Max length of symmetry sites: %i", max_len)
     return datasets_pd, max_len

@@ -37,6 +37,7 @@ def load_all_data(device:str="cpu", allow_retokenize:bool=False):
         return dict(
             symmetry_sites=torch.stack(dataset['symmetry_sites_tensor'].to_list()).to(device),
             symmetry_elements=torch.stack(dataset['symmetry_elements_tensor'].to_list()).to(device),
+            symmetry_sites_enumeration=torch.stack(dataset['symmetry_sites_enumeration_tensor'].to_list()).to(device),
             spacegroup_number=torch.stack(dataset['spacegroup_number_tensor'].to_list()).to(device),
             padding_mask = torch.stack(dataset['padding_mask_tensor'].to_list()).to(device),
         )
