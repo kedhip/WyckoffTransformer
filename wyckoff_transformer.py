@@ -30,8 +30,7 @@ class WyckoffTransformerModel(nn.Module):
         self.space_groups_embedding = nn.Embedding(n_space_groups, d_space_groups)
         # We predict both the site and the element
         # However, they can not be sampled independently!
-        # +1 for volume
-        self.linear = nn.Linear(self.d_model, self.n_token + 1)
+        self.linear = nn.Linear(self.d_model, self.n_token)
         self.init_weights()
 
     def init_weights(self) -> None:
@@ -73,7 +72,7 @@ class WyckoffTransformerModel(nn.Module):
                             self.space_groups_embedding(torch.tile(space_group.view(-1, 1), (1, sites.shape[1])))], dim=2) * math.sqrt(self.d_model)
         output = self.transformer_encoder(src, src_key_padding_mask=padding_mask)
         output = self.linear(output)
-        return output[:, :, :self.n_elements], output[:, :, self.n_elements:-1], output[:, -1, -1]
+        return output[:, :, :self.n_elements], output[:, :, self.n_elements:]
 
 
 def get_batches(
@@ -140,19 +139,11 @@ class WyckoffTrainer():
         loss_site = self.criterion(output_site[:, -1, :], target_site)
         return loss_element, loss_site
 
-    def get_lattice_loss(self, dataset_name):
-        predicted_volume = self.model(self.torch_datasets[dataset_name]["spacegroup_number"],
-                                      self.torch_datasets[dataset_name]["symmetry_sites"],
-                                      self.torch_datasets[dataset_name]["symmetry_elements"],
-                                      self.torch_datasets[dataset_name]["padding_mask"])[2]
-        return self.lattice_criterion(predicted_volume, self.normalised_lattice_volume[dataset_name])
-
     def train_step(self):
         self.model.train()
         known_seq_len = randint(1, self.max_len - 1)
         loss_element, loss_site = self.get_token_loss(self.torch_datasets["train"], known_seq_len)                                  
-        loss_volume = self.get_lattice_loss("train")
-        loss = loss_element + loss_site + loss_volume
+        loss = loss_element + loss_site
         self.optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), 0.5)
@@ -161,7 +152,6 @@ class WyckoffTrainer():
         wandb.log({"train_loss_batch": loss,
                    "train_loss_element": loss_element,
                    "train_loss_site": loss_site,
-                   "train_loss_volume": loss_volume,
                    "known_seq_len": known_seq_len, "lr": self.lr})
         return loss
         
@@ -173,8 +163,6 @@ class WyckoffTrainer():
                 loss_token = self.get_token_loss(self.torch_datasets["val"], known_seq_len)
                 total_loss += sum(loss_token)
             total_loss /= (self.max_len - 1)
-            loss_volume = self.get_lattice_loss("val")
-            total_loss += loss_volume
         return total_loss
         # TODO Stop/PAD handling in loss
 
