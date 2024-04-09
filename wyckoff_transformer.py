@@ -30,7 +30,8 @@ class WyckoffTransformerModel(nn.Module):
         self.space_groups_embedding = nn.Embedding(n_space_groups, d_space_groups)
         # We predict both the site and the element
         # However, they can not be sampled independently!
-        self.linear = nn.Linear(self.d_model, self.n_token)
+        # +1 for volume
+        self.linear = nn.Linear(self.d_model, self.n_token + 1)
         self.init_weights()
 
     def init_weights(self) -> None:
@@ -65,14 +66,14 @@ class WyckoffTransformerModel(nn.Module):
         # 2. Casual masking. We can't use it as is, as we need the model to attend on the element of the site
         # 3. While we output the whole sequence, we should only train on the last element, as we use MASK for marking the site under prediction
         # and since we do incremental batching, using the previous elements multiple time would unjustly increase their weight
-        #print(sites.shape, species.shape, space_group.shape, padding_mask.shape)
-        #print(self.sites_embedding(sites).shape, self.species_embedding(species).shape,
+        # print(sites.shape, species.shape, space_group.shape, padding_mask.shape)
+        # print(self.sites_embedding(sites).shape, self.species_embedding(species).shape,
         #      self.space_groups_embedding(torch.tile(space_group.view(-1, 1), (1, sites.shape[1]))).shape)
         src = torch.concat([self.sites_embedding(sites), self.species_embedding(species),
                             self.space_groups_embedding(torch.tile(space_group.view(-1, 1), (1, sites.shape[1])))], dim=2) * math.sqrt(self.d_model)
         output = self.transformer_encoder(src, src_key_padding_mask=padding_mask)
         output = self.linear(output)
-        return output[:, :, :self.n_elements], output[:, :, self.n_elements:]
+        return output[:, :, :self.n_elements], output[:, :, self.n_elements:-1], output[:, -1, -1]
 
 
 def get_batches(
@@ -111,40 +112,57 @@ def get_batches(
 class WyckoffTrainer():
     def __init__(self, model: nn.Module, torch_datasets: dict, max_len: int, mask_id_tensor: Tensor):
         self.criterion = nn.CrossEntropyLoss()
+        self.lattice_criterion = nn.MSELoss()
         self.lr = 5.0  # learning rate
         self.optimizer = torch.optim.SGD(model.parameters(), lr=self.lr)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 50, gamma=0.95)
         self.max_len = max_len
         self.model = model
         self.torch_datasets = torch_datasets
+        self.mean_lattice_volume = torch.mean(torch_datasets["train"]["lattice_volume"])
+        self.std_latice_volume = torch.std(torch_datasets["train"]["lattice_volume"])
+        self.normalised_lattice_volume = dict()
+        for dataset_name in torch_datasets:
+            self.normalised_lattice_volume[dataset_name] = \
+                (torch_datasets[dataset_name]["lattice_volume"] - self.mean_lattice_volume) / self.std_latice_volume
         self.mask_id_tensor = mask_id_tensor
 
-    def get_loss(self, model, dataset, known_seq_len):
+    def get_token_loss(self, dataset, known_seq_len):
         (data_element, target_element), (data_site, target_site) = get_batches(dataset["symmetry_sites"],
                                                                                dataset["symmetry_elements"],
                                                                                known_seq_len,
                                                                                self.mask_id_tensor)
-        output_element = model(dataset["spacegroup_number"], **data_element,
-                               padding_mask=dataset["padding_mask"][:, :known_seq_len])[0]
-        #print(output_element.shape, target_element.shape)
+        output_element = self.model(dataset["spacegroup_number"], **data_element,
+                                    padding_mask=dataset["padding_mask"][:, :known_seq_len])[0]
         loss_element = self.criterion(output_element[:, -1, :], target_element)
-        output_site = model(dataset["spacegroup_number"], **data_site,
-                            padding_mask=dataset["padding_mask"][:, :known_seq_len + 1])[1]
+        output_site = self.model(dataset["spacegroup_number"], **data_site,
+                                 padding_mask=dataset["padding_mask"][:, :known_seq_len + 1])[1]
         loss_site = self.criterion(output_site[:, -1, :], target_site)
-        loss = loss_element + loss_site
-        return loss
+        return loss_element, loss_site
 
+    def get_lattice_loss(self, dataset_name):
+        predicted_volume = self.model(self.torch_datasets[dataset_name]["spacegroup_number"],
+                                      self.torch_datasets[dataset_name]["symmetry_sites"],
+                                      self.torch_datasets[dataset_name]["symmetry_elements"],
+                                      self.torch_datasets[dataset_name]["padding_mask"])[2]
+        return self.lattice_criterion(predicted_volume, self.normalised_lattice_volume[dataset_name])
 
     def train_step(self):
         self.model.train()
         known_seq_len = randint(1, self.max_len - 1)
-        loss = self.get_loss(self.model, self.torch_datasets["train"], known_seq_len)
+        loss_element, loss_site = self.get_token_loss(self.torch_datasets["train"], known_seq_len)                                  
+        loss_volume = self.get_lattice_loss("train")
+        loss = loss_element + loss_site + loss_volume
         self.optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), 0.5)
         self.optimizer.step()
         self.lr = self.scheduler.get_last_lr()[0]
-        wandb.log({"train_loss_batch": loss, "known_seq_len": known_seq_len, "lr": self.lr})
+        wandb.log({"train_loss_batch": loss,
+                   "train_loss_element": loss_element,
+                   "train_loss_site": loss_site,
+                   "train_loss_volume": loss_volume,
+                   "known_seq_len": known_seq_len, "lr": self.lr})
         return loss
         
     def evaluate(self) -> float:
@@ -152,10 +170,13 @@ class WyckoffTrainer():
         total_loss = 0.
         with torch.no_grad():
             for known_seq_len in range(1, self.max_len):
-                loss = self.get_loss(self.model, self.torch_datasets["val"], known_seq_len)
-                total_loss += loss
-        return total_loss / (self.max_len - 1)
-        # TODO Stop/PAD handling in loss            
+                loss_token = self.get_token_loss(self.torch_datasets["val"], known_seq_len)
+                total_loss += sum(loss_token)
+            total_loss /= (self.max_len - 1)
+            loss_volume = self.get_lattice_loss("val")
+            total_loss += loss_volume
+        return total_loss
+        # TODO Stop/PAD handling in loss
 
     def train(self, epochs: int, val_period: int = 10):
         best_val_loss = float('inf')

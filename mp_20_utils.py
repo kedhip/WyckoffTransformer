@@ -38,7 +38,9 @@ def load_all_data(device:str="cpu", allow_retokenize:bool=False):
             symmetry_sites=torch.stack(dataset['symmetry_sites_tensor'].to_list()).to(device),
             symmetry_elements=torch.stack(dataset['symmetry_elements_tensor'].to_list()).to(device),
             spacegroup_number=torch.stack(dataset['spacegroup_number_tensor'].to_list()).to(device),
-            padding_mask = torch.stack(dataset['padding_mask_tensor'].to_list()).to(device)
+            padding_mask = torch.stack(dataset['padding_mask_tensor'].to_list()).to(device),
         )
     torch_datasets = dict(zip(tensors.keys(), map(to_combined_dataset, tensors.values())))
+    for dataset_name, dataset in torch_datasets.items():
+        dataset["lattice_volume"] = torch.stack(datasets_pd[dataset_name]['lattice_volume'].map(torch.tensor).to_list()).to(device)
     return datasets_pd, torch_datasets, site_to_ids, element_to_ids, spacegroup_to_ids, max_len

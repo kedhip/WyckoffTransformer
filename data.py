@@ -126,6 +126,7 @@ def read_all_MP_csv(mp20_path=Path(__file__).parent.resolve() / "cdvae"/"data"/"
 
     max_len = max(map(len, chain.from_iterable(map(itemgetter("symmetry_sites"), datasets_pd.values())))) + 1
     for dataset in datasets_pd.values():
+        dataset["lattice_volume"] = [s.get_primitive_structure().lattice.volume for s in dataset['structure']]
         dataset['symmetry_sites_padded'] = [x + ["STOP"] + ["PAD"] * (max_len - len(x)) for x in dataset['symmetry_sites']]
         dataset['symmetry_elements_padded'] = [x + ["STOP"] + [DummySpecie()] * (max_len - len(x)) for x in dataset['symmetry_elements']]
         dataset['padding_mask'] = [[False] * (len(x) + 1) + [True] * (max_len - len(x)) for x in dataset['symmetry_sites']]

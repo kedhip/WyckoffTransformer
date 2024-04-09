@@ -34,5 +34,5 @@ def get_tokens(datasets_pd):
         tensors[dataset_name]['symmetry_elements_tensor'] = dataset['symmetry_elements_padded'].map(element_to_tensor)
         tensors[dataset_name]['spacegroup_number_tensor'] = dataset['spacegroup_number'].map(spacegroup_to_tensor)
         tensors[dataset_name]['padding_mask_tensor'] = dataset['padding_mask'].map(torch.tensor)
-    
+        tensors[dataset_name]['lattice_volume_tensor'] = dataset['lattice_volume'].map(torch.tensor)
     return tensors, site_to_ids, element_to_ids, spacegroup_to_ids
