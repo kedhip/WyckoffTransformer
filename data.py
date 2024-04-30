@@ -3,17 +3,16 @@ This module provides functions for reading the structures and extracting the sym
 """
 
 from itertools import chain, repeat
-from collections import Counter
 from operator import itemgetter
 from pathlib import Path
 import logging
-import warnings
 import pickle
+import gzip
 from multiprocessing import Pool
 import numpy as np
 import pandas as pd
 from pymatgen.io.cif import CifParser
-from pymatgen.core import Structure, Element, DummySpecie
+from pymatgen.core import Structure, Element
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pyxtal import pyxtal
 
@@ -74,14 +73,18 @@ def structure_to_sites(
     site_symmetries = [wp.site_symm for wp in wyckoffs]
     site_enumeration = [wychoffs_enumerated_by_ss[pyxtal_structure.group.number][wp.letter] for wp in wyckoffs]
     multiplicity = [wp.multiplicity for wp in wyckoffs]
+    dof = [wp.get_dof() for wp in wyckoffs]
 
     order = np.lexsort((site_enumeration, multiplicity, electronegativity))
 
     return {
         "symmetry_sites": [site_symmetries[i] for i in order],
         "symmetry_elements": [elements[i] for i in order],
+        "symmetry_multiplicity": [multiplicity[i] for i in order],
+        "symmetry_letters": [wyckoffs[i].letter for i in order],
         "symmetry_sites_enumeration": [site_enumeration[i] for i in order],
-        "spacegroup_number": pyxtal_structure.group.number,
+        "symmetry_dof": [dof[i] for i in order],
+        "spacegroup_number": pyxtal_structure.group.number
     }
 
 
@@ -96,13 +99,8 @@ def read_MP(MP_csv: Path|str):
         pd.DataFrame: The DataFrame with structures.
     """
     MP_df = pd.read_csv(MP_csv, index_col=0)
-    warnings.warn("Fractional coordinates will be silently rounded to ideal values to avoid issues with finite precision")
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=UserWarning,
-                                message=r".*fractional coordinates rounded to ideal values to"
-                                "avoid issues with finite precision")
-        with Pool() as pool:
-            MP_df["structure"] = pool.map(read_cif, MP_df["cif"])
+    with Pool() as pool:
+        MP_df["structure"] = pool.map(read_cif, MP_df["cif"])
     MP_df.drop(columns=["cif"], inplace=True)
     return MP_df
 
@@ -146,3 +144,22 @@ def read_all_MP_csv(
         dataset['padding_mask'] = [[False] * (len(x) + 1) + [True] * (max_len - len(x)) for x in dataset['symmetry_sites']]
     logging.info("Max length of symmetry sites: %i", max_len)
     return datasets_pd, max_len
+
+
+def main():
+    MP_20_cache_data = "cache/mp_20/data.pkl.gz"
+    try:
+        logging.info("Testing the cache")
+        with gzip.open(MP_20_cache_data, "rb") as f:
+            datasets_pd, max_len = pickle.load(f)
+    except Exception as e:
+        logging.info("Error reading data cache:")
+        logging.info(e)
+        logging.info("Reading from csv")
+        datasets_pd, max_len = read_all_MP_csv()
+        with gzip.open(MP_20_cache_data, "wb") as f:
+            pickle.dump((datasets_pd, max_len), f)
+
+
+if __name__ == "__main__":
+    main()
