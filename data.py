@@ -15,6 +15,7 @@ from pymatgen.io.cif import CifParser
 from pymatgen.core import Structure, Element
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pyxtal import pyxtal
+from sklearn.model_selection import train_test_split
 
 
 def conventional_standard_structure_from_cif(cif: str, symprec=0.1) -> Structure:
@@ -105,6 +106,35 @@ def read_MP(MP_csv: Path|str):
     return MP_df
 
 
+def compute_symmetry_sites(
+    datasets_pd: dict[str, pd.DataFrame],
+    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "wychoffs_enumerated_by_ss.pkl.gz"
+    ) -> tuple[dict[str, pd.DataFrame], int]:
+
+    with open(wychoffs_enumerated_by_ss_file, "rb") as f:
+        wychoffs_enumerated_by_ss = pickle.load(f)[0]
+    
+    for dataset in datasets_pd.values():
+        with Pool() as p:
+            symmetry_dataset = pd.DataFrame.from_records(
+                p.starmap(structure_to_sites, zip(dataset['structure'], repeat(wychoffs_enumerated_by_ss)))).set_index(dataset.index)
+        dataset.loc[:, symmetry_dataset.columns] = symmetry_dataset
+
+    # TODO investigate the "long" materials
+    MAX_LEN_LIMIT = 21
+    for dataset_name in datasets_pd:
+        datasets_pd[dataset_name] = datasets_pd[dataset_name].loc[datasets_pd[dataset_name]['symmetry_sites'].map(len) < MAX_LEN_LIMIT]
+    max_len = max(map(len, chain.from_iterable(map(itemgetter("symmetry_sites"), datasets_pd.values())))) + 1
+    for dataset in datasets_pd.values():
+        dataset.loc[:, "lattice_volume"] = [s.get_primitive_structure().lattice.volume for s in dataset['structure']]
+        dataset.loc[:, 'symmetry_sites_padded'] = [x + ["PAD"] * (max_len - len(x) + 1) for x in dataset['symmetry_sites']]
+        dataset.loc[:, 'symmetry_elements_padded'] = [x + ["STOP"] + ["PAD"] * (max_len - len(x)) for x in dataset['symmetry_elements']]
+        dataset.loc[:, 'symmetry_sites_enumeration_padded'] = [x + [-1] * (max_len - len(x) + 1) for x in dataset['symmetry_sites_enumeration']]
+        dataset.loc[:, 'padding_mask'] = [[False] * (len(x) + 1) + [True] * (max_len - len(x)) for x in dataset['symmetry_sites']]
+    logging.info("Max length of symmetry sites: %i", max_len)
+    return datasets_pd, max_len
+
+
 def read_all_MP_csv(
     mp20_path: Path = Path(__file__).parent.resolve() / "cdvae"/"data"/"mp_20",
     wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "wychoffs_enumerated_by_ss.pkl.gz"
@@ -126,40 +156,20 @@ def read_all_MP_csv(
         "test": read_MP(mp20_path/"test.csv"),
         "val": read_MP(mp20_path/"val.csv")
     }
-    with open(wychoffs_enumerated_by_ss_file, "rb") as f:
-        wychoffs_enumerated_by_ss = pickle.load(f)[0]
-    
-    for dataset in datasets_pd.values():
-        with Pool() as p:
-            symmetry_dataset = pd.DataFrame.from_records(
-                p.starmap(structure_to_sites, zip(dataset['structure'], repeat(wychoffs_enumerated_by_ss)))).set_index(dataset.index)
-        dataset.loc[:, symmetry_dataset.columns] = symmetry_dataset
-
-    max_len = max(map(len, chain.from_iterable(map(itemgetter("symmetry_sites"), datasets_pd.values())))) + 1
-    for dataset in datasets_pd.values():
-        dataset["lattice_volume"] = [s.get_primitive_structure().lattice.volume for s in dataset['structure']]
-        dataset['symmetry_sites_padded'] = [x + ["PAD"] * (max_len - len(x) + 1) for x in dataset['symmetry_sites']]
-        dataset['symmetry_elements_padded'] = [x + ["STOP"] + ["PAD"] * (max_len - len(x)) for x in dataset['symmetry_elements']]
-        dataset['symmetry_sites_enumeration_padded'] = [x + [-1] * (max_len - len(x) + 1) for x in dataset['symmetry_sites_enumeration']]
-        dataset['padding_mask'] = [[False] * (len(x) + 1) + [True] * (max_len - len(x)) for x in dataset['symmetry_sites']]
-    logging.info("Max length of symmetry sites: %i", max_len)
-    return datasets_pd, max_len
+    return compute_symmetry_sites(datasets_pd, wychoffs_enumerated_by_ss_file)
 
 
-def main():
-    MP_20_cache_data = "cache/mp_20/data.pkl.gz"
-    try:
-        logging.info("Testing the cache")
-        with gzip.open(MP_20_cache_data, "rb") as f:
-            datasets_pd, max_len = pickle.load(f)
-    except Exception as e:
-        logging.info("Error reading data cache:")
-        logging.info(e)
-        logging.info("Reading from csv")
-        datasets_pd, max_len = read_all_MP_csv()
-        with gzip.open(MP_20_cache_data, "wb") as f:
-            pickle.dump((datasets_pd, max_len), f)
-
-
-if __name__ == "__main__":
-    main()
+def read_mp_ternary_csv(
+    mp_ternary_path: Path = Path(__file__).parent.resolve() / "cache" / "mp_ternary" / "df_allternary_newdata.csv.gz",
+    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "wychoffs_enumerated_by_ss.pkl.gz"
+    ) -> tuple[dict[str, pd.DataFrame], int]:
+    all_data = read_MP(mp_ternary_path)
+    train, test_validation = train_test_split(all_data, train_size=27136, random_state=42)
+    # TODO(kazeevn) this is embarassing. We really need to batch.
+    validation, test = train_test_split(test_validation, train_size=0.5, random_state=43)
+    datasets_pd = {
+        "train": train,
+        "test": test,
+        "val": validation
+    }
+    return compute_symmetry_sites(datasets_pd, wychoffs_enumerated_by_ss_file)
