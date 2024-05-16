@@ -13,7 +13,7 @@ pandas = ">=2.1.1"
 numpy = ">=1.26.0"
 ase = ">=3.22.1"
 nglview = ">=3.0.8"
-torch = "^2.2.0"
+torch = "^2.3.0"
 torchvision = ">=0.16.0"
 torchaudio = ">=2.2.0"
 wandb = ">=0.16.0"
@@ -21,7 +21,14 @@ torchviz = ">=0.0.2"
 torch-uncertainty = ">=0.1.5"
 py3dmol = ">=2.0.4"
 pyxtal = {git = "https://github.com/qzhu2017/PyXtal.git", rev = "master"}
+intel-extension-for-pytorch = "^2.3.0"
+oneccl-bind-pt = {version = "^2.3.0+cpu", source = "pytorch-intel-cpu"}
 
+
+[[tool.poetry.source]]
+name = "pytorch-intel-cpu"
+url = "https://pytorch-extension.intel.com/release-whl/stable/cpu/us/"
+priority = "explicit"
 
 [build-system]
 requires = ["poetry-core"]
