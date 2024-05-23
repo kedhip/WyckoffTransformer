@@ -8,7 +8,6 @@ if __name__ == "__main__":
 import pickle
 from pathlib import Path
 import gzip
-import torch
 import argparse
 from data import read_all_MP_csv, read_mp_ternary_csv
 from tokenization import get_tokens
@@ -27,54 +26,48 @@ def get_cache_tensors_file_name(dataset:str):
 
 
 def cache_dataset(dataset:str):
+    """
+    Loads a dataset, tokenizes and caches it.
+    """
     if dataset == "mp_20":
-        datasets_pd, max_len = read_all_MP_csv()
+        datasets_pd = read_all_MP_csv()
     elif dataset == "mp_ternary":
-        datasets_pd, max_len = read_mp_ternary_csv()
+        datasets_pd = read_mp_ternary_csv()
     elif dataset == "mp_20_biternary":
-        datasets_pd, max_len = read_all_MP_csv(
+        datasets_pd = read_all_MP_csv(
             Path(__file__).parent.resolve() / "data" / "mp_20_biternary",
             file_format="csv.gz")
+    else:
+        raise ValueError(f"Unknown dataset {dataset}")
+    
     cache_data_file_name = get_cache_data_file_name(dataset)
     cache_data_file_name.parent.mkdir(parents=True, exist_ok=True)
     with gzip.open(cache_data_file_name, "wb") as f:
-        pickle.dump((datasets_pd, max_len), f)
+        pickle.dump(datasets_pd, f)
 
-    tensors, site_to_ids, element_to_ids, spacegroup_to_ids = get_tokens(datasets_pd)
+    tensor_info = get_tokens(datasets_pd)
     cache_tensors_file_name = get_cache_tensors_file_name(dataset)
     cache_tensors_file_name.parent.mkdir(parents=True, exist_ok=True)
     with gzip.open(cache_tensors_file_name, "wb") as f:
-        pickle.dump((tensors, site_to_ids, element_to_ids, spacegroup_to_ids), f)
+        pickle.dump(tensor_info, f)
 
 
 def load_all_data(
-    device:str="cpu",
     dataset:str = "mp_20"):
     cache_data_file_name = get_cache_data_file_name(dataset)
     with gzip.open(cache_data_file_name, "rb") as f:
-        datasets_pd, max_len = pickle.load(f)
+        datasets_pd = pickle.load(f)
     
     cache_tensors_file_name = get_cache_tensors_file_name(dataset)
     with gzip.open(cache_tensors_file_name, "rb") as f:
-        tensors, site_to_ids, element_to_ids, spacegroup_to_ids = pickle.load(f)
+        tensor_info = pickle.load(f)
     
-    def to_combined_dataset(dataset):
-        return dict(
-            symmetry_sites=torch.stack(dataset['symmetry_sites_tensor'].to_list()).to(device),
-            symmetry_elements=torch.stack(dataset['symmetry_elements_tensor'].to_list()).to(device),
-            symmetry_sites_enumeration=torch.stack(dataset['symmetry_sites_enumeration_tensor'].to_list()).to(device),
-            spacegroup_number=torch.stack(dataset['spacegroup_number_tensor'].to_list()).to(device),
-            padding_mask = torch.stack(dataset['padding_mask_tensor'].to_list()).to(device),
-        )
-    torch_datasets = dict(zip(tensors.keys(), map(to_combined_dataset, tensors.values())))
-    for dataset_name, dataset in torch_datasets.items():
-        dataset["lattice_volume"] = torch.stack(datasets_pd[dataset_name]['lattice_volume'].map(torch.tensor).to_list()).to(device)
-    return datasets_pd, torch_datasets, site_to_ids, element_to_ids, spacegroup_to_ids, max_len
+    return datasets_pd, *tensor_info
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("dataset", default="mp_20", help="The dataset to cache.")
+    parser.add_argument("dataset", help="The dataset to cache.")
     args = parser.parse_args()
     cache_dataset(args.dataset)
 

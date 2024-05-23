@@ -1,13 +1,12 @@
 """
 This module provides functions for reading the structures and extracting the symmetry information.
 """
-
 from itertools import chain, repeat
 from operator import itemgetter
 from pathlib import Path
 import logging
 import pickle
-import gzip
+import torch
 from multiprocessing import Pool
 import numpy as np
 import pandas as pd
@@ -16,21 +15,6 @@ from pymatgen.core import Structure, Element
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pyxtal import pyxtal
 from sklearn.model_selection import train_test_split
-
-
-def conventional_standard_structure_from_cif(cif: str, symprec=0.1) -> Structure:
-    """
-    Reads a CIF file and returns the conventional standard structure.
-
-    Args:
-        cif (str): The CIF file content.
-        symprec (float, optional): The symmetry precision. Defaults to 0.1.
-
-    Returns:
-        Structure: The conventional standard structure.
-    """
-    raw_structure = CifParser.from_str(cif).parse_structures(primitive=False)[0]
-    return SpacegroupAnalyzer(raw_structure, symprec=symprec).get_conventional_standard_structure()
 
 
 def read_cif(cif: str) -> Structure:
@@ -114,21 +98,13 @@ def compute_symmetry_sites(
     with open(wychoffs_enumerated_by_ss_file, "rb") as f:
         wychoffs_enumerated_by_ss = pickle.load(f)[0]
     
+    result = []
     for dataset in datasets_pd.values():
         with Pool() as p:
             symmetry_dataset = pd.DataFrame.from_records(
                 p.starmap(structure_to_sites, zip(dataset['structure'], repeat(wychoffs_enumerated_by_ss)))).set_index(dataset.index)
-        dataset.loc[:, symmetry_dataset.columns] = symmetry_dataset
-
-    max_len = max(map(len, chain.from_iterable(map(itemgetter("symmetry_sites"), datasets_pd.values())))) + 1
-    for dataset in datasets_pd.values():
-        dataset.loc[:, "lattice_volume"] = [s.get_primitive_structure().lattice.volume for s in dataset['structure']]
-        dataset.loc[:, 'symmetry_sites_padded'] = [x + ["PAD"] * (max_len - len(x) + 1) for x in dataset['symmetry_sites']]
-        dataset.loc[:, 'symmetry_elements_padded'] = [x + ["STOP"] + ["PAD"] * (max_len - len(x)) for x in dataset['symmetry_elements']]
-        dataset.loc[:, 'symmetry_sites_enumeration_padded'] = [x + [-1] * (max_len - len(x) + 1) for x in dataset['symmetry_sites_enumeration']]
-        dataset.loc[:, 'padding_mask'] = [[False] * (len(x) + 1) + [True] * (max_len - len(x)) for x in dataset['symmetry_sites']]
-    logging.info("Max length of symmetry sites: %i", max_len)
-    return datasets_pd, max_len
+        result.append(symmetry_dataset)
+    return result
 
 
 def read_all_MP_csv(
@@ -155,7 +131,10 @@ def read_all_MP_csv(
         "test": read_MP(mp_path / f"test.{file_format}"),
         "val": read_MP(mp_path / f"val.{file_format}")
     }
-    return compute_symmetry_sites(datasets_pd, wychoffs_enumerated_by_ss_file)
+    symmetry_datasets = compute_symmetry_sites(datasets_pd, wychoffs_enumerated_by_ss_file)
+    for dataset, symmetry_dataset in zip(datasets_pd.values(), symmetry_datasets):
+        dataset.loc[:, symmetry_dataset.columns] = symmetry_dataset
+    return datasets_pd
 
 
 def read_mp_ternary_csv(
@@ -163,12 +142,14 @@ def read_mp_ternary_csv(
     wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "wychoffs_enumerated_by_ss.pkl.gz"
     ) -> tuple[dict[str, pd.DataFrame], int]:
     all_data = read_MP(mp_ternary_path)
-    train, test_validation = train_test_split(all_data, train_size=27136, random_state=42)
-    # TODO(kazeevn) this is embarassing. We really need to batch.
+    train, test_validation = train_test_split(all_data, train_size=0.6, random_state=42)
     validation, test = train_test_split(test_validation, train_size=0.5, random_state=43)
     datasets_pd = {
         "train": train,
         "test": test,
         "val": validation
     }
-    return compute_symmetry_sites(datasets_pd, wychoffs_enumerated_by_ss_file)
+    symmetry_datasets = compute_symmetry_sites(datasets_pd, wychoffs_enumerated_by_ss_file)
+    for dataset, symmetry_dataset in zip(datasets_pd.values(), symmetry_datasets):
+        dataset.loc[:, symmetry_dataset.columns] = symmetry_dataset
+    return datasets_pd

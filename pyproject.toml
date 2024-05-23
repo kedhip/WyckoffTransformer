@@ -24,6 +24,8 @@ pyxtal = ">=0.6.6"
 #pyxtal = {git = "https://github.com/qzhu2017/PyXtal.git", rev = "master"}
 #intel-extension-for-pytorch = "^2.3.0"
 #oneccl-bind-pt = {version = "^2.3.0+cpu", source = "pytorch-intel-cpu"}
+scikit-learn = "^1.5.0"
+filelock = "^3.14.0"
 
 
 [[tool.poetry.source]]
