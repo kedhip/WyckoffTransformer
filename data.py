@@ -120,10 +120,6 @@ def compute_symmetry_sites(
                 p.starmap(structure_to_sites, zip(dataset['structure'], repeat(wychoffs_enumerated_by_ss)))).set_index(dataset.index)
         dataset.loc[:, symmetry_dataset.columns] = symmetry_dataset
 
-    # TODO investigate the "long" materials
-    MAX_LEN_LIMIT = 21
-    for dataset_name in datasets_pd:
-        datasets_pd[dataset_name] = datasets_pd[dataset_name].loc[datasets_pd[dataset_name]['symmetry_sites'].map(len) < MAX_LEN_LIMIT]
     max_len = max(map(len, chain.from_iterable(map(itemgetter("symmetry_sites"), datasets_pd.values())))) + 1
     for dataset in datasets_pd.values():
         dataset.loc[:, "lattice_volume"] = [s.get_primitive_structure().lattice.volume for s in dataset['structure']]
@@ -136,14 +132,17 @@ def compute_symmetry_sites(
 
 
 def read_all_MP_csv(
-    mp20_path: Path = Path(__file__).parent.resolve() / "cdvae"/"data"/"mp_20",
-    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "wychoffs_enumerated_by_ss.pkl.gz"
+    mp_path: Path = Path(__file__).parent.resolve() / "cdvae"/"data"/"mp_20",
+    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "wychoffs_enumerated_by_ss.pkl.gz",
+    file_format: str = "csv"
     ) -> tuple[dict[str, pd.DataFrame], int]:
     """
     Reads all Materials Project CSV files and returns a dictionary of DataFrames.
 
     Args:
-        mp20_path (Path, optional): The path to the Materials Project CSV files. Defaults to "cdvae/data/mp_20".
+        mp_path (Path, optional): The path to the Materials Project CSV files. Defaults to "cdvae/data/mp_20".
+        wychoffs_enumerated_by_ss_file (Path, optional): The path to the Wyckoff positions enumerated by space group file. Defaults to "wychoffs_enumerated_by_ss.pkl.gz".
+        file_format (str, optional): The file format. Defaults to "csv". Can be archived csv openable by pandas.
 
     Returns:
         dict: A dictionary with the following keys:
@@ -152,9 +151,9 @@ def read_all_MP_csv(
             - val: DataFrame with validation data
     """
     datasets_pd = {
-        "train": read_MP(mp20_path/"train.csv"),
-        "test": read_MP(mp20_path/"test.csv"),
-        "val": read_MP(mp20_path/"val.csv")
+        "train": read_MP(mp_path / f"train.{file_format}"),
+        "test": read_MP(mp_path / f"test.{file_format}"),
+        "val": read_MP(mp_path / f"val.{file_format}")
     }
     return compute_symmetry_sites(datasets_pd, wychoffs_enumerated_by_ss_file)
 
