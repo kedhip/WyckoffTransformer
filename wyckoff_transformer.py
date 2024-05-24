@@ -82,7 +82,8 @@ class WyckoffTrainer():
         self.train_loader = torch.utils.data.DataLoader(
             torch.utils.data.TensorDataset(self.torch_datasets["train"][start_name].type(dtype).to(device), train_dataset),
             batch_size=batch_size,
-            shuffle=True)
+            # With the new code we still can process the whole dataset
+            shuffle=False)
         self.val_start = self.torch_datasets["val"][start_name].type(dtype).to(device)
         self.val_dataset = torch.stack([self.torch_datasets["val"][name] for name in cascade_order], dim=2).type(dtype).to(device)
         self.cascade_len = len(cascade_order)
