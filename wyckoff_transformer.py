@@ -58,19 +58,25 @@ class WyckoffTrainer():
                  start_name: str,
                  max_len: int,
                  device: str,
+                 initial_lr: float = 1.,
+                 clip_grad_norm: float = 0.5,
                  batch_size: int = 1024*32,
+                 val_period: int = 10,
+                 patience: int = 10,
                  dtype = torch.int64):
         """
-        We actually want dtype uint8. However, Embedding layer does not support it,
-        and CrossEntropyLoss expects only int64.
+        Arguments:
+        val_period: How often to evaluate the model on the validation dataset.
+        patience: How many validations to wait before reducing the learning rate.
+        dtype: We actually want dtype uint8. However, Embedding layer does not support it,
+            and CrossEntropyLoss expects only int64.
         """
         # Sequences have difference lengths, so we need to make sure that
         # long sequences don't dominate the loss
         self.criterion = nn.CrossEntropyLoss(reduction="sum")
-        self.lr = 5.0
-        self.optimizer = torch.optim.SGD(model.parameters(), lr=self.lr)
+        self.optimizer = torch.optim.SGD(model.parameters(), lr=initial_lr)
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            self.optimizer, 'min', factor=0.9, patience=10)
+            self.optimizer, 'min', factor=0.9, patience=patience)
         self.max_len = max_len
         self.model = model
         self.torch_datasets = torch_datasets
@@ -87,10 +93,19 @@ class WyckoffTrainer():
         self.val_start = self.torch_datasets["val"][start_name].type(dtype).to(device)
         self.val_dataset = torch.stack([self.torch_datasets["val"][name] for name in cascade_order], dim=2).type(dtype).to(device)
         self.cascade_len = len(cascade_order)
+        self.patience = patience
+        self.val_period = val_period
+        self.clip_grad_norm = clip_grad_norm
         self.config = {
             "batch_size": self.train_loader.batch_size,
             "cascade_order": cascade_order,
             "use_mixer": model.use_mixer,
+            "n_head": model.n_head,
+            "n_layers": model.n_layers,
+            "d_hid": model.d_hid,
+            "dropout": model.dropout,
+            "initial_lr": initial_lr,
+            "clip_grad_norm": clip_grad_norm,
             "max_len": self.max_len}
 
 
@@ -114,20 +129,18 @@ class WyckoffTrainer():
     def train_epoch(self):
         self.model.train()
         for start_batch, data_batch in self.train_loader:
+            self.optimizer.zero_grad(set_to_none=True)
             # TODO is STOP in max_len?
             known_seq_len = randint(0, self.max_len)
             known_cascade_len = randint(0, self.cascade_len - 1)
             loss = self.get_loss(start_batch, data_batch, known_seq_len, known_cascade_len)
             if loss != 0:
-                self.optimizer.zero_grad(set_to_none=True)
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 0.5)
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
                 self.optimizer.step()
-                self.lr = self.scheduler.get_last_lr()[0]
-                wandb.log({"train_loss_batch": loss,
-                           "known_seq_len": known_seq_len,
-                           "known_cascade_len": known_cascade_len,
-                           "lr": self.lr})
+            wandb.log({"train_loss_batch": loss,
+                        "known_seq_len": known_seq_len,
+                        "known_cascade_len": known_cascade_len})
 
 
     def evaluate(self) -> Tensor:
@@ -151,7 +164,7 @@ class WyckoffTrainer():
                    train_loss.item() / len(self.train_loader.dataset)
 
 
-    def train(self, epochs: int, val_period: int = 10):
+    def train(self, epochs: int):
         best_val_loss = float('inf')
         run_path = pathlib.Path("checkpoints", datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         run_path.mkdir(parents=True)
@@ -161,19 +174,18 @@ class WyckoffTrainer():
             project="WyckoffTransformer",
             job_type="train",
             config=self.config):
-            wandb.config.update({
-                "epochs": epochs,
-                "val_period": val_period})
-            for epoch in range(1, epochs + 1):
+            wandb.config.update({"epochs": epochs})
+            for epoch in range(epochs):
                 self.train_epoch()
-                if epoch % val_period == 0:
+                if epoch % self.val_period == 0:
                     val_loss_epoch, train_loss_eposh = self.evaluate()
                     wandb.log({"val_loss_epoch": val_loss_epoch,
                                "train_loss_epoch": train_loss_eposh,
+                               "lr": self.optimizer.param_groups[0]['lr'],
                                "epoch": epoch}, commit=False)
                     if val_loss_epoch < best_val_loss:
                         best_val_loss = val_loss_epoch
                         wandb.save(str(best_model_params_path))
                         torch.save(self.model.state_dict(), best_model_params_path)
                         print(f"Epoch {epoch} val_loss_epoch {val_loss_epoch} saved to {best_model_params_path}")
-                    self.scheduler.step(val_loss_epoch, epoch=epoch)
+                    self.scheduler.step(val_loss_epoch)

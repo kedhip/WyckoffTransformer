@@ -89,6 +89,11 @@ class CascadeTransformer(nn.Module):
         # Note that in the normal usage, we want to condition the cascade element prediction
         # on the previous element, so care shoul be taken as to which head to call.
         self.prediction_heads = torch.nn.ModuleList([nn.Linear(self.d_model, n) for n, _, _ in cascade])
+        self.n_head = n_head
+        self.n_layers = n_layers
+        self.d_hid = d_hid
+        self.dropout = dropout
+    
 
     def forward(self,
                 start: Tensor,
