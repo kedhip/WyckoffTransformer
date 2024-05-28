@@ -2,8 +2,6 @@ import os
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = "backend:cudaMallocAsync"
 import torch
-# UserWarning: TensorFloat32 tensor cores for float32 matrix multiplication available but not enabled. Consider setting `torch.set_float32_matmul_precision('high')` for better performance.
-torch.set_float32_matmul_precision('high')
 import argparse
 from mp_20_utils import load_all_data
 from cascade_transformer.model import CascadeTransformer
@@ -20,9 +18,15 @@ def main():
     parser.add_argument("--n-layers", type=int, default=8, help="Number of layers")
     args = parser.parse_args()
 
+    if args.device.startswith("cuda"):
+        # UserWarning: TensorFloat32 tensor cores for float32 matrix multiplication available but not enabled. Consider setting `torch.set_float32_matmul_precision('high')` for better performance.
+        torch.set_float32_matmul_precision('high')
+
     datasets_pd, torch_datasets, site_to_ids, element_to_ids, spacegroup_to_ids, max_len, \
         max_enumeration, enumeration_stop, enumeration_pad = \
             load_all_data(dataset=args.dataset)
+    del datasets_pd
+    del torch_datasets["test"]
     print(max_len, max_enumeration, enumeration_stop, enumeration_pad)
 
     n_space_groups = len(spacegroup_to_ids)
@@ -62,7 +66,7 @@ def main():
     }
     trainer = WyckoffTrainer(
         model, torch_datasets, pad_dict, mask_dict, cascade_order, "spacegroup_number", max_len, args.device, dtype=dtype)
-    trainer.train(epochs=30000)
+    trainer.train(epochs=20000)
 
 if __name__ == '__main__':
     main()

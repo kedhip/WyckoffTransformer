@@ -51,7 +51,7 @@ class CascadeTransformer(nn.Module):
                  n_layers: int,
                  d_hid: int,
                  dropout: float,
-                 use_mixer: bool = False):
+                 use_mixer: bool=True):
         """
         Expects tokens in the following format:
         START_k -> [] -> STOP -> PAD
@@ -80,20 +80,26 @@ class CascadeTransformer(nn.Module):
         self.encoder_layers = TransformerEncoderLayer(self.d_model, n_head, d_hid, dropout, batch_first=True)
         # Nested tensors are broken in the current version of PyTorch
         # https://github.com/pytorch/pytorch/issues/97111
+        # We also don't need them as we ensure that batches all have the same langth in WychoffTrainer
         self.transformer_encoder = TransformerEncoder(self.encoder_layers, n_layers, enable_nested_tensor=False)
         self.start_embedding = nn.Embedding(n_start, self.d_model)
         # So that multiple heads can be used
         self.use_mixer = use_mixer
-        if use_mixer:
-            self.mixer = nn.Linear(self.d_model, self.d_model, bias=False)
+        if not use_mixer:
+            raise NotImplementedError("Only mixer=True is supported")
+        # Since our tokens are concatenated, we need to mix the embeddings
+        # before we can use multuple attention heads.
+        # Actually, a fully-connected layer is an overparametrisation
+        # but it's easier to implement
+        self.mixer = nn.Linear(self.d_model, self.d_model, bias=False)
         # Note that in the normal usage, we want to condition the cascade element prediction
-        # on the previous element, so care shoul be taken as to which head to call.
+        # on the previous element, so care should be taken as to which head to call.
         self.prediction_heads = torch.nn.ModuleList([nn.Linear(self.d_model, n) for n, _, _ in cascade])
         self.n_head = n_head
         self.n_layers = n_layers
         self.d_hid = d_hid
         self.dropout = dropout
-    
+
 
     def forward(self,
                 start: Tensor,
@@ -101,8 +107,7 @@ class CascadeTransformer(nn.Module):
                 padding_mask: Tensor,
                 prediction_head: int) -> Tensor:
         data = torch.cat([self.start_embedding(start).unsqueeze(1), self.embedding(cascade)], dim=1)
-        if self.use_mixer:
-            data = self.mixer(data)
+        data = self.mixer(data)
         transformer_output = self.transformer_encoder(data, src_key_padding_mask=padding_mask)
         prediction = self.prediction_heads[prediction_head](transformer_output[:, -1])
         return prediction
@@ -113,8 +118,8 @@ def get_masked_cascade_data(
     mask_indices: Tensor,
     known_seq_len: int,
     known_cascade_len: int):
-    assert known_seq_len < data.shape[1]
-    assert known_seq_len >= 0
+    # assert known_seq_len < data.shape[1]
+    # assert known_seq_len >= 0
 
     # We are predicting the first cascade element also through the mask
     # It would be slightly more efficient to predict it using only the previous data
@@ -128,6 +133,6 @@ def get_cascade_target(
     data: Tensor,
     known_seq_len: int,
     known_cascade_len: int):
-    assert known_seq_len < data.shape[1]
-    assert known_seq_len >= 0
+    # assert known_seq_len < data.shape[1]
+    # assert known_seq_len >= 0
     return data[:, known_seq_len, known_cascade_len]

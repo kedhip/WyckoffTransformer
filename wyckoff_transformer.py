@@ -60,7 +60,7 @@ class WyckoffTrainer():
                  device: str,
                  initial_lr: float = 1.,
                  clip_grad_norm: float = 0.5,
-                 batch_size: int = 1024*32,
+                 # batch_size: int = 1024*32,
                  val_period: int = 10,
                  patience: int = 10,
                  dtype = torch.int64):
@@ -79,25 +79,25 @@ class WyckoffTrainer():
             self.optimizer, 'min', factor=0.9, patience=patience)
         self.max_len = max_len
         self.model = model
-        self.torch_datasets = torch_datasets
         self.dtype = dtype
         self.pad_tensor = torch.tensor([pad[name] for name in cascade_order], dtype=self.dtype, device=device)
         self.mask_tensor = torch.tensor([mask[name] for name in cascade_order], dtype=self.dtype, device=device)
-        train_dataset = torch.stack([self.torch_datasets["train"][name] for name in cascade_order], dim=2).type(dtype).to(device)
-        # TODO shuffle ?
-        self.train_loader = torch.utils.data.DataLoader(
-            torch.utils.data.TensorDataset(self.torch_datasets["train"][start_name].type(dtype).to(device), train_dataset),
-            batch_size=batch_size,
+        self.train_dataset = torch.stack([torch_datasets["train"][name] for name in cascade_order], dim=2).type(dtype).to(device)
+        self.train_start = torch_datasets["train"][start_name].type(dtype).to(device)
+        
+        # self.train_loader = torch.utils.data.DataLoader(
+            # torch.utils.data.TensorDataset(self.torch_datasets["train"][start_name].type(dtype).to(device), train_dataset),
+            # batch_size=batch_size,
             # With the new code we still can process the whole dataset
-            shuffle=False)
-        self.val_start = self.torch_datasets["val"][start_name].type(dtype).to(device)
-        self.val_dataset = torch.stack([self.torch_datasets["val"][name] for name in cascade_order], dim=2).type(dtype).to(device)
+            # shuffle=False)
+        self.val_start = torch_datasets["val"][start_name].type(dtype).to(device)
+        self.val_dataset = torch.stack([torch_datasets["val"][name] for name in cascade_order], dim=2).type(dtype).to(device)
         self.cascade_len = len(cascade_order)
         self.patience = patience
         self.val_period = val_period
         self.clip_grad_norm = clip_grad_norm
         self.config = {
-            "batch_size": self.train_loader.batch_size,
+            # "batch_size": self.train_loader.batch_size,
             "cascade_order": cascade_order,
             "use_mixer": model.use_mixer,
             "n_head": model.n_head,
@@ -117,30 +117,30 @@ class WyckoffTrainer():
         target = get_cascade_target(data_batch, known_seq_len, known_cascade_len)
         non_pad_target = (target != self.pad_tensor[known_cascade_len])
         selected_target = target[non_pad_target]
-        if len(selected_target) == 0:
-            return torch.zeros(1)
-        else:
-            masked_data = get_masked_cascade_data(data_batch[non_pad_target], self.mask_tensor, known_seq_len, known_cascade_len)
-            # No padding, as we have already discarded the padding
-            prediction = self.model(start_batch[non_pad_target], masked_data, None, known_cascade_len)
-            return self.criterion(prediction, selected_target)
+        #if len(selected_target) == 0:
+        #    return torch.zeros(1)
+        #else:
+        masked_data = get_masked_cascade_data(data_batch[non_pad_target], self.mask_tensor, known_seq_len, known_cascade_len)
+        # No padding, as we have already discarded the padding
+        prediction = self.model(start_batch[non_pad_target], masked_data, None, known_cascade_len)
+        return self.criterion(prediction, selected_target)
 
 
     def train_epoch(self):
         self.model.train()
-        for start_batch, data_batch in self.train_loader:
-            self.optimizer.zero_grad(set_to_none=True)
-            # TODO is STOP in max_len?
-            known_seq_len = randint(0, self.max_len)
-            known_cascade_len = randint(0, self.cascade_len - 1)
-            loss = self.get_loss(start_batch, data_batch, known_seq_len, known_cascade_len)
-            if loss != 0:
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
-                self.optimizer.step()
-            wandb.log({"train_loss_batch": loss,
-                        "known_seq_len": known_seq_len,
-                        "known_cascade_len": known_cascade_len})
+        #for start_batch, data_batch in self.train_loader:
+        self.optimizer.zero_grad(set_to_none=True)
+        # TODO is STOP in max_len?
+        known_seq_len = randint(0, self.max_len)
+        known_cascade_len = randint(0, self.cascade_len - 1)
+        loss = self.get_loss(self.train_start, self.train_dataset, known_seq_len, known_cascade_len)
+        #if loss != 0:
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
+        self.optimizer.step()
+        wandb.log({"train_loss_batch": loss,
+                   "known_seq_len": known_seq_len,
+                   "known_cascade_len": known_cascade_len})
 
 
     def evaluate(self) -> Tensor:
@@ -157,11 +157,12 @@ class WyckoffTrainer():
             for known_seq_len in range(0, self.max_len):
                 for known_cascade_len in range(0, self.cascade_len):
                     val_loss += self.get_loss(self.val_start, self.val_dataset, known_seq_len, known_cascade_len)
-                    train_loss += self.get_loss(self.train_loader.dataset.tensors[0], self.train_loader.dataset.tensors[1], known_seq_len, known_cascade_len)
+                    train_loss += self.get_loss(self.train_start, self.train_dataset, known_seq_len, known_cascade_len)
+                    # train_loss += self.get_loss(self.train_loader.dataset.tensors[0], self.train_loader.dataset.tensors[1], known_seq_len, known_cascade_len)
             # ln(P) = ln p(t_n|t_n-1, ..., t_1) + ... + ln p(t_2|t_1)
             # We are minimising the negative log likelihood of the whole sequences
-            return (val_loss / self.torch_datasets["val"]["symmetry_sites"].shape[0]).item(), \
-                   train_loss.item() / len(self.train_loader.dataset)
+            return (val_loss / self.val_start.shape[0]).item(), \
+                   (train_loss / self.train_start.shape[0]).item()
 
 
     def train(self, epochs: int):
@@ -185,7 +186,7 @@ class WyckoffTrainer():
                                "epoch": epoch}, commit=False)
                     if val_loss_epoch < best_val_loss:
                         best_val_loss = val_loss_epoch
-                        wandb.save(str(best_model_params_path))
                         torch.save(self.model.state_dict(), best_model_params_path)
+                        wandb.save(str(best_model_params_path))
                         print(f"Epoch {epoch} val_loss_epoch {val_loss_epoch} saved to {best_model_params_path}")
                     self.scheduler.step(val_loss_epoch)
