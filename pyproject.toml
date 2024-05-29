@@ -13,26 +13,13 @@ pandas = ">=2.1.1"
 numpy = ">=1.26.0"
 ase = ">=3.22.1"
 nglview = ">=3.0.8"
-#torch = "==2.4.0a0+gitda7bf1d"
-#torchvision = ">=0.16.0"
-#torchaudio = ">=2.2.0"
 wandb = ">=0.16.0"
-#torchviz = ">=0.0.2"
-#torch-uncertainty = ">=0.1.5"
 py3dmol = ">=2.0.4"
 pyxtal = ">=0.6.6"
-#pyxtal = {git = "https://github.com/qzhu2017/PyXtal.git", rev = "master"}
-#intel-extension-for-pytorch = "^2.3.0"
-#oneccl-bind-pt = {version = "^2.3.0+cpu", source = "pytorch-intel-cpu"}
 scikit-learn = "^1.5.0"
 filelock = "^3.14.0"
 torch = {path = "/mnt/hdd/torch_wheels/torch-2.4.0a0+gitda7bf1d-cp310-cp310-linux_x86_64.whl"}
-
-
-[[tool.poetry.source]]
-name = "pytorch-intel-cpu"
-url = "https://pytorch-extension.intel.com/release-whl/stable/cpu/us/"
-priority = "explicit"
+pytorch-triton = {path = "/mnt/hdd/torch_wheels/pytorch_triton-3.0.0+45fff310c8-cp310-cp310-linux_x86_64.whl"}
 
 [build-system]
 requires = ["poetry-core"]
