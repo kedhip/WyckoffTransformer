@@ -1,5 +1,5 @@
 # Installation
-1. clone the repository
+1. Clone the repository
 2. `poetry install`. If it doesn't work due to torch, it's up to you to fix. If you are able to find a general solution, a PR is most welcome.
 # Training
 1. Log into WanDB, and configure your entity. For the team memebers, I suggest `export WANDB_ENTITY="symmetry-advantage"`
