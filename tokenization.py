@@ -56,6 +56,6 @@ def get_tokens(datasets_pd, dtype=torch.uint8):
         tensors[dataset_name]['spacegroup_number'] = torch.stack(dataset['spacegroup_number'].map(spacegroup_to_tensor).to_list())
         tensors[dataset_name]['symmetry_sites_enumeration_augmented'] = \
             dataset['symmetry_sites_enumeration_augmented'].map(
-                lambda x: torch.stack([enumeration_to_tensor(enumeration) for enumeration in x])).to_list()
+                lambda x: [enumeration_to_tensor(enumeration) for enumeration in x]).to_list()
         # tensors[dataset_name]['padding_mask_tensor'] = dataset['padding_mask'].map(torch.tensor)
     return tensors, site_to_ids, element_to_ids, spacegroup_to_ids, max_len, max_enumeration, enumeration_stop, enumeration_pad

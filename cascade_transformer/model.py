@@ -112,33 +112,3 @@ class CascadeTransformer(nn.Module):
         transformer_output = self.transformer_encoder(data, src_key_padding_mask=padding_mask)
         prediction = self.prediction_heads[prediction_head](transformer_output[:, -1])
         return prediction
-
-
-def get_masked_cascade_data(
-    data: List[Tensor],
-    mask_indices: Tensor,
-    known_seq_len: int,
-    known_cascade_len: int):
-    # assert known_seq_len < data.shape[1]
-    # assert known_seq_len >= 0
-
-    # We are predicting the first cascade element also through the mask
-    # It would be slightly more efficient to predict it using only the previous data
-    res = []
-    for i, cascade_vector in enumerate(data):
-        if i < known_cascade_len:
-            res.append(cascade_vector[:, :known_seq_len + 1])
-        else:
-            res.append(torch.cat([
-                cascade_vector[:, :known_seq_len],
-                mask_indices[i].expand(cascade_vector.shape[0], 1)], dim=1))
-    return res
-
-
-def get_cascade_target(
-    data: List[Tensor],
-    known_seq_len: int,
-    known_cascade_len: int):
-    # assert known_seq_len < data.shape[1]
-    # assert known_seq_len >= 0
-    return data[known_cascade_len][:, known_seq_len]
