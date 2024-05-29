@@ -10,6 +10,7 @@
 [statistical_evaluation.ipynb](statistical_evaluation.ipynb)
 # Developing
 [Taskboard](https://www.notion.so/kna/36e263a83cc441a38483c084a5457a59?v=ecbd33a6130246bf940876abbf1d984c)
+Please don't `main` branch
 # Data sources
 1. `mp_20` is [MP 20](https://github.com/txie-93/cdvae/tree/main/data/mp_20). To download, checkout the `cdvae` submodule.
 2. `mp_20_biternary` is a selection of binary and ternary compounds from `mp_20`, produced with with `select_from_mp_20.py`.
