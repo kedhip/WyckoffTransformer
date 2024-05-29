@@ -9,6 +9,11 @@ from cascade_transformer.model import get_cascade_target, get_masked_cascade_dat
 import wandb
 
 
+def randint_tensor(high: torch.Tensor):
+    dtype = high.dtype
+    return torch.randint(torch.iinfo(dtype).max, size=(len(high),), device=high.device) % high
+
+
 class WyckoffGenerator():
     def __init__(self,
                  model: nn.Module,
@@ -36,8 +41,9 @@ class WyckoffGenerator():
         """
         self.model.eval()
         with torch.no_grad():
-            batch_size = start.shape[0]
-            generated = torch.empty(batch_size, self.max_len, len(self.cascade_order), dtype=start.dtype, device=self.device)
+            batch_size = start.size(0)
+            generated = [torch.empty(batch_size, self.max_len, dtype=start.dtype, device=self.device) \
+                for _ in range(len(self.cascade_order))]
             for known_seq_len in range(self.max_len):
                 for known_cascade_len in range(len(self.cascade_order)):
                     masked_data = get_masked_cascade_data(
@@ -45,7 +51,7 @@ class WyckoffGenerator():
                     model_output = self.model(start, masked_data, None, known_cascade_len)
                     probas = torch.nn.functional.softmax(model_output, dim=1)
                     # +1 as START
-                    generated[:, known_seq_len, known_cascade_len] = torch.multinomial(probas, num_samples=1).squeeze()
+                    generated[known_cascade_len][:, known_seq_len] = torch.multinomial(probas, num_samples=1).squeeze()
             return generated
 
 class WyckoffTrainer():
@@ -55,6 +61,7 @@ class WyckoffTrainer():
                  pad: dict,
                  mask: dict,
                  cascade_order: Tuple,
+                 augmented_field: str|None,
                  start_name: str,
                  max_len: int,
                  device: str,
@@ -82,8 +89,14 @@ class WyckoffTrainer():
         self.dtype = dtype
         self.pad_tensor = torch.tensor([pad[name] for name in cascade_order], dtype=self.dtype, device=device)
         self.mask_tensor = torch.tensor([mask[name] for name in cascade_order], dtype=self.dtype, device=device)
-        self.train_dataset = torch.stack([torch_datasets["train"][name] for name in cascade_order], dim=2).type(dtype).to(device)
+        self.train_datasets = {name: torch_datasets["train"][name].type(dtype).to(device) for name in cascade_order if name != augmented_field}
         self.train_start = torch_datasets["train"][start_name].type(dtype).to(device)
+        self.train_augmentation_variants = torch.tensor(
+            list(map(len, torch_datasets["train"][f"{augmented_field}_augmented"])), dtype=dtype, device=device)
+        self.train_augmentation_tensor = torch.nested.nested_tensor(
+            torch_datasets["train"][f"{augmented_field}_augmented"], dtype=dtype, device=device).to_padded_tensor(
+            padding=pad[augmented_field])
+        self.augmented_field = augmented_field
         
         # self.train_loader = torch.utils.data.DataLoader(
             # torch.utils.data.TensorDataset(self.torch_datasets["train"][start_name].type(dtype).to(device), train_dataset),
@@ -91,8 +104,15 @@ class WyckoffTrainer():
             # With the new code we still can process the whole dataset
             # shuffle=False)
         self.val_start = torch_datasets["val"][start_name].type(dtype).to(device)
-        self.val_dataset = torch.stack([torch_datasets["val"][name] for name in cascade_order], dim=2).type(dtype).to(device)
+        self.val_datasets = {name: torch_datasets["val"][name].type(dtype).to(device) for name in cascade_order if name != augmented_field}
+        self.val_augmentation_variants = torch.tensor(
+            list(map(len, torch_datasets["val"][f"{augmented_field}_augmented"])), dtype=dtype, device=device)
+        self.val_augmentation_tensor = torch.nested.nested_tensor(
+            torch_datasets["val"][f"{augmented_field}_augmented"], dtype=dtype, device=device).to_padded_tensor(
+            padding=pad[augmented_field])
+
         self.cascade_len = len(cascade_order)
+        self.cascade_order = cascade_order
         self.patience = patience
         self.val_period = val_period
         self.clip_grad_norm = clip_grad_norm
@@ -112,15 +132,16 @@ class WyckoffTrainer():
     def get_loss(self,
         start_batch: Tensor,
         data_batch: Tensor,
-        known_seq_len,
-        known_cascade_len) -> Tensor:
+        known_seq_len: int,
+        known_cascade_len: int) -> Tensor:
         target = get_cascade_target(data_batch, known_seq_len, known_cascade_len)
         non_pad_target = (target != self.pad_tensor[known_cascade_len])
         selected_target = target[non_pad_target]
         #if len(selected_target) == 0:
         #    return torch.zeros(1)
         #else:
-        masked_data = get_masked_cascade_data(data_batch[non_pad_target], self.mask_tensor, known_seq_len, known_cascade_len)
+        masked_data = get_masked_cascade_data(
+            [data[non_pad_target] for data in data_batch], self.mask_tensor, known_seq_len, known_cascade_len)
         # No padding, as we have already discarded the padding
         prediction = self.model(start_batch[non_pad_target], masked_data, None, known_cascade_len)
         return self.criterion(prediction, selected_target)
@@ -133,7 +154,14 @@ class WyckoffTrainer():
         # TODO is STOP in max_len?
         known_seq_len = randint(0, self.max_len)
         known_cascade_len = randint(0, self.cascade_len - 1)
-        loss = self.get_loss(self.train_start, self.train_dataset, known_seq_len, known_cascade_len)
+        augnementation_selection = randint_tensor(self.train_augmentation_variants)
+        augmentated_data = self.train_augmentation_tensor[
+            torch.arange(self.train_augmentation_tensor.size(0), device=self.train_augmentation_tensor.device),
+            augnementation_selection]
+        loss = self.get_loss(
+            self.train_start,
+            [self.train_datasets[name] if name != self.augmented_field else augmentated_data for name in self.cascade_order],
+            known_seq_len, known_cascade_len)
         #if loss != 0:
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
@@ -156,9 +184,23 @@ class WyckoffTrainer():
         with torch.no_grad():
             for known_seq_len in range(0, self.max_len):
                 for known_cascade_len in range(0, self.cascade_len):
-                    val_loss += self.get_loss(self.val_start, self.val_dataset, known_seq_len, known_cascade_len)
-                    train_loss += self.get_loss(self.train_start, self.train_dataset, known_seq_len, known_cascade_len)
-                    # train_loss += self.get_loss(self.train_loader.dataset.tensors[0], self.train_loader.dataset.tensors[1], known_seq_len, known_cascade_len)
+                    augnementation_selection = randint_tensor(self.train_augmentation_variants)
+                    augmentated_data = self.train_augmentation_tensor[
+                        torch.arange(self.train_augmentation_tensor.size(0), device=self.train_augmentation_tensor.device),
+                        augnementation_selection]
+                    train_loss += self.get_loss(
+                        self.train_start,
+                        [self.train_datasets[name] if name != self.augmented_field else augmentated_data for name in self.cascade_order],
+                        known_seq_len, known_cascade_len)
+                    
+                    augnementation_selection = randint_tensor(self.val_augmentation_variants)
+                    augmentated_data = self.val_augmentation_tensor[
+                        torch.arange(self.val_augmentation_tensor.size(0), device=self.val_augmentation_tensor.device),
+                        augnementation_selection]
+                    val_loss += self.get_loss(
+                        self.val_start,
+                        [self.val_datasets[name] if name != self.augmented_field else augmentated_data for name in self.cascade_order],
+                        known_seq_len, known_cascade_len)
             # ln(P) = ln p(t_n|t_n-1, ..., t_1) + ... + ln p(t_2|t_1)
             # We are minimising the negative log likelihood of the whole sequences
             return (val_loss / self.val_start.shape[0]).item(), \

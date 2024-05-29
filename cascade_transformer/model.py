@@ -1,8 +1,9 @@
-from typing import Tuple
+from typing import Tuple, List
 import torch
 from torch import nn
 from torch import Tensor
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
+
 
 class CascadeEmbedding(nn.Module):
     def __init__(self,
@@ -26,7 +27,7 @@ class CascadeEmbedding(nn.Module):
                 self.total_embedding_dim += d
 
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: List[Tensor]) -> Tensor:
         """
         Arguments:
             x: Tensor of shape ``[batch_size, seq_len, len(cascade)]``
@@ -35,18 +36,18 @@ class CascadeEmbedding(nn.Module):
             Tensor of shape ``[batch_size, seq_len, self.total_embedding_dim]``
         """
         list_of_embeddings = []
-        for i, emb in enumerate(self.embeddings):
+        for tensor, emb in zip(x, self.embeddings):
             if emb is None:
-                list_of_embeddings.append(x[:, :, [i]])
+                list_of_embeddings.append(tensor.unsqueeze(-1))
             else:
-                list_of_embeddings.append(emb(x[:, :, i]))
+                list_of_embeddings.append(emb(tensor))
         return torch.cat(list_of_embeddings, dim=2)
 
 
 class CascadeTransformer(nn.Module):
     def __init__(self,
                  n_start: int,
-                 cascade: Tuple[Tuple[int, int, int|None], ...],
+                 cascade: Tuple[Tuple[int, int|None, int], ...],
                  n_head: int,
                  n_layers: int,
                  d_hid: int,
@@ -103,7 +104,7 @@ class CascadeTransformer(nn.Module):
 
     def forward(self,
                 start: Tensor,
-                cascade: Tensor,
+                cascade: List[Tensor],
                 padding_mask: Tensor,
                 prediction_head: int) -> Tensor:
         data = torch.cat([self.start_embedding(start).unsqueeze(1), self.embedding(cascade)], dim=1)
@@ -114,7 +115,7 @@ class CascadeTransformer(nn.Module):
 
 
 def get_masked_cascade_data(
-    data: Tensor,
+    data: List[Tensor],
     mask_indices: Tensor,
     known_seq_len: int,
     known_cascade_len: int):
@@ -123,16 +124,21 @@ def get_masked_cascade_data(
 
     # We are predicting the first cascade element also through the mask
     # It would be slightly more efficient to predict it using only the previous data
-    known_data = data[:, :known_seq_len]
-    data_masked_head = torch.cat([data[:, known_seq_len, :known_cascade_len],
-                                  mask_indices[known_cascade_len:].expand(data.shape[0], -1)], dim=1)
-    return torch.cat([known_data, data_masked_head[:, None, :]], dim=1)
+    res = []
+    for i, cascade_vector in enumerate(data):
+        if i < known_cascade_len:
+            res.append(cascade_vector[:, :known_seq_len + 1])
+        else:
+            res.append(torch.cat([
+                cascade_vector[:, :known_seq_len],
+                mask_indices[i].expand(cascade_vector.shape[0], 1)], dim=1))
+    return res
 
 
 def get_cascade_target(
-    data: Tensor,
+    data: List[Tensor],
     known_seq_len: int,
     known_cascade_len: int):
     # assert known_seq_len < data.shape[1]
     # assert known_seq_len >= 0
-    return data[:, known_seq_len, known_cascade_len]
+    return data[known_cascade_len][:, known_seq_len]

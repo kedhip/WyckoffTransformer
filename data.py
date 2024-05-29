@@ -1,12 +1,10 @@
 """
 This module provides functions for reading the structures and extracting the symmetry information.
 """
-from itertools import chain, repeat
-from operator import itemgetter
+from itertools import repeat
+from functools import partial
 from pathlib import Path
-import logging
 import pickle
-import torch
 from multiprocessing import Pool
 import numpy as np
 import pandas as pd
@@ -15,6 +13,8 @@ from pymatgen.core import Structure, Element
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pyxtal import pyxtal
 from sklearn.model_selection import train_test_split
+
+from preprocess_wychoffs import get_augmentation_dict
 
 
 def read_cif(cif: str) -> Structure:
@@ -33,13 +33,17 @@ def read_cif(cif: str) -> Structure:
 def structure_to_sites(
     structure: Structure,
     wychoffs_enumerated_by_ss: dict,
+    wychoffs_augmentation: dict = None,
     tol: float = 0.1) -> dict:
     """
     Converts a pymatgen structure to a dictionary of symmetry sites.
 
     Args:
         structure (Structure): The pymatgen structure.
-        tol (float, optional): The tolerance. Defaults to 0.1.
+        wychoffs_enumerated_by_ss (dict)
+        wychoffs_augmentation (dict, optional)
+        tol (float, optional): The tolerance passed to pyxtal().from_seed.
+            Defaults to 0.1, as in Materials Project.
 
     Returns:
         dict: A dictionary with the following keys:
@@ -62,7 +66,7 @@ def structure_to_sites(
 
     order = np.lexsort((site_enumeration, multiplicity, electronegativity))
 
-    return {
+    sites_dict = {
         "symmetry_sites": [site_symmetries[i] for i in order],
         "symmetry_elements": [elements[i] for i in order],
         "symmetry_multiplicity": [multiplicity[i] for i in order],
@@ -71,6 +75,14 @@ def structure_to_sites(
         "symmetry_dof": [dof[i] for i in order],
         "spacegroup_number": pyxtal_structure.group.number
     }
+    if wychoffs_augmentation is not None:
+        augmented_enumeration = [
+            [wychoffs_enumerated_by_ss[pyxtal_structure.group.number][augmentator[letter]] for
+              letter in sites_dict["symmetry_letters"]]
+                for augmentator in wychoffs_augmentation[pyxtal_structure.group.number]
+        ]
+        sites_dict["symmetry_sites_enumeration_augmented"] = augmented_enumeration
+    return sites_dict
 
 
 def read_MP(MP_csv: Path|str):
@@ -98,11 +110,17 @@ def compute_symmetry_sites(
     with open(wychoffs_enumerated_by_ss_file, "rb") as f:
         wychoffs_enumerated_by_ss = pickle.load(f)[0]
     
+    structure_to_sites_with_args = partial(
+                structure_to_sites,
+                wychoffs_enumerated_by_ss=wychoffs_enumerated_by_ss,
+                wychoffs_augmentation=get_augmentation_dict()
+        )
+
     result = []
     for dataset in datasets_pd.values():
         with Pool() as p:
             symmetry_dataset = pd.DataFrame.from_records(
-                p.starmap(structure_to_sites, zip(dataset['structure'], repeat(wychoffs_enumerated_by_ss)))).set_index(dataset.index)
+                p.map(structure_to_sites_with_args, dataset['structure'])).set_index(dataset.index)
         result.append(symmetry_dataset)
     return result
 

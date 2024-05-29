@@ -13,16 +13,13 @@ from data import read_all_MP_csv, read_mp_ternary_csv
 from tokenization import get_tokens
 
 cache_folder = Path("cache")
-cache_data = "data.pkl.gz"
-cache_tensors = "tensors.pkl.gz"
-
 
 def get_cache_data_file_name(dataset:str):
-    return cache_folder / dataset / cache_data
+    return cache_folder / dataset / "data.pkl.gz"
 
 
 def get_cache_tensors_file_name(dataset:str):
-    return cache_folder / dataset / cache_tensors
+    return cache_folder / dataset / "tensors.pkl.gz"
 
 
 def cache_dataset(dataset:str):
@@ -45,6 +42,12 @@ def cache_dataset(dataset:str):
     with gzip.open(cache_data_file_name, "wb") as f:
         pickle.dump(datasets_pd, f)
 
+
+def cache_tensors(dataset:str):
+    cache_data_file_name = get_cache_data_file_name(dataset)
+    with gzip.open(cache_data_file_name, "rb") as f:
+        datasets_pd = pickle.load(f)
+
     tensor_info = get_tokens(datasets_pd)
     cache_tensors_file_name = get_cache_tensors_file_name(dataset)
     cache_tensors_file_name.parent.mkdir(parents=True, exist_ok=True)
@@ -52,8 +55,7 @@ def cache_dataset(dataset:str):
         pickle.dump(tensor_info, f)
 
 
-def load_all_data(
-    dataset:str = "mp_20"):
+def load_all_data(dataset:str):
     cache_data_file_name = get_cache_data_file_name(dataset)
     with gzip.open(cache_data_file_name, "rb") as f:
         datasets_pd = pickle.load(f)
@@ -68,8 +70,13 @@ def load_all_data(
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("dataset", help="The dataset to cache.")
+    parser.add_argument("--cache-dataset", action="store_true", help="Cache the dataset.")
+    parser.add_argument("--cache-tensors", action="store_true", help="Cache the tensors.")
     args = parser.parse_args()
-    cache_dataset(args.dataset)
+    if args.cache_dataset:
+        cache_dataset(args.dataset)
+    if args.cache_tensors:
+        cache_tensors(args.dataset)
 
 
 if __name__ == "__main__":

@@ -22,6 +22,9 @@ def enumerate_wychoffs_by_ss(output_file: Path = "wychoffs_enumerated_by_ss.pkl.
     for spacegroup_number in range(1, N_3D_SPACEGROUPS + 1):
         group = Group(spacegroup_number)
         ss_counts = Counter()
+        # [::-1] doesn't matter in principle,
+        # but serves a cosmetic purpose, so that
+        # a comes before b, etc.
         for wp in group.Wyckoff_positions[::-1]:
             wp.get_site_symmetry()
             ss_from_letter[spacegroup_number][wp.letter] = wp.site_symm
