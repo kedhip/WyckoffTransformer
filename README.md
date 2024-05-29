@@ -1,9 +1,13 @@
 # Installation
 1. Clone the repository
-2. `poetry install`. If it doesn't work due to torch, it's up to you to fix. If you are able to find a general solution, a PR is most welcome.
+2. `poetry install`. If it doesn't work due to PyTorch, it's up to you to fix. If you are able to find a general solution, a PR is most welcome.
+3. Log into WanDB, and configure your entity. For the team memebers, I suggest `symmetry-advantage`. It can be configured in poetry:
+```bash
+poetry self add poetry-dotenv-plugin
+echo "WANDB_ENTITY=symmetry-advantage" > .env
+```
 # Training
-1. Log into WanDB, and configure your entity. For the team memebers, I suggest `export WANDB_ENTITY="symmetry-advantage"`
-2. `python train.py cuda:0|cuda:1|cpu`
+`python train.py cuda:0|cuda:1|cpu`
 # Generation
 [Generate.ipynb](Generate.ipynb)
 # Evaluation
