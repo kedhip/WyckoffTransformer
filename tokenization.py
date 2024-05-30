@@ -1,61 +1,119 @@
+from typing import Dict, Iterable, Set, FrozenSet, Optional, List, Tuple
 from itertools import chain
-from operator import itemgetter
+from operator import attrgetter, itemgetter
+from functools import partial
 from collections import defaultdict
+from enum import Enum
+from pathlib import Path
+import gzip
+import pickle
+from pandas import DataFrame
+import argparse
 import torch
-import pyxtal
+import omegaconf
 
-PAD_TOKEN = "PAD"
-STOP_TOKEN = "STOP"
-MASK_TOKEN = "MASK"
+ServiceToken = Enum('ServiceToken', ['PAD', 'STOP', 'MASK'])
 
-def get_tokens(datasets_pd, dtype=torch.uint8):
-    all_sites = set(chain.from_iterable(chain(*map(itemgetter("symmetry_sites"), datasets_pd.values()))))
-    all_sites.update((PAD_TOKEN, STOP_TOKEN, MASK_TOKEN))
-    all_elements = set(chain.from_iterable(chain(*map(itemgetter("symmetry_elements"), datasets_pd.values()))))
-    all_elements.update((PAD_TOKEN, STOP_TOKEN, MASK_TOKEN))
-    all_spacegroups = set(chain(*map(itemgetter("spacegroup_number"), datasets_pd.values())))
-    # We assume that enumeration goes from 0 to max_enumeration - 1
-    max_enumeration = max(map(max, chain.from_iterable(map(itemgetter("symmetry_sites_enumeration"), datasets_pd.values()))))
-    assert max_enumeration + 2 < torch.iinfo(dtype).max
-    enumeration_stop = max_enumeration + 1
-    enumeration_pad = max_enumeration + 2
-    assert len(all_sites) < torch.iinfo(dtype).max
-    assert len(all_elements) < torch.iinfo(dtype).max
-    assert len(all_spacegroups) < torch.iinfo(dtype).max
-    # It's the true len, without start or stop
-    max_len = max(map(len, chain.from_iterable(map(itemgetter("symmetry_sites"), datasets_pd.values()))))
+class EnumeratingTokeniser(dict):
+    @classmethod
+    def from_token_set(cls,
+        all_tokens: Set|FrozenSet,
+        max_tokens: Optional[int] = None):
+        for special_token in ServiceToken:
+            if special_token.name in all_tokens:
+                raise ValueError(f"Special token {special_token.name} is in the dataset")
+        instance = cls()
+        instance.update({token: idx for idx, token in enumerate(
+            chain(all_tokens, map(attrgetter('name'), ServiceToken)))})
+        instance.stop_token = instance[ServiceToken.STOP.name]
+        instance.pad_token = instance[ServiceToken.PAD.name]
+        instance.mask_token = instance[ServiceToken.MASK.name]
+        # Theoretically, we can check it in the beginnig, but
+        # the performance hit is negligible
+        if max_tokens is not None and len(instance) > max_tokens:
+            raise ValueError(f"Too many tokens: {len(instance)}. Remember "
+            f"that we also added {len(ServiceToken)} service tokens")
+        return instance
 
-    site_to_ids = {word: idx for idx, word in enumerate(all_sites)}
-    element_to_ids = {word: idx for idx, word in enumerate(all_elements)}
-    spacegroup_to_ids = {word: idx for idx, word in enumerate(all_spacegroups)}
-    
-    site_stop = [site_to_ids[STOP_TOKEN]]
-    site_pad = [site_to_ids[PAD_TOKEN]]
-    def sites_to_tensor(sites):
-        return torch.tensor([site_to_ids[site] for site in sites] + site_stop + site_pad * (max_len - len(sites)), dtype=dtype)
-    
-    element_stop = [element_to_ids[STOP_TOKEN]]
-    element_pad = [element_to_ids[PAD_TOKEN]]
-    def element_to_tensor(elements):
-        return torch.tensor(
-            [element_to_ids[element] for element in elements] + element_stop + element_pad * (max_len - len(elements)),
-             dtype=dtype)
-    
-    def spacegroup_to_tensor(spacegroup):
-        return torch.tensor(spacegroup_to_ids[spacegroup], dtype=dtype)
-    
-    def enumeration_to_tensor(enumeration):
-        return torch.tensor(
-            enumeration + [enumeration_stop] + [enumeration_pad] * (max_len - len(enumeration)), dtype=dtype)
 
+    def tokenise_sequence(self,
+                          sequence: Iterable,
+                          original_max_len: int,
+                          **tensor_args) -> torch.Tensor:
+        tokenised_sequence = [self[token] for token in sequence]
+        padding = [self.pad_token] * (original_max_len - len(tokenised_sequence))
+        return torch.tensor(tokenised_sequence + [self.stop_token] + padding, **tensor_args)
+    
+
+    def tokenise_single(self, token, **tensor_args) -> torch.Tensor:
+        return torch.tensor(self[token], **tensor_args)
+
+
+def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
+                     config: omegaconf.OmegaConf) -> \
+                        Tuple[Dict[str, Dict[str, torch.Tensor|List[List[torch.Tensor]]]], Dict[str, EnumeratingTokeniser]]:
+    tokenisers = {}
+    dtype = getattr(torch, config.dtype)
+    max_tokens = torch.iinfo(dtype).max
+    for token_field in config.token_fields.pure_categorical:
+        all_tokens = frozenset(chain.from_iterable(chain.from_iterable(map(itemgetter(token_field), datasets_pd.values()))))
+        tokenisers[token_field] = EnumeratingTokeniser.from_token_set(all_tokens, max_tokens)
+
+    for sequence_field in config.sequence_fields.pure_categorical:
+        all_tokens = frozenset(chain.from_iterable(map(lambda df: df[sequence_field].unique(), datasets_pd.values())))
+        tokenisers[sequence_field] = EnumeratingTokeniser.from_token_set(all_tokens, max_tokens)
+
+    # We don't check consistency among the fields here
+    # The value is for the original sequences, withot service tokens
+    original_max_len = max(map(len, chain.from_iterable(
+        map(itemgetter(config.token_fields.pure_categorical[0]),
+            datasets_pd.values()))))
+    
     tensors = defaultdict(dict)
     for dataset_name, dataset in datasets_pd.items():
-        tensors[dataset_name]['symmetry_sites'] = torch.stack(dataset['symmetry_sites'].map(sites_to_tensor).to_list())
-        tensors[dataset_name]['elements'] = torch.stack(dataset['symmetry_elements'].map(element_to_tensor).to_list())
-        tensors[dataset_name]['symmetry_sites_enumeration'] = torch.stack(dataset['symmetry_sites_enumeration'].map(enumeration_to_tensor).to_list())
-        tensors[dataset_name]['spacegroup_number'] = torch.stack(dataset['spacegroup_number'].map(spacegroup_to_tensor).to_list())
-        tensors[dataset_name]['symmetry_sites_enumeration_augmented'] = \
-            dataset['symmetry_sites_enumeration_augmented'].map(
-                lambda x: [enumeration_to_tensor(enumeration) for enumeration in x]).to_list()
-        # tensors[dataset_name]['padding_mask_tensor'] = dataset['padding_mask'].map(torch.tensor)
-    return tensors, site_to_ids, element_to_ids, spacegroup_to_ids, max_len, max_enumeration, enumeration_stop, enumeration_pad
+        for field in config.token_fields.pure_categorical:
+            tensors[dataset_name][field] = torch.stack(
+                dataset[field].map(partial(
+                    tokenisers[field].tokenise_sequence,
+                    original_max_len=original_max_len,
+                    dtype=dtype)).to_list())
+        for field in config.sequence_fields.pure_categorical:
+            tensors[dataset_name][field] = torch.stack(
+                dataset[field].map(partial(
+                    tokenisers[field].tokenise_single,
+                    original_max_len=original_max_len,
+                    dtype=dtype)).to_list())
+        for field in config.augmented_token_fields:
+            tensors[dataset_name][field] = dataset[field].map(lambda variants:
+                    [tokenisers[field].tokenise(
+                        variant, original_max_len=original_max_len, dtype=dtype)
+                        for variant in variants]).to_list()
+    # +1 as we have added the stop token
+    return tensors, tokenisers
+
+
+def main():
+    parser = argparse.ArgumentParser("Retokenise a cached dataset")
+    parser.add_argument("dataset", type=str, help="The name of the dataset to retokenise")
+    parser.add_argument("config_file", type=Path, help="The tokeniser configuration file")
+    args = parser.parse_args()
+    config = omegaconf.OmegaConf.load(args.config_file)
+    cache_path = Path(__file__).parent.resolve() / "cache" / args.dataset
+    cache_path.mkdir(parents=True, exist_ok=True)
+    with gzip.open(cache_path / 'data.pkl.gz', "rb") as f:
+        datasets_pd = pickle.load(f)
+    tensors, tokenisers = tokenise_dataset(datasets_pd, config)
+    tokeniser_name = args.config_file.stem
+    cache_tensors_path = cache_path / 'tensors'
+    cache_tensors_path.mkdir(parents=True, exist_ok=True)
+    with gzip.open(cache_tensors_path / f'{tokeniser_name}.pkl.gz', "wb") as f:
+        pickle.dump(tensors, f)
+    # In the future we might want to save the tokenisers in json, so that they can be distributed
+    cache_tokenisers_path = cache_path / 'tokenisers'
+    cache_tokenisers_path.mkdir(parents=True, exist_ok=True)
+    with gzip.open(cache_tokenisers_path / f'{tokeniser_name}.pkl.gz', "wb") as f:
+        pickle.dump(tokenisers, f)
+
+
+if __name__ == '__main__':
+    main()

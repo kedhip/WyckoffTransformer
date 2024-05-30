@@ -9,11 +9,6 @@ from cascade_transformer.dataset import AugmentedCascadeDataset
 import wandb
 
 
-def randint_tensor(high: torch.Tensor):
-    dtype = high.dtype
-    return torch.randint(torch.iinfo(dtype).max, size=(len(high),), device=high.device) % high
-
-
 class WyckoffGenerator():
     def __init__(self,
                  model: nn.Module,
@@ -141,7 +136,6 @@ class WyckoffTrainer():
     def train_epoch(self):
         self.model.train()
         self.optimizer.zero_grad(set_to_none=True)
-        # TODO is STOP in max_len?
         known_seq_len = randint(0, self.max_len)
         known_cascade_len = randint(0, self.cascade_len - 1)
         loss = self.get_loss(self.train_dataset, known_seq_len, known_cascade_len)

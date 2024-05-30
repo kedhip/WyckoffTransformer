@@ -51,8 +51,7 @@ class CascadeTransformer(nn.Module):
                  n_head: int,
                  n_layers: int,
                  d_hid: int,
-                 dropout: float,
-                 use_mixer: bool=True):
+                 dropout: float):
         """
         Expects tokens in the following format:
         START_k -> [] -> STOP -> PAD
@@ -84,14 +83,10 @@ class CascadeTransformer(nn.Module):
         # We also don't need them as we ensure that batches all have the same langth in WychoffTrainer
         self.transformer_encoder = TransformerEncoder(self.encoder_layers, n_layers, enable_nested_tensor=False)
         self.start_embedding = nn.Embedding(n_start, self.d_model)
-        # So that multiple heads can be used
-        self.use_mixer = use_mixer
-        if not use_mixer:
-            raise NotImplementedError("Only mixer=True is supported")
         # Since our tokens are concatenated, we need to mix the embeddings
         # before we can use multuple attention heads.
         # Actually, a fully-connected layer is an overparametrisation
-        # but it's easier to implement
+        # but it's easier to implement. Completely redundant if nhead == 1.
         self.mixer = nn.Linear(self.d_model, self.d_model, bias=False)
         # Note that in the normal usage, we want to condition the cascade element prediction
         # on the previous element, so care should be taken as to which head to call.

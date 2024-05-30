@@ -5,11 +5,18 @@ from torch import Tensor
 
 def randint_tensor(high: torch.Tensor) -> Tensor:
     """
-    Generates a random tensor of integers from 0 to high - 1, size high.size.
+    Generates a random tensor of integers from 0 (inclusive) to high (exclusive).
+    
+    The probability distribution is not perfectly uniform in the case of
+    torch.iinfo(dtype).max - torch.iinfo(dtype).min % high != 0
+    but it's good enough for our purposes, where high < 50, and max-min ~ 2^64
+    
+    Arguments:
+        high: The maximum value of the random tensor.
+    Returns:
+        A random tensor of integers from 0 to high - 1, size high.size.
     """
     dtype = high.dtype
-    # The probability distribution is not perfect, as max-min won't always be divisible by high,
-    # but it's good enough for our purposes, where high < 50, and max-min ~ 2^64
     return torch.randint(
         torch.iinfo(dtype).min, torch.iinfo(dtype).max, size=high.size(),
         device=high.device, dtype=dtype) % high

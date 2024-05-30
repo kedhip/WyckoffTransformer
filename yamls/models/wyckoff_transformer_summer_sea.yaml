@@ -1,0 +1,27 @@
+model:
+  # defines both the embedding size and the cascade order
+  cascade_embedding_size:
+    elements: 64
+    symmetry_sites: 64
+    symmetry_sites_enumeration: 16
+  # the number of heads in the multiheadattention models 
+  # in TransformerEncoderLayer
+  nhead: 8
+  # the dimension of the feedforward network model
+  # in TransformerEncoderLayer
+  dim_feedforward: 256
+  #  the dropout value in TransformerEncoderLayer
+  dropout: 0.1
+optimisation:
+  optimizer:
+    name: SGD
+    initial_lr: 1.
+    clip_grad_norm: 0.5
+  scheduler:
+    name: ReduceLROnPlateau
+    factor: 0.9
+    validation_period: 10
+    # patience is measured in validation_period epochs
+    patience: 40
+  epochs: 20000
+tokeniser: mp_20_naive
