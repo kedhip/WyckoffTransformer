@@ -48,10 +48,8 @@ class CascadeTransformer(nn.Module):
     def __init__(self,
                  n_start: int,
                  cascade: Tuple[Tuple[int, int|None, int], ...],
-                 n_head: int,
-                 n_layers: int,
-                 d_hid: int,
-                 dropout: float):
+                 TransformerEncoderLayer_args: dict,
+                 TransformerEncoder_args: dict):
         """
         Expects tokens in the following format:
         START_k -> [] -> STOP -> PAD
@@ -77,11 +75,8 @@ class CascadeTransformer(nn.Module):
         super().__init__()
         self.embedding = CascadeEmbedding(cascade)
         self.d_model = self.embedding.total_embedding_dim
-        self.encoder_layers = TransformerEncoderLayer(self.d_model, n_head, d_hid, dropout, batch_first=True)
-        # Nested tensors are broken in the current version of PyTorch
-        # https://github.com/pytorch/pytorch/issues/97111
-        # We also don't need them as we ensure that batches all have the same langth in WychoffTrainer
-        self.transformer_encoder = TransformerEncoder(self.encoder_layers, n_layers, enable_nested_tensor=False)
+        self.encoder_layers = TransformerEncoderLayer(self.d_model, batch_first=True, **TransformerEncoderLayer_args)
+        self.transformer_encoder = TransformerEncoder(self.encoder_layers, **TransformerEncoder_args)
         self.start_embedding = nn.Embedding(n_start, self.d_model)
         # Since our tokens are concatenated, we need to mix the embeddings
         # before we can use multuple attention heads.
@@ -91,10 +86,6 @@ class CascadeTransformer(nn.Module):
         # Note that in the normal usage, we want to condition the cascade element prediction
         # on the previous element, so care should be taken as to which head to call.
         self.prediction_heads = torch.nn.ModuleList([nn.Linear(self.d_model, n) for n, _, _ in cascade])
-        self.n_head = n_head
-        self.n_layers = n_layers
-        self.d_hid = d_hid
-        self.dropout = dropout
 
 
     def forward(self,

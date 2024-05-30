@@ -6,7 +6,7 @@ from torch import Tensor
 def randint_tensor(high: torch.Tensor) -> Tensor:
     """
     Generates a random tensor of integers from 0 (inclusive) to high (exclusive).
-    
+
     The probability distribution is not perfectly uniform in the case of
     torch.iinfo(dtype).max - torch.iinfo(dtype).min % high != 0
     but it's good enough for our purposes, where high < 50, and max-min ~ 2^64
@@ -61,7 +61,7 @@ class AugmentedCascadeDataset():
         
         # Ideally, we would like a nested tensor, but it doesn't support indexing we need
         # So we use a custom data store, and indices to it
-        self.sequence_length = self.data[self.cascade_order[0]].size(1)
+        self.sequence_length = next(iter(self.data.values())).size(1)
         self.augmentation_variants = torch.tensor(
             list(map(len, data[f"{augmented_field}_augmented"])), dtype=dtype, device=device)
         self.augmentation_start_indices = (torch.cumsum(self.augmentation_variants, dim=0) -
@@ -72,7 +72,7 @@ class AugmentedCascadeDataset():
 
 
     def __len__(self):
-        return self.data[self.cascade_order[0]].size(0)
+        return next(iter(self.data.values())).size(0)
 
 
     # Compilation is safe since the function only ever uses the same data

@@ -1,3 +1,5 @@
+# For the code to work, must be the same as the file name
+name: mp_20_naive
 deterministic: false
 # tokens will be just numbered in a random order, withot a guarantee of reproducibility
 dtype: uint8
@@ -6,15 +8,15 @@ dtype: uint8
 # torch will highly likely complain about it
 token_fields:
   pure_categorical:
-    - symmetry_sites
-    - symmetry_elements
+    - site_symmetries
+    - elements
     # We don't use the original Wyckoff letter, but the enumeration
     # for each site symmetry, hence the order is not important,
     # and it's a bona fide categorical field.
-    - symmetry_sites_enumeration
+    - sites_enumeration
 augmented_token_fields:
   # must be named <field-name>_augmented in the dataframe
-  - symmetry_sites_enumeration
+  - sites_enumeration
 sequence_fields:
   pure_categorical:
     - spacegroup_number

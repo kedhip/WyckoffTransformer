@@ -5,8 +5,12 @@ import datetime
 import torch
 from torch import nn
 from torch import Tensor
-from cascade_transformer.dataset import AugmentedCascadeDataset
 import wandb
+from omegaconf import OmegaConf
+
+from cascade_transformer.dataset import AugmentedCascadeDataset
+from cascade_transformer.model import CascadeTransformer
+from wyckoff_transformer.tokenization import load_tensors_and_tokenisers
 
 
 class WyckoffGenerator():
@@ -53,74 +57,57 @@ class WyckoffTrainer():
     def __init__(self,
                  model: nn.Module,
                  torch_datasets: dict,
-                 pad: dict,
-                 mask: dict,
+                 tokenisers: dict,
                  cascade_order: Tuple,
                  augmented_field: str|None,
                  start_name: str,
-                 max_len: int,
-                 device: str,
-                 initial_lr: float = 1.,
-                 clip_grad_norm: float = 0.5,
-                 # batch_size: int = 1024*32,
-                 val_period: int = 10,
-                 patience: int = 10,
-                 dtype = torch.int64):
-        """
-        Arguments:
-        val_period: How often to evaluate the model on the validation dataset.
-        patience: How many validations to wait before reducing the learning rate.
-        dtype: We actually want dtype uint8. However, Embedding layer does not support it,
-            and CrossEntropyLoss expects only int64.
-        """
+                 device: torch.DeviceObjType,
+                 optimisation_config: dict):
+        # Nothing else will work in foreseeable future
+        self.dtype = torch.int64
         # Sequences have difference lengths, so we need to make sure that
         # long sequences don't dominate the loss
         self.criterion = nn.CrossEntropyLoss(reduction="sum")
-        self.optimizer = torch.optim.SGD(model.parameters(), lr=initial_lr)
-        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            self.optimizer, 'min', factor=0.9, patience=patience)
-        self.max_len = max_len
+
+        self.optimizer = getattr(torch.optim, optimisation_config.optimiser.name)(
+            model.parameters(), **optimisation_config.optimiser.config)
+        self.scheduler = getattr(torch.optim.lr_scheduler, optimisation_config.scheduler.name)(
+            self.optimizer, 'min', **optimisation_config.scheduler.config)
+        
         self.model = model
-        self.dtype = dtype
         self.device = device
-        self.pad_tensor = torch.tensor([pad[name] for name in cascade_order], dtype=self.dtype, device=device)
-        self.mask_tensor = torch.tensor([mask[name] for name in cascade_order], dtype=self.dtype, device=device)
         self.augmented_field = augmented_field
+
+        masks_dict = {field: tokenisers[field].mask_token for field in cascade_order}
+        pad_dict = {field: tokenisers[field].pad_token for field in cascade_order}
+
         self.train_dataset = AugmentedCascadeDataset(
             data=torch_datasets["train"],
             cascade_order=cascade_order,
-            masks=mask,
-            pads=pad,
+            masks=masks_dict,
+            pads=pad_dict,
             start_field=start_name,
             augmented_field=augmented_field,
-            dtype=dtype,
-            device=device)
+            dtype=self.dtype,
+            device=self.device)
         
         self.val_dataset = AugmentedCascadeDataset(
             data=torch_datasets["val"],
             cascade_order=cascade_order,
-            masks=mask,
-            pads=pad,
+            masks=masks_dict,
+            pads=pad_dict,
             start_field=start_name,
             augmented_field=augmented_field,
-            dtype=dtype,
+            dtype=self.dtype,
             device=device)
+        assert self.train_dataset.sequence_length == self.val_dataset.sequence_length
     
+        self.clip_grad_norm = optimisation_config.clip_grad_norm
         self.cascade_len = len(cascade_order)
         self.cascade_order = cascade_order
-        self.patience = patience
-        self.val_period = val_period
-        self.clip_grad_norm = clip_grad_norm
-        self.config = {
-            "cascade_order": cascade_order,
-            "use_mixer": model.use_mixer,
-            "n_head": model.n_head,
-            "n_layers": model.n_layers,
-            "d_hid": model.d_hid,
-            "dropout": model.dropout,
-            "initial_lr": initial_lr,
-            "clip_grad_norm": clip_grad_norm,
-            "max_len": self.max_len}
+        self.epochs = optimisation_config.epochs
+        self.validation_period = optimisation_config.validation_period
+        self.early_stopping_patience_epochs = optimisation_config.early_stopping_patience_epochs
 
 
     def get_loss(self,
@@ -136,7 +123,7 @@ class WyckoffTrainer():
     def train_epoch(self):
         self.model.train()
         self.optimizer.zero_grad(set_to_none=True)
-        known_seq_len = randint(0, self.max_len)
+        known_seq_len = randint(0, self.train_dataset.sequence_length - 1)
         known_cascade_len = randint(0, self.cascade_len - 1)
         loss = self.get_loss(self.train_dataset, known_seq_len, known_cascade_len)
         loss.backward()
@@ -158,7 +145,7 @@ class WyckoffTrainer():
         val_loss = torch.zeros(self.cascade_len, device=self.device)
         train_loss = torch.zeros(self.cascade_len, device=self.device)
         with torch.no_grad():
-            for known_seq_len in range(0, self.max_len):
+            for known_seq_len in range(0, self.train_dataset.sequence_length):
                 for known_cascade_len in range(0, self.cascade_len):
                     train_loss[known_cascade_len] += self.get_loss(
                         self.train_dataset, known_seq_len, known_cascade_len)
@@ -170,33 +157,68 @@ class WyckoffTrainer():
                    train_loss / len(self.train_dataset)
 
 
-    def train(self, epochs: int):
+    def train(self):
         best_val_loss = float('inf')
+        best_val_epoch = 0
         run_path = pathlib.Path("checkpoints", datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         run_path.mkdir(parents=True)
         best_model_params_path = run_path / "best_model_params.pt"
+        
+        for epoch in range(self.epochs):
+            self.train_epoch()
+            if epoch % self.validation_period == 0:
+                val_loss_epoch, train_loss_epoch = self.evaluate()
+                val_loss_dict = {name: val_loss_epoch[i].item() for i, name in enumerate(self.cascade_order)}
+                total_val_loss = val_loss_epoch.sum()
+                val_loss_dict["total"] = total_val_loss.item()
+                train_loss_dict = {name: train_loss_epoch[i].item() for i, name in enumerate(self.cascade_order)}
+                train_loss_dict["total"] = train_loss_epoch.sum().item()
+                wandb.log({"val_loss_epoch": val_loss_dict,
+                            "train_loss_epoch": train_loss_dict,
+                            "lr": self.optimizer.param_groups[0]['lr'],
+                            "epoch": epoch}, commit=False)
+                if total_val_loss < best_val_loss:
+                    best_val_loss = total_val_loss
+                    best_val_epoch = epoch
+                    torch.save(self.model.state_dict(), best_model_params_path)
+                    wandb.save(str(best_model_params_path))
+                    print(f"Epoch {epoch} val_loss_epoch {total_val_loss} saved to {best_model_params_path}")
+                    wandb.log({"best_val_loss": best_val_loss}, commit=False)
+                if epoch - best_val_epoch > self.early_stopping_patience_epochs:
+                    print(f"Early stopping at epoch {epoch} after more than {self.early_stopping_patience_epochs}"
+                           " epochs without improvement")
+                    return
+                self.scheduler.step(total_val_loss)
 
-        with wandb.init(
-            project="WyckoffTransformer",
-            job_type="train",
-            config=self.config):
-            wandb.config.update({"epochs": epochs})
-            for epoch in range(epochs):
-                self.train_epoch()
-                if epoch % self.val_period == 0:
-                    val_loss_epoch, train_loss_epoch = self.evaluate()
-                    val_loss_dict = {name: val_loss_epoch[i].item() for i, name in enumerate(self.cascade_order)}
-                    total_val_loss = val_loss_epoch.sum()
-                    val_loss_dict["total"] = total_val_loss.item()
-                    train_loss_dict = {name: train_loss_epoch[i].item() for i, name in enumerate(self.cascade_order)}
-                    train_loss_dict["total"] = train_loss_epoch.sum().item()
-                    wandb.log({"val_loss_epoch": val_loss_dict,
-                                "train_loss_epoch": train_loss_dict,
-                               "lr": self.optimizer.param_groups[0]['lr'],
-                               "epoch": epoch}, commit=False)
-                    if total_val_loss < best_val_loss:
-                        best_val_loss = total_val_loss
-                        torch.save(self.model.state_dict(), best_model_params_path)
-                        wandb.save(str(best_model_params_path))
-                        print(f"Epoch {epoch} val_loss_epoch {total_val_loss} saved to {best_model_params_path}")
-                    self.scheduler.step(total_val_loss)
+
+def train_from_config(config_dict: dict, device: torch.device):
+    config = OmegaConf.create(config_dict)
+    if len(config.tokeniser.augmented_token_fields) > 1:
+        raise ValueError("Only one augmented field is supported")
+
+    tensors, tokenisers = load_tensors_and_tokenisers(config.dataset, config.tokeniser.name)
+
+    if "cascade_order" in config.model:
+        cascade_order = config.model.cascade_order
+        print(f"Using cascade order {cascade_order}")
+    else:
+        cascade_order = tuple(config.model.cascade_embedding_size.keys())
+
+    full_cascade = dict()
+    for field in cascade_order:
+        full_cascade[field] = (len(tokenisers[field]),
+                               config.model.cascade_embedding_size[field],
+                               tokenisers[field].pad_token)
+
+    model = CascadeTransformer(
+        n_start=len(tokenisers[config.model.start_token]),
+        cascade=full_cascade.values(),
+        **config.model.CascadeTransformer_args
+        ).to(device)
+
+
+    trainer = WyckoffTrainer(
+        model, tensors, tokenisers, tuple(full_cascade.keys()), 
+        config.tokeniser.augmented_token_fields[0],
+        config.model.start_token, device, optimisation_config=config.optimisation)
+    trainer.train()

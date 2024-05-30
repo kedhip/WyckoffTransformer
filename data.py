@@ -5,6 +5,8 @@ from itertools import repeat
 from functools import partial
 from pathlib import Path
 import pickle
+import warnings
+import re
 from multiprocessing import Pool
 import numpy as np
 import pandas as pd
@@ -67,21 +69,21 @@ def structure_to_sites(
     order = np.lexsort((site_enumeration, multiplicity, electronegativity))
 
     sites_dict = {
-        "symmetry_sites": [site_symmetries[i] for i in order],
-        "symmetry_elements": [elements[i] for i in order],
-        "symmetry_multiplicity": [multiplicity[i] for i in order],
-        "symmetry_letters": [wyckoffs[i].letter for i in order],
-        "symmetry_sites_enumeration": [site_enumeration[i] for i in order],
-        "symmetry_dof": [dof[i] for i in order],
+        "site_symmetries": [site_symmetries[i] for i in order],
+        "elements": [elements[i] for i in order],
+        "multiplicity": [multiplicity[i] for i in order],
+        "wyckoff_letters": [wyckoffs[i].letter for i in order],
+        "sites_enumeration": [site_enumeration[i] for i in order],
+        "dof": [dof[i] for i in order],
         "spacegroup_number": pyxtal_structure.group.number
     }
     if wychoffs_augmentation is not None:
         augmented_enumeration = [
             [wychoffs_enumerated_by_ss[pyxtal_structure.group.number][augmentator[letter]] for
-              letter in sites_dict["symmetry_letters"]]
+              letter in sites_dict["wyckoff_letters"]]
                 for augmentator in wychoffs_augmentation[pyxtal_structure.group.number]
         ]
-        sites_dict["symmetry_sites_enumeration_augmented"] = augmented_enumeration
+        sites_dict["sites_enumeration_augmented"] = augmented_enumeration
     return sites_dict
 
 
@@ -96,8 +98,18 @@ def read_MP(MP_csv: Path|str):
         pd.DataFrame: The DataFrame with structures.
     """
     MP_df = pd.read_csv(MP_csv, index_col=0)
-    with Pool() as pool:
-        MP_df["structure"] = pool.map(read_cif, MP_df["cif"])
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message=r"Issues encountered while parsing CIF: \d+"
+                " fractional coordinates rounded to ideal"
+                " values to avoid issues with finite precision.",
+            category=UserWarning,
+            module="pymatgen.io.cif"
+        )
+        print("Suppressed CIF rounding warnings.")
+        with Pool() as pool:
+            MP_df["structure"] = pool.map(read_cif, MP_df["cif"])
     MP_df.drop(columns=["cif"], inplace=True)
     return MP_df
 
@@ -116,12 +128,12 @@ def compute_symmetry_sites(
                 wychoffs_augmentation=get_augmentation_dict()
         )
 
-    result = []
-    for dataset in datasets_pd.values():
+    result = {}
+    for dataset_name, dataset in datasets_pd.items():
         with Pool() as p:
             symmetry_dataset = pd.DataFrame.from_records(
                 p.map(structure_to_sites_with_args, dataset['structure'])).set_index(dataset.index)
-        result.append(symmetry_dataset)
+        result[dataset_name] = symmetry_dataset
     return result
 
 
@@ -150,9 +162,7 @@ def read_all_MP_csv(
         "val": read_MP(mp_path / f"val.{file_format}")
     }
     symmetry_datasets = compute_symmetry_sites(datasets_pd, wychoffs_enumerated_by_ss_file)
-    for dataset, symmetry_dataset in zip(datasets_pd.values(), symmetry_datasets):
-        dataset.loc[:, symmetry_dataset.columns] = symmetry_dataset
-    return datasets_pd
+    return symmetry_datasets
 
 
 def read_mp_ternary_csv(
@@ -168,6 +178,4 @@ def read_mp_ternary_csv(
         "val": validation
     }
     symmetry_datasets = compute_symmetry_sites(datasets_pd, wychoffs_enumerated_by_ss_file)
-    for dataset, symmetry_dataset in zip(datasets_pd.values(), symmetry_datasets):
-        dataset.loc[:, symmetry_dataset.columns] = symmetry_dataset
     return datasets_pd

@@ -1,0 +1,40 @@
+method: random
+metric:
+  goal: minimize
+  name: best_val_loss
+parameters:
+  base_config:
+    distribution: constant
+    value: wyckoff_transformer_summer_sea
+  dataset:
+    distribution: constant
+    value: mp_20_biternary
+  model:
+    parameters:
+      cascade_order:
+        values: [["elements", "site_symmetries", "sites_enumeration"],
+                  ["site_symmetries", "elements", "sites_enumeration"]]
+        distribution: categorical
+      cascade_embedding_size:
+        parameters:
+          elements:
+            values: [8, 16, 32, 64, 128]
+            distribution: categorical
+          site_symmetries:
+            values: [8, 16, 32, 64, 128]
+          sites_enumeration:
+            values: [2, 4, 8, 16, 32]
+      CascadeTransformer_args:
+        parameters:
+          TransformerEncoderLayer_args:
+            parameters:
+              nhead:
+                values: [1, 2, 4, 8, 16]
+              dim_feedforward:
+                values: [32, 64, 128, 256, 512]
+              dropout:
+                values: [0.1, 0.2, 0.3, 0.4]
+          TransformerEncoder_args:
+            parameters:
+              num_layers:
+                values: [1, 2, 4, 8, 16]

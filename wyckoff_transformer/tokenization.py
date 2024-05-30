@@ -8,7 +8,6 @@ from pathlib import Path
 import gzip
 import pickle
 from pandas import DataFrame
-import argparse
 import torch
 import omegaconf
 
@@ -81,39 +80,24 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
             tensors[dataset_name][field] = torch.stack(
                 dataset[field].map(partial(
                     tokenisers[field].tokenise_single,
-                    original_max_len=original_max_len,
                     dtype=dtype)).to_list())
         for field in config.augmented_token_fields:
-            tensors[dataset_name][field] = dataset[field].map(lambda variants:
-                    [tokenisers[field].tokenise(
+            augmented_field = f"{field}_augmented"
+            tensors[dataset_name][augmented_field] = dataset[augmented_field].map(lambda variants:
+                    [tokenisers[field].tokenise_sequence(
                         variant, original_max_len=original_max_len, dtype=dtype)
                         for variant in variants]).to_list()
-    # +1 as we have added the stop token
     return tensors, tokenisers
 
 
-def main():
-    parser = argparse.ArgumentParser("Retokenise a cached dataset")
-    parser.add_argument("dataset", type=str, help="The name of the dataset to retokenise")
-    parser.add_argument("config_file", type=Path, help="The tokeniser configuration file")
-    args = parser.parse_args()
-    config = omegaconf.OmegaConf.load(args.config_file)
-    cache_path = Path(__file__).parent.resolve() / "cache" / args.dataset
-    cache_path.mkdir(parents=True, exist_ok=True)
-    with gzip.open(cache_path / 'data.pkl.gz', "rb") as f:
-        datasets_pd = pickle.load(f)
-    tensors, tokenisers = tokenise_dataset(datasets_pd, config)
-    tokeniser_name = args.config_file.stem
-    cache_tensors_path = cache_path / 'tensors'
-    cache_tensors_path.mkdir(parents=True, exist_ok=True)
-    with gzip.open(cache_tensors_path / f'{tokeniser_name}.pkl.gz', "wb") as f:
-        pickle.dump(tensors, f)
-    # In the future we might want to save the tokenisers in json, so that they can be distributed
-    cache_tokenisers_path = cache_path / 'tokenisers'
-    cache_tokenisers_path.mkdir(parents=True, exist_ok=True)
-    with gzip.open(cache_tokenisers_path / f'{tokeniser_name}.pkl.gz', "wb") as f:
-        pickle.dump(tokenisers, f)
-
-
-if __name__ == '__main__':
-    main()
+def load_tensors_and_tokenisers(
+    dataset: str,
+    config_name: str,
+    cache_path: Path = Path(__file__).parent.parent.resolve() / "cache"):
+    
+    this_cache_path = cache_path / dataset
+    with gzip.open(this_cache_path / 'tensors' / f'{config_name}.pkl.gz', "rb") as f:
+        tensors = pickle.load(f)
+    with gzip.open(this_cache_path / 'tokenisers' / f'{config_name}.pkl.gz', "rb") as f:
+        tokenisers = pickle.load(f)
+    return tensors, tokenisers
