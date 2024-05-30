@@ -67,7 +67,7 @@ def main():
     trainer = WyckoffTrainer(
         model, torch_datasets, pad_dict, mask_dict, cascade_order, 
         "symmetry_sites_enumeration",
-        "spacegroup_number", max_len, args.device, dtype=dtype)
+        "spacegroup_number", max_len, args.device, patience=50, dtype=dtype)
     trainer.train(epochs=20000)
 
 if __name__ == '__main__':
