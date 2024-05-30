@@ -10,7 +10,6 @@ from pathlib import Path
 import gzip
 import argparse
 from data import read_all_MP_csv, read_mp_ternary_csv
-from tokenization import get_tokens
 
 cache_folder = Path("cache")
 
@@ -55,28 +54,17 @@ def cache_tensors(dataset:str):
         pickle.dump(tensor_info, f)
 
 
-def load_all_data(dataset:str):
-    cache_data_file_name = get_cache_data_file_name(dataset)
-    with gzip.open(cache_data_file_name, "rb") as f:
-        datasets_pd = pickle.load(f)
-    
-    cache_tensors_file_name = get_cache_tensors_file_name(dataset)
-    with gzip.open(cache_tensors_file_name, "rb") as f:
-        tensor_info = pickle.load(f)
-    
-    return datasets_pd, *tensor_info
+
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("dataset", help="The dataset to cache.")
     parser.add_argument("--cache-dataset", action="store_true", help="Cache the dataset.")
-    parser.add_argument("--cache-tensors", action="store_true", help="Cache the tensors.")
+    
     args = parser.parse_args()
     if args.cache_dataset:
         cache_dataset(args.dataset)
-    if args.cache_tensors:
-        cache_tensors(args.dataset)
 
 
 if __name__ == "__main__":

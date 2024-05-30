@@ -20,6 +20,7 @@ scikit-learn = "^1.5.0"
 filelock = "^3.14.0"
 torch = {path = "/mnt/hdd/torch_wheels/torch-2.4.0a0+gitda7bf1d-cp310-cp310-linux_x86_64.whl"}
 pytorch-triton = {path = "/mnt/hdd/torch_wheels/pytorch_triton-3.0.0+45fff310c8-cp310-cp310-linux_x86_64.whl"}
+omegaconf = "^2.3.0"
 
 [build-system]
 requires = ["poetry-core"]
