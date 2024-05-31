@@ -1,0 +1,36 @@
+model:
+  start_token: spacegroup_number
+  # defines both the embedding size and the cascade order
+  cascade_embedding_size:
+    elements: 16
+    site_symmetries: 16
+    sites_enumeration: 4
+  CascadeTransformer_args:
+    # Will be passed as is to CascadeTransformer
+    TransformerEncoderLayer_args:
+      nhead: 2
+      dim_feedforward: 32
+      dropout: 0.1
+    TransformerEncoder_args:
+      num_layers: 2
+      # Nested tensors are broken in the current version of PyTorch
+      # https://github.com/pytorch/pytorch/issues/97111
+      # We also don't need them as we ensure that batches all have the same length in WychoffTrainer
+      enable_nested_tensor: false
+optimisation:
+  optimiser:
+    name: SGD
+    config:
+      lr: 0.1
+  scheduler:
+    name: ReduceLROnPlateau
+    config:
+      factor: 0.8
+      # note that scheduler is called every validation_period epochs
+      patience: 40
+  validation_period: 10
+  early_stopping_patience_epochs: 1000
+  clip_grad_norm: 0.5
+  epochs: 1000
+tokeniser:
+  name: mp_20_naive
