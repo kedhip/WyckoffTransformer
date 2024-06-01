@@ -57,7 +57,7 @@ def structure_to_sites(
     pyxtal_structure.from_seed(structure, tol=tol)
 
     elements = [Element(site.specie) for site in pyxtal_structure.atom_sites]
-    electronegativity = [element.X for element in elements]
+    # electronegativity = [element.X for element in elements]
     wyckoffs = [site.wp for site in pyxtal_structure.atom_sites]
     for wp in wyckoffs:
         wp.get_site_symmetry()
@@ -66,16 +66,24 @@ def structure_to_sites(
     multiplicity = [wp.multiplicity for wp in wyckoffs]
     dof = [wp.get_dof() for wp in wyckoffs]
 
-    order = np.lexsort((site_enumeration, multiplicity, electronegativity))
-
+    # order = np.lexsort((site_enumeration, multiplicity, electronegativity))
+    #sites_dict = {
+    #    "site_symmetries": [site_symmetries[i] for i in order],
+    #    "elements": [elements[i] for i in order],
+    #    "multiplicity": [multiplicity[i] for i in order],
+    #    "wyckoff_letters": [wyckoffs[i].letter for i in order],
+    #    "sites_enumeration": [site_enumeration[i] for i in order],
+    #    "dof": [dof[i] for i in order],
+    #    "spacegroup_number": int(pyxtal_structure.group.number)
+    #}
     sites_dict = {
-        "site_symmetries": [site_symmetries[i] for i in order],
-        "elements": [elements[i] for i in order],
-        "multiplicity": [multiplicity[i] for i in order],
-        "wyckoff_letters": [wyckoffs[i].letter for i in order],
-        "sites_enumeration": [site_enumeration[i] for i in order],
-        "dof": [dof[i] for i in order],
-        "spacegroup_number": int(pyxtal_structure.group.number)
+        "site_symmetries": site_symmetries,
+        "elements": elements,
+        "multiplicity": multiplicity,
+        "wyckoff_letters": [wp.letter for wp in wyckoffs],
+        "sites_enumeration": site_enumeration,
+        "dof": dof,
+        "spacegroup_number": pyxtal_structure.group.number
     }
     if wychoffs_augmentation is not None:
         augmented_enumeration = [
@@ -139,7 +147,7 @@ def compute_symmetry_sites(
 
 def read_all_MP_csv(
     mp_path: Path = Path(__file__).parent.resolve() / "cdvae"/"data"/"mp_20",
-    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "wychoffs_enumerated_by_ss.pkl.gz",
+    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz",
     file_format: str = "csv"
     ) -> tuple[dict[str, pd.DataFrame], int]:
     """
@@ -167,7 +175,7 @@ def read_all_MP_csv(
 
 def read_mp_ternary_csv(
     mp_ternary_path: Path = Path(__file__).parent.resolve() / "cache" / "mp_ternary" / "df_allternary_newdata.csv.gz",
-    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "wychoffs_enumerated_by_ss.pkl.gz"
+    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "cache"/"wychoffs_enumerated_by_ss.pkl.gz"
     ) -> tuple[dict[str, pd.DataFrame], int]:
     all_data = read_MP(mp_ternary_path)
     train, test_validation = train_test_split(all_data, train_size=0.6, random_state=42)

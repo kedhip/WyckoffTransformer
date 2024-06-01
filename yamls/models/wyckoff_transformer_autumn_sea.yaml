@@ -8,7 +8,9 @@ model:
     elements: 16
     site_symmetries: 128
     sites_enumeration: 4
+  multiclass_target_with_order_permutation: true
   CascadeTransformer_args:
+    use_token_sum_for_prediction: true
     learned_positional_encoding_max_size: 21
     learned_positional_encoding_only_masked: true
     # Will be passed as is to CascadeTransformer
@@ -35,7 +37,7 @@ optimisation:
       patience: 40
   validation_period: 10
   early_stopping_patience_epochs: 5000
-  clip_grad_norm: 0.5
+  clip_grad_norm: 1.
   epochs: 30000
 tokeniser:
   name: mp_20_naive

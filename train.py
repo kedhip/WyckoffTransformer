@@ -1,8 +1,10 @@
 from pathlib import Path
 import argparse
 from omegaconf import OmegaConf
-import wandb
 import torch
+import wandb
+import logging
+
 from wyckoff_transformer.trainer import train_from_config
 
 
@@ -11,7 +13,12 @@ def main():
     parser.add_argument("config", type=OmegaConf.load, help="The configuration file")
     parser.add_argument("dataset", type=str, default="mp_20_biternary", help="Dataset to use")
     parser.add_argument("device", type=torch.device, help="Device to train on")
+    parser.add_argument("--debug", action="store_true", help="Debug mode")
     args = parser.parse_args()
+
+    if args.debug:
+        torch.autograd.set_detect_anomaly(True)
+        logging.basicConfig(level=logging.DEBUG)
 
     if args.device.type == "cuda":
         # UserWarning: TensorFloat32 tensor cores for float32 matrix multiplication available but not enabled. Consider setting `torch.set_float32_matmul_precision('high')` for better performance.

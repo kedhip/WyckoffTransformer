@@ -65,7 +65,7 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
         tokenisers[token_field] = EnumeratingTokeniser.from_token_set(all_tokens, max_tokens)
 
     for sequence_field in config.sequence_fields.pure_categorical:
-        all_tokens = frozenset(chain.from_iterable(map(lambda df: df[sequence_field].unique(), datasets_pd.values())))
+        all_tokens = frozenset(chain.from_iterable(map(lambda df: frozenset(df[sequence_field].tolist()), datasets_pd.values())))
         tokenisers[sequence_field] = EnumeratingTokeniser.from_token_set(all_tokens, max_tokens)
 
     # We don't check consistency among the fields here
@@ -93,6 +93,9 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                     [tokenisers[field].tokenise_sequence(
                         variant, original_max_len=original_max_len, dtype=dtype)
                         for variant in variants]).to_list()
+        # Assuming all the fields have the same lenght
+        tensors[dataset_name]["pure_sequence_length"] = torch.tensor(
+            dataset[config.token_fields.pure_categorical[0]].map(len).to_list(), dtype=dtype)
     return tensors, tokenisers
 
 

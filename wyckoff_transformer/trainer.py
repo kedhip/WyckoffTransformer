@@ -30,8 +30,9 @@ class WyckoffTrainer():
                  cascade_order: Tuple,
                  augmented_field: str|None,
                  start_name: str,
-                 device: torch.DeviceObjType,
-                 optimisation_config: dict):
+                 multiclass_target_with_order_permutation: bool,
+                 optimisation_config: dict,
+                 device: torch.DeviceObjType):
         # Nothing else will work in foreseeable future
         self.dtype = torch.int64
         # Sequences have difference lengths, so we need to make sure that
@@ -50,12 +51,16 @@ class WyckoffTrainer():
 
         masks_dict = {field: tokenisers[field].mask_token for field in cascade_order}
         pad_dict = {field: tokenisers[field].pad_token for field in cascade_order}
+        stops_dict = {field: tokenisers[field].stop_token for field in cascade_order}
+        num_classes_dict = {field: len(tokenisers[field]) for field in cascade_order}
 
         self.train_dataset = AugmentedCascadeDataset(
             data=torch_datasets["train"],
             cascade_order=cascade_order,
             masks=masks_dict,
             pads=pad_dict,
+            stops=stops_dict,
+            num_classes=num_classes_dict,
             start_field=start_name,
             augmented_field=augmented_field,
             dtype=self.dtype,
@@ -66,25 +71,37 @@ class WyckoffTrainer():
             cascade_order=cascade_order,
             masks=masks_dict,
             pads=pad_dict,
+            stops=stops_dict,
+            num_classes=num_classes_dict,
             start_field=start_name,
             augmented_field=augmented_field,
             dtype=self.dtype,
             device=device)
-        assert self.train_dataset.sequence_length == self.val_dataset.sequence_length
+        assert self.train_dataset.max_sequence_length == self.val_dataset.max_sequence_length
     
         self.clip_grad_norm = optimisation_config.clip_grad_norm
         self.cascade_len = len(cascade_order)
         self.cascade_order = cascade_order
         self.epochs = optimisation_config.epochs
         self.validation_period = optimisation_config.validation_period
-        self.early_stopping_patience_epochs = optimisation_config.early_stopping_patience_epochs
+        self.early_stopping_patience_epochs = optimisation_config.early_stopping_patience_epochs    
+        self.multiclass_target_with_order_permutation = multiclass_target_with_order_permutation
 
 
     def get_loss(self,
         dataset: AugmentedCascadeDataset,
         known_seq_len: int,
         known_cascade_len: int) -> Tensor:
-        start_tokens, masked_data, target = dataset.get_masked_cascade_data(known_seq_len, known_cascade_len)
+        logging.debug("Known sequence length: %i", known_seq_len)
+        logging.debug("Known cascade lenght: %i", known_cascade_len)
+        if self.multiclass_target_with_order_permutation:
+            # Once we have sampled the first cascade field, the prediction target is no longer mutliclass
+            # However, we still need to permute the sequence so that the autoregression is
+            # permutation-invariant.
+            start_tokens, masked_data, target = dataset.get_masked_multiclass_cascade_data(
+                known_seq_len, known_cascade_len, multiclass_target=(known_cascade_len == 0))
+        else:
+            start_tokens, masked_data, target = dataset.get_masked_cascade_data(known_seq_len, known_cascade_len)
         # No padding, as we have already discarded the padding
         prediction = self.model(start_tokens, masked_data, None, known_cascade_len)
         return self.criterion(prediction, target)
@@ -93,7 +110,7 @@ class WyckoffTrainer():
     def train_epoch(self):
         self.model.train()
         self.optimizer.zero_grad(set_to_none=True)
-        known_seq_len = randint(0, self.train_dataset.sequence_length - 1)
+        known_seq_len = randint(0, self.train_dataset.max_sequence_length - 1)
         known_cascade_len = randint(0, self.cascade_len - 1)
         loss = self.get_loss(self.train_dataset, known_seq_len, known_cascade_len)
         loss.backward()
@@ -115,7 +132,7 @@ class WyckoffTrainer():
         val_loss = torch.zeros(self.cascade_len, device=self.device)
         train_loss = torch.zeros(self.cascade_len, device=self.device)
         with torch.no_grad():
-            for known_seq_len in range(0, self.train_dataset.sequence_length):
+            for known_seq_len in range(0, self.train_dataset.max_sequence_length):
                 for known_cascade_len in range(0, self.cascade_len):
                     train_loss[known_cascade_len] += self.get_loss(
                         self.train_dataset, known_seq_len, known_cascade_len)
@@ -163,7 +180,7 @@ class WyckoffTrainer():
 
     def generate_structures(self, n_structures: int):
         generator = WyckoffGenerator(
-            self.model, self.cascade_order, self.train_dataset.masks, self.train_dataset.sequence_length)
+            self.model, self.cascade_order, self.train_dataset.masks, self.train_dataset.max_sequence_length)
         max_start = self.model.start_embedding.num_embeddings
         start_counts = torch.bincount(
             self.train_dataset.start_tokens, minlength=max_start) + torch.bincount(
@@ -186,13 +203,18 @@ class WyckoffTrainer():
 
 def train_from_config(config_dict: dict, device: torch.device):
     config = OmegaConf.create(config_dict)
+    if config.model.multiclass_target_with_order_permutation and not config.model.CascadeTransformer_args.learned_positional_encoding_only_masked:
+        raise ValueError("Multiclass target with order permutation requires learned positional encoding only masked, ",
+                         "otherwise the Transformer is not permutation invariant.")
     tensors, tokenisers = load_tensors_and_tokenisers(config.dataset, config.tokeniser.name)
     model = CascadeTransformer.from_config_and_tokenisers(config, tokenisers, device)
-
+    
     trainer = WyckoffTrainer(
         model, tensors, tokenisers, config.model.cascade_order, 
         config.tokeniser.augmented_token_fields[0],
-        config.model.start_token, device, optimisation_config=config.optimisation)
+        config.model.start_token,
+        multiclass_target_with_order_permutation=config.model.multiclass_target_with_order_permutation,
+        optimisation_config=config.optimisation, device=device)
     trainer.train()
     print("Training complete, generating a sample of Wykchoff genes.")
     generated_wp = trainer.generate_structures(config.evaluation.n_structures_to_generate)

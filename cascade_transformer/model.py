@@ -1,4 +1,5 @@
 from typing import Tuple, List, Optional
+import logging
 import torch
 from torch import nn
 from torch import Tensor
@@ -55,7 +56,7 @@ class CascadeTransformer(nn.Module):
 
         if "cascade_order" in config.model:
             cascade_order = config.model.cascade_order
-            print(f"Using cascade order {cascade_order}")
+            logging.info("Using cascade order %s", cascade_order)
         else:
             cascade_order = tuple(config.model.cascade_embedding_size.keys())
 
@@ -77,6 +78,7 @@ class CascadeTransformer(nn.Module):
                  cascade: Tuple[Tuple[int, int|None, int], ...],
                  learned_positional_encoding_max_size: Optional[int],
                  learned_positional_encoding_only_masked: bool,
+                 use_token_sum_for_prediction: bool,
                  TransformerEncoderLayer_args: dict,
                  TransformerEncoder_args: dict):
         """
@@ -120,7 +122,9 @@ class CascadeTransformer(nn.Module):
         self.mixer = nn.Linear(self.d_model, self.d_model, bias=False)
         # Note that in the normal usage, we want to condition the cascade element prediction
         # on the previous element, so care should be taken as to which head to call.
-        self.prediction_heads = torch.nn.ModuleList([nn.Linear(self.d_model, n) for n, _, _ in cascade])
+        self.use_token_sum_for_prediction = use_token_sum_for_prediction
+        prediction_head_size = 2 * self.d_model if use_token_sum_for_prediction else self.d_model
+        self.prediction_heads = torch.nn.ModuleList([nn.Linear(prediction_head_size, n) for n, _, _ in cascade])
 
 
     def forward(self,
@@ -128,17 +132,26 @@ class CascadeTransformer(nn.Module):
                 cascade: List[Tensor],
                 padding_mask: Tensor,
                 prediction_head: int) -> Tensor:
-        cascade_embedding = self.mixer(self.embedding(cascade))
+        logging.debug("Cascade len: %i", len(cascade))
+        cascade_embedding = self.embedding(cascade)
+        logging.debug("Cascade reported embedding dim: %i", self.embedding.total_embedding_dim)
+        logging.debug("Cascade embedding size: (%i, %i, %i)", *cascade_embedding.size())
+        cascade_embedding = self.mixer(cascade_embedding)
         if self.learned_positional_encoding_max_size != 0:
-            sequence_range = torch.arange(0, cascade_embedding.size(1), device=start.device)
-            positional_encoding = self.positions_embedding(sequence_range)
             if self.learned_positional_encoding_only_masked:
+                positional_encoding = self.positions_embedding(
+                    torch.tensor([cascade_embedding.size(1) - 1], device=start.device, dtype=start.dtype))
                 cascade_embedding[:, -1] += positional_encoding
             else:
+                sequence_range = torch.arange(0, cascade_embedding.size(1), device=start.device, dtype=start.dtype)
+                positional_encoding = self.positions_embedding(sequence_range)
                 cascade_embedding += positional_encoding.unsqueeze(0)
 
         data = torch.cat([self.start_embedding(start).unsqueeze(1), cascade_embedding], dim=1)
-        
         transformer_output = self.transformer_encoder(data, src_key_padding_mask=padding_mask)
-        prediction = self.prediction_heads[prediction_head](transformer_output[:, -1])
+        if self.use_token_sum_for_prediction:
+            prediction_input = torch.cat([transformer_output[:, -1], transformer_output[:, :-1].sum(dim=1)], dim=1)
+        else:
+            prediction_input = transformer_output[:, -1]
+        prediction = self.prediction_heads[prediction_head](prediction_input)
         return prediction
