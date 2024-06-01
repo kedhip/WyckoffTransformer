@@ -6,8 +6,22 @@
 poetry self add poetry-dotenv-plugin
 echo "WANDB_ENTITY=symmetry-advantage" > .env
 ```
+# Data preprocessing
+```bash
+# Preprocess the data on Wychoff positions
+python preprocess_wychoffs.py
+# Read CIF structures and find the Wychoff positions
+# A CPU-intensive operations
+python mp_20_utils.py mp_20_biternary --cache-dataset
+# Tokenise a dataset
+python tokenise_a_dataset.py mp_20_biternary yamls/tokenisers/mp_20_naive.yaml
+```
 # Training
-`python train.py cuda:0|cuda:1|cpu`
+To test training on CPU and GPU:
+```bash
+python train.py yamls/models/wyckoff_transformer_pilot.yaml mp_20_biternary cpu
+python train.py yamls/models/wyckoff_transformer_pilot.yaml mp_20_biternary cuda:0
+```
 # Generation
 [Generate.ipynb](Generate.ipynb)
 # Evaluation
