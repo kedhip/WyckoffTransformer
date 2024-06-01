@@ -1,57 +1,26 @@
 from typing import Tuple
 from random import randint
+from functools import partial
 import pathlib
-import datetime
+import gzip
+import json
 import torch
 from torch import nn
 from torch import Tensor
 import wandb
+from multiprocessing import Pool
 from omegaconf import OmegaConf
+from io import StringIO
+import pyxtal
+import logging
 
 from cascade_transformer.dataset import AugmentedCascadeDataset
 from cascade_transformer.model import CascadeTransformer
-from wyckoff_transformer.tokenization import load_tensors_and_tokenisers
+from wyckoff_transformer.tokenization import (
+    load_tensors_and_tokenisers, tensor_to_pyxtal,
+    get_letter_from_ss_enum_idx, get_wp_index)
+from wyckoff_transformer.generator import WyckoffGenerator
 
-
-class WyckoffGenerator():
-    def __init__(self,
-                 model: nn.Module,
-                 cascade_order: Tuple,
-                 mask: dict,
-                 max_len: int,
-                 device: str,
-                 dtype = torch.int64):
-        self.model = model
-        self.max_len = max_len
-        self.cascade_order = cascade_order
-        self.device = device
-        self.mask_tensor = torch.tensor([mask[name] for name in cascade_order], dtype=dtype, device=device)
-
-
-    def generate_tensors(self, start: Tensor) -> Tensor:
-        """
-        Generates a sequence of tokens.
-
-        Arguments:
-            start: The start token. It should be a tensor of shape [batch_size, 1, len(cascade_order)].
-
-        Returns:
-            The generated sequence of tokens. It has shape [batch_size, max_len, len(cascade_order)].
-        """
-        self.model.eval()
-        with torch.no_grad():
-            batch_size = start.size(0)
-            generated = [torch.empty(batch_size, self.max_len, dtype=start.dtype, device=self.device) \
-                for _ in range(len(self.cascade_order))]
-            for known_seq_len in range(self.max_len):
-                for known_cascade_len in range(len(self.cascade_order)):
-                    masked_data = get_masked_cascade_data(
-                        generated, self.mask_tensor, known_seq_len, known_cascade_len)
-                    model_output = self.model(start, masked_data, None, known_cascade_len)
-                    probas = torch.nn.functional.softmax(model_output, dim=1)
-                    # +1 as START
-                    generated[known_cascade_len][:, known_seq_len] = torch.multinomial(probas, num_samples=1).squeeze()
-            return generated
 
 class WyckoffTrainer():
     def __init__(self,
@@ -75,6 +44,7 @@ class WyckoffTrainer():
             self.optimizer, 'min', **optimisation_config.scheduler.config)
         
         self.model = model
+        self.tokenisers = tokenisers
         self.device = device
         self.augmented_field = augmented_field
 
@@ -160,10 +130,11 @@ class WyckoffTrainer():
     def train(self):
         best_val_loss = float('inf')
         best_val_epoch = 0
-        run_path = pathlib.Path("checkpoints", datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
-        run_path.mkdir(parents=True)
-        best_model_params_path = run_path / "best_model_params.pt"
-        
+        self.run_path = pathlib.Path("runs", wandb.run.id)
+        self.run_path.mkdir(exist_ok=False)
+        best_model_params_path = self.run_path / "best_model_params.pt"
+        wandb.save(str(best_model_params_path), base_path=self.run_path, policy="live")
+
         for epoch in range(self.epochs):
             self.train_epoch()
             if epoch % self.validation_period == 0:
@@ -181,7 +152,6 @@ class WyckoffTrainer():
                     best_val_loss = total_val_loss
                     best_val_epoch = epoch
                     torch.save(self.model.state_dict(), best_model_params_path)
-                    wandb.save(str(best_model_params_path))
                     print(f"Epoch {epoch} val_loss_epoch {total_val_loss} saved to {best_model_params_path}")
                     wandb.log({"best_val_loss": best_val_loss}, commit=False)
                 if epoch - best_val_epoch > self.early_stopping_patience_epochs:
@@ -191,34 +161,44 @@ class WyckoffTrainer():
                 self.scheduler.step(total_val_loss)
 
 
+    def generate_structures(self, n_structures: int):
+        generator = WyckoffGenerator(
+            self.model, self.cascade_order, self.train_dataset.masks, self.train_dataset.sequence_length)
+        max_start = self.model.start_embedding.num_embeddings
+        start_counts = torch.bincount(
+            self.train_dataset.start_tokens, minlength=max_start) + torch.bincount(
+                self.val_dataset.start_tokens, minlength=max_start)
+        start_tensor = torch.distributions.Categorical(probs=start_counts.float()).sample((n_structures,))
+        generated_tensors = torch.stack(
+            generator.generate_tensors(start_tensor), dim=-1)
+
+        letter_from_ss_enum_idx = get_letter_from_ss_enum_idx(self.tokenisers['sites_enumeration'])
+        to_pyxtal = partial(tensor_to_pyxtal,
+                            tokenisers=self.tokenisers,
+                            cascade_order=self.cascade_order,
+                            letter_from_ss_enum_idx=letter_from_ss_enum_idx,
+                            wp_index=get_wp_index())
+        with Pool() as p:
+            structures = p.starmap(to_pyxtal, zip(start_tensor.detach().cpu(), generated_tensors.detach().cpu()))
+        valid_structures = [s for s in structures if s is not None]
+        return valid_structures
+
+
 def train_from_config(config_dict: dict, device: torch.device):
     config = OmegaConf.create(config_dict)
-    if len(config.tokeniser.augmented_token_fields) > 1:
-        raise ValueError("Only one augmented field is supported")
-
     tensors, tokenisers = load_tensors_and_tokenisers(config.dataset, config.tokeniser.name)
-
-    if "cascade_order" in config.model:
-        cascade_order = config.model.cascade_order
-        print(f"Using cascade order {cascade_order}")
-    else:
-        cascade_order = tuple(config.model.cascade_embedding_size.keys())
-
-    full_cascade = dict()
-    for field in cascade_order:
-        full_cascade[field] = (len(tokenisers[field]),
-                               config.model.cascade_embedding_size[field],
-                               tokenisers[field].pad_token)
-
-    model = CascadeTransformer(
-        n_start=len(tokenisers[config.model.start_token]),
-        cascade=full_cascade.values(),
-        **config.model.CascadeTransformer_args
-        ).to(device)
-
+    model = CascadeTransformer.from_config_and_tokenisers(config, tokenisers, device)
 
     trainer = WyckoffTrainer(
-        model, tensors, tokenisers, tuple(full_cascade.keys()), 
+        model, tensors, tokenisers, config.model.cascade_order, 
         config.tokeniser.augmented_token_fields[0],
         config.model.start_token, device, optimisation_config=config.optimisation)
     trainer.train()
+    print("Training complete, generating a sample of Wykchoff genes.")
+    generated_wp = trainer.generate_structures(config.evaluation.n_structures_to_generate)
+    wp_formal_validity = len(generated_wp) / config.evaluation.n_structures_to_generate
+    wandb.run.summary["wp_formal_validity"] = wp_formal_validity
+    print(f"Wyckchoffs' formal validity: {wp_formal_validity}")
+    with gzip.open(trainer.run_path / "generated_wp.json.gz", "wt") as f:
+        json.dump(generated_wp, f)
+    wandb.save(str(trainer.run_path / "generated_wp.json.gz"), base_path=trainer.run_path, policy="now")

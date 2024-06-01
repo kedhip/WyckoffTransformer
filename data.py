@@ -75,7 +75,7 @@ def structure_to_sites(
         "wyckoff_letters": [wyckoffs[i].letter for i in order],
         "sites_enumeration": [site_enumeration[i] for i in order],
         "dof": [dof[i] for i in order],
-        "spacegroup_number": pyxtal_structure.group.number
+        "spacegroup_number": int(pyxtal_structure.group.number)
     }
     if wychoffs_augmentation is not None:
         augmented_enumeration = [

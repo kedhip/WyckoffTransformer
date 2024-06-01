@@ -9,7 +9,7 @@ from pyxtal import Group
 N_3D_SPACEGROUPS = 230
 
 
-def enumerate_wychoffs_by_ss(output_file: Path = "wychoffs_enumerated_by_ss.pkl.gz"):
+def enumerate_wychoffs_by_ss(output_file: Path = Path("cache", "wychoffs_enumerated_by_ss.pkl.gz")):
     """
     Enumerates all Wyckoff positions by site symmetry.
 

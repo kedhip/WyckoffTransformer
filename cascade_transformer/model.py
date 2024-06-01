@@ -1,8 +1,9 @@
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 import torch
 from torch import nn
 from torch import Tensor
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
+from omegaconf import OmegaConf
 
 
 class CascadeEmbedding(nn.Module):
@@ -45,9 +46,37 @@ class CascadeEmbedding(nn.Module):
 
 
 class CascadeTransformer(nn.Module):
+    @classmethod
+    def from_config_and_tokenisers(cls, config: OmegaConf,
+        tokenisers: dict, device: torch.device):
+
+        if len(config.tokeniser.augmented_token_fields) > 1:
+            raise ValueError("Only one augmented field is supported")
+
+        if "cascade_order" in config.model:
+            cascade_order = config.model.cascade_order
+            print(f"Using cascade order {cascade_order}")
+        else:
+            cascade_order = tuple(config.model.cascade_embedding_size.keys())
+
+        full_cascade = dict()
+        for field in cascade_order:
+            full_cascade[field] = (len(tokenisers[field]),
+                                config.model.cascade_embedding_size[field],
+                                tokenisers[field].pad_token)
+
+        return cls(
+            n_start=len(tokenisers[config.model.start_token]),
+            cascade=full_cascade.values(),
+            **config.model.CascadeTransformer_args
+            ).to(device)
+
+
     def __init__(self,
                  n_start: int,
                  cascade: Tuple[Tuple[int, int|None, int], ...],
+                 learned_positional_encoding_max_size: Optional[int],
+                 learned_positional_encoding_only_masked: bool,
                  TransformerEncoderLayer_args: dict,
                  TransformerEncoder_args: dict):
         """
@@ -78,6 +107,12 @@ class CascadeTransformer(nn.Module):
         self.encoder_layers = TransformerEncoderLayer(self.d_model, batch_first=True, **TransformerEncoderLayer_args)
         self.transformer_encoder = TransformerEncoder(self.encoder_layers, **TransformerEncoder_args)
         self.start_embedding = nn.Embedding(n_start, self.d_model)
+        self.learned_positional_encoding_max_size = learned_positional_encoding_max_size
+        self.learned_positional_encoding_only_masked = learned_positional_encoding_only_masked
+        if learned_positional_encoding_max_size != 0:
+            self.positions_embedding = nn.Embedding(
+                learned_positional_encoding_max_size,
+                self.d_model)
         # Since our tokens are concatenated, we need to mix the embeddings
         # before we can use multuple attention heads.
         # Actually, a fully-connected layer is an overparametrisation
@@ -93,8 +128,17 @@ class CascadeTransformer(nn.Module):
                 cascade: List[Tensor],
                 padding_mask: Tensor,
                 prediction_head: int) -> Tensor:
-        data = torch.cat([self.start_embedding(start).unsqueeze(1), self.embedding(cascade)], dim=1)
-        data = self.mixer(data)
+        cascade_embedding = self.mixer(self.embedding(cascade))
+        if self.learned_positional_encoding_max_size != 0:
+            sequence_range = torch.arange(0, cascade_embedding.size(1), device=start.device)
+            positional_encoding = self.positions_embedding(sequence_range)
+            if self.learned_positional_encoding_only_masked:
+                cascade_embedding[:, -1] += positional_encoding
+            else:
+                cascade_embedding += positional_encoding.unsqueeze(0)
+
+        data = torch.cat([self.start_embedding(start).unsqueeze(1), cascade_embedding], dim=1)
+        
         transformer_output = self.transformer_encoder(data, src_key_padding_mask=padding_mask)
         prediction = self.prediction_heads[prediction_head](transformer_output[:, -1])
         return prediction
