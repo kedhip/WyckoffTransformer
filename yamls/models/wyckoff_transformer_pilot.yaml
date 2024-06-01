@@ -10,6 +10,7 @@ model:
     sites_enumeration: 4
   multiclass_target_with_order_permutation: true
   CascadeTransformer_args:
+    num_fully_connected_layers: 2
     use_token_sum_for_prediction: true
     learned_positional_encoding_max_size: 21
     learned_positional_encoding_only_masked: true

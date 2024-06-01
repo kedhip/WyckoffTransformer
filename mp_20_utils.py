@@ -9,7 +9,7 @@ import pickle
 from pathlib import Path
 import gzip
 import argparse
-from data import read_all_MP_csv, read_mp_ternary_csv
+from data import read_all_MP_csv
 
 cache_folder = Path("cache")
 

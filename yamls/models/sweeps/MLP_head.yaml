@@ -1,0 +1,17 @@
+method: grid
+metric:
+  goal: minimize
+  name: best_val_loss
+parameters:
+  base_config:
+    distribution: constant
+    value: wyckoff_transformer_autumn_sea
+  dataset:
+    distribution: constant
+    value: mp_20_biternary
+  model:
+    parameters:
+      CascadeTransformer_args:
+        parameters:
+          num_fully_connected_layers:
+            values: [1, 2, 3, 4]

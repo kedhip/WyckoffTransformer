@@ -79,6 +79,7 @@ class CascadeTransformer(nn.Module):
                  learned_positional_encoding_max_size: Optional[int],
                  learned_positional_encoding_only_masked: bool,
                  use_token_sum_for_prediction: bool,
+                 num_fully_connected_layers: int,
                  TransformerEncoderLayer_args: dict,
                  TransformerEncoder_args: dict):
         """
@@ -124,7 +125,19 @@ class CascadeTransformer(nn.Module):
         # on the previous element, so care should be taken as to which head to call.
         self.use_token_sum_for_prediction = use_token_sum_for_prediction
         prediction_head_size = 2 * self.d_model if use_token_sum_for_prediction else self.d_model
-        self.prediction_heads = torch.nn.ModuleList([nn.Linear(prediction_head_size, n) for n, _, _ in cascade])
+        self.prediction_heads = torch.nn.ModuleList()
+        if num_fully_connected_layers == 0:
+            raise ValueError("num_fully_connected_layers must be at least 1 for dimensionality reasons.")
+        for output_size, _, _ in cascade:
+            if num_fully_connected_layers == 1:
+                self.prediction_heads.append(nn.Linear(prediction_head_size, output_size))
+            else:
+                this_sequence = []
+                for _ in range(num_fully_connected_layers - 1):
+                    this_sequence.append(nn.Linear(prediction_head_size, prediction_head_size))
+                    this_sequence.append(nn.ReLU())
+                this_sequence.append(nn.Linear(prediction_head_size, output_size))
+                self.prediction_heads.append(nn.Sequential(*this_sequence))
 
 
     def forward(self,

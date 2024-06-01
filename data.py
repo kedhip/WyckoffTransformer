@@ -122,6 +122,20 @@ def read_MP(MP_csv: Path|str):
     return MP_df
 
 
+def get_composition(structure: Structure) -> dict[Element, float]:
+    """
+    Returns the composition of a structure as a dictionary.
+
+    Args:
+        structure (Structure): The pymatgen structure.
+
+    Returns:
+        dict: A dictionary with the elements as keys and the number of atoms as values.
+    """
+    str_dict = structure.composition.get_el_amt_dict()
+    return {Element(k): v for k, v in str_dict.items()}
+
+
 def compute_symmetry_sites(
     datasets_pd: dict[str, pd.DataFrame],
     wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "wychoffs_enumerated_by_ss.pkl.gz"
@@ -141,6 +155,7 @@ def compute_symmetry_sites(
         with Pool() as p:
             symmetry_dataset = pd.DataFrame.from_records(
                 p.map(structure_to_sites_with_args, dataset['structure'])).set_index(dataset.index)
+        symmetry_dataset["composition"] = dataset["structure"].map(get_composition)
         result[dataset_name] = symmetry_dataset
     return result
 
@@ -172,18 +187,3 @@ def read_all_MP_csv(
     symmetry_datasets = compute_symmetry_sites(datasets_pd, wychoffs_enumerated_by_ss_file)
     return symmetry_datasets
 
-
-def read_mp_ternary_csv(
-    mp_ternary_path: Path = Path(__file__).parent.resolve() / "cache" / "mp_ternary" / "df_allternary_newdata.csv.gz",
-    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "cache"/"wychoffs_enumerated_by_ss.pkl.gz"
-    ) -> tuple[dict[str, pd.DataFrame], int]:
-    all_data = read_MP(mp_ternary_path)
-    train, test_validation = train_test_split(all_data, train_size=0.6, random_state=42)
-    validation, test = train_test_split(test_validation, train_size=0.5, random_state=43)
-    datasets_pd = {
-        "train": train,
-        "test": test,
-        "val": validation
-    }
-    symmetry_datasets = compute_symmetry_sites(datasets_pd, wychoffs_enumerated_by_ss_file)
-    return datasets_pd
