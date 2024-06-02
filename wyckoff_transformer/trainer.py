@@ -1,25 +1,27 @@
-from typing import Tuple
+from typing import Tuple, Dict
 from random import randint
 from functools import partial
-import pathlib
+from pathlib import Path
 import gzip
 import json
+import pickle
+import logging
+from multiprocessing import Pool
 import torch
 from torch import nn
 from torch import Tensor
-import wandb
-from multiprocessing import Pool
 from omegaconf import OmegaConf
-from io import StringIO
 import pyxtal
-import logging
+import wandb
 
-from cascade_transformer.dataset import AugmentedCascadeDataset
+
+from cascade_transformer.dataset import AugmentedCascadeDataset, TargetClass
 from cascade_transformer.model import CascadeTransformer
 from wyckoff_transformer.tokenization import (
     load_tensors_and_tokenisers, tensor_to_pyxtal,
     get_letter_from_ss_enum_idx, get_wp_index)
 from wyckoff_transformer.generator import WyckoffGenerator
+from wyckoff_transformer.evaluation import StatisticalEvaluator, smact_validity_from_record, smac_validity_from_counter
 
 
 class WyckoffTrainer():
@@ -30,14 +32,34 @@ class WyckoffTrainer():
                  cascade_order: Tuple,
                  augmented_field: str|None,
                  start_name: str,
-                 multiclass_target_with_order_permutation: bool,
+                 target: TargetClass|str,
+                 multiclass_next_token_with_order_permutation: bool,
                  optimisation_config: dict,
                  device: torch.DeviceObjType):
+        """
+        Args:
+            multiclass_next_token_with_order_permutation: Train a permutation-invariant model by permuting the sequences,
+                    If the target is the next token, predict the 0-th cascade field as a multiclass target.
+                    You might also want to ensure that the model is permutation-invariant; pay attention to the positional encoding.
+            target: the target to predict. One of:
+                next_token: predict the next token in the cascade&sequence.
+                num_unique_tokens: predict the number of unique tokens in the cascade&sequence encountered so far.
+                    Intended for debugging the ability of the model to count.
+        """
         # Nothing else will work in foreseeable future
         self.dtype = torch.int64
-        # Sequences have difference lengths, so we need to make sure that
-        # long sequences don't dominate the loss
-        self.criterion = nn.CrossEntropyLoss(reduction="sum")
+        if isinstance(target, str):
+            target = TargetClass[target]
+        if target == TargetClass.NextToken:
+            # Sequences have difference lengths, so we need to make sure that
+            # long sequences don't dominate the loss
+            self.criterion = nn.CrossEntropyLoss(reduction="sum")
+        elif target == TargetClass.NumUniqueTokens:
+            if not multiclass_next_token_with_order_permutation:
+                raise NotImplementedError("NumUniqueTokens is not implemented without permutations")
+            self.criterion = nn.MSELoss(reduction="none")
+        else:
+            raise ValueError(f"Unknown target: {target}")
 
         self.optimizer = getattr(torch.optim, optimisation_config.optimiser.name)(
             model.parameters(), **optimisation_config.optimiser.config)
@@ -85,7 +107,8 @@ class WyckoffTrainer():
         self.epochs = optimisation_config.epochs
         self.validation_period = optimisation_config.validation_period
         self.early_stopping_patience_epochs = optimisation_config.early_stopping_patience_epochs    
-        self.multiclass_target_with_order_permutation = multiclass_target_with_order_permutation
+        self.target = target
+        self.multiclass_next_token_with_order_permutation = multiclass_next_token_with_order_permutation
 
 
     def get_loss(self,
@@ -94,16 +117,28 @@ class WyckoffTrainer():
         known_cascade_len: int) -> Tensor:
         logging.debug("Known sequence length: %i", known_seq_len)
         logging.debug("Known cascade lenght: %i", known_cascade_len)
-        if self.multiclass_target_with_order_permutation:
-            # Once we have sampled the first cascade field, the prediction target is no longer mutliclass
-            # However, we still need to permute the sequence so that the autoregression is
-            # permutation-invariant.
-            start_tokens, masked_data, target = dataset.get_masked_multiclass_cascade_data(
-                known_seq_len, known_cascade_len, multiclass_target=(known_cascade_len == 0))
+        if self.multiclass_next_token_with_order_permutation:
+            if self.target == TargetClass.NextToken:
+                # Once we have sampled the first cascade field, the prediction target is no longer mutliclass
+                # However, we still need to permute the sequence so that the autoregression is
+                # permutation-invariant.
+                start_tokens, masked_data, target = dataset.get_masked_multiclass_cascade_data(
+                    known_seq_len, known_cascade_len, multiclass_target=(known_cascade_len == 0),
+                    target_type=self.target)
+            elif self.target == TargetClass.NumUniqueTokens:
+                start_tokens, masked_data, target = dataset.get_masked_multiclass_cascade_data(
+                    known_seq_len, known_cascade_len, multiclass_target=False, target_type=self.target)
+                logging.debug("Target: %s", target)
+                # Counts are integers, as they should be, but MSE needs a float
+                target = target.float()
         else:
             start_tokens, masked_data, target = dataset.get_masked_cascade_data(known_seq_len, known_cascade_len)
-        # No padding, as we have already discarded the padding
-        prediction = self.model(start_tokens, masked_data, None, known_cascade_len)
+        if self.target == TargetClass.NextToken:    
+            # No padding, as we have already discarded the padding
+            prediction = self.model(start_tokens, masked_data, None, known_cascade_len)
+        elif self.target == TargetClass.NumUniqueTokens:
+            # No padding, as we have already discarded the padding
+            prediction = self.model(start_tokens, masked_data, None, None)
         return self.criterion(prediction, target)
 
 
@@ -111,8 +146,17 @@ class WyckoffTrainer():
         self.model.train()
         self.optimizer.zero_grad(set_to_none=True)
         known_seq_len = randint(0, self.train_dataset.max_sequence_length - 1)
-        known_cascade_len = randint(0, self.cascade_len - 1)
+        if self.target == TargetClass.NextToken:
+            known_cascade_len = randint(0, self.cascade_len - 1)
+        elif self.target == TargetClass.NumUniqueTokens:
+            known_cascade_len = 0
         loss = self.get_loss(self.train_dataset, known_seq_len, known_cascade_len)
+        if self.target == TargetClass.NumUniqueTokens:
+            # Predictions are [batch_size, cascade_size]
+            # Unreduced MSE is [batch_size, cascade_size]
+            # We avoid averating them at the level of self.criterion, so we can log
+            # the loss for each cascade field separately.
+            loss = loss.mean()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
         self.optimizer.step()
@@ -129,25 +173,30 @@ class WyckoffTrainer():
             The average loss on the validation dataset.
         """
         self.model.eval()
-        val_loss = torch.zeros(self.cascade_len, device=self.device)
-        train_loss = torch.zeros(self.cascade_len, device=self.device)
         with torch.no_grad():
+            val_loss = torch.zeros(self.cascade_len, device=self.device)
+            train_loss = torch.zeros(self.cascade_len, device=self.device)
             for known_seq_len in range(0, self.train_dataset.max_sequence_length):
-                for known_cascade_len in range(0, self.cascade_len):
-                    train_loss[known_cascade_len] += self.get_loss(
-                        self.train_dataset, known_seq_len, known_cascade_len)
-                    val_loss[known_cascade_len] += self.get_loss(
-                        self.val_dataset, known_seq_len, known_cascade_len)
+                if self.target == TargetClass.NextToken:
+                    for known_cascade_len in range(0, self.cascade_len):
+                        train_loss[known_cascade_len] += self.get_loss(
+                            self.train_dataset, known_seq_len, known_cascade_len)
+                        val_loss[known_cascade_len] += self.get_loss(
+                            self.val_dataset, known_seq_len, known_cascade_len)
+                else:
+                    train_loss += self.get_loss(self.train_dataset, known_seq_len, 0).sum(dim=0)
+                    val_loss += self.get_loss(self.val_dataset, known_seq_len, 0).sum(dim=0)
             # ln(P) = ln p(t_n|t_n-1, ..., t_1) + ... + ln p(t_2|t_1)
             # We are minimising the negative log likelihood of the whole sequences
-            return val_loss / len(self.val_dataset), \
-                   train_loss / len(self.train_dataset)
+            val_loss /= len(self.val_dataset)
+            train_loss /= len(self.train_dataset)
+            return val_loss, train_loss
 
 
     def train(self):
         best_val_loss = float('inf')
         best_val_epoch = 0
-        self.run_path = pathlib.Path("runs", wandb.run.id)
+        self.run_path = Path("runs", wandb.run.id)
         self.run_path.mkdir(exist_ok=False)
         best_model_params_path = self.run_path / "best_model_params.pt"
         wandb.save(str(best_model_params_path), base_path=self.run_path, policy="live")
@@ -156,10 +205,10 @@ class WyckoffTrainer():
             self.train_epoch()
             if epoch % self.validation_period == 0:
                 val_loss_epoch, train_loss_epoch = self.evaluate()
-                val_loss_dict = {name: val_loss_epoch[i].item() for i, name in enumerate(self.cascade_order)}
+                val_loss_dict = {name: val_loss_epoch[i] for i, name in enumerate(self.cascade_order)}
                 total_val_loss = val_loss_epoch.sum()
                 val_loss_dict["total"] = total_val_loss.item()
-                train_loss_dict = {name: train_loss_epoch[i].item() for i, name in enumerate(self.cascade_order)}
+                train_loss_dict = {name: train_loss_epoch[i] for i, name in enumerate(self.cascade_order)}
                 train_loss_dict["total"] = train_loss_epoch.sum().item()
                 wandb.log({"val_loss_epoch": val_loss_dict,
                             "train_loss_epoch": train_loss_dict,
@@ -201,9 +250,13 @@ class WyckoffTrainer():
         return valid_structures
 
 
+def ks_to_dict(ks_statistic) -> Dict[str, float]:
+    return {"statistic": ks_statistic.statistic, "pvalue": ks_statistic.pvalue}
+
+
 def train_from_config(config_dict: dict, device: torch.device):
     config = OmegaConf.create(config_dict)
-    if config.model.multiclass_target_with_order_permutation and not config.model.CascadeTransformer_args.learned_positional_encoding_only_masked:
+    if config.model.WyckoffTrainer_args.multiclass_next_token_with_order_permutation and not config.model.CascadeTransformer_args.learned_positional_encoding_only_masked:
         raise ValueError("Multiclass target with order permutation requires learned positional encoding only masked, ",
                          "otherwise the Transformer is not permutation invariant.")
     tensors, tokenisers = load_tensors_and_tokenisers(config.dataset, config.tokeniser.name)
@@ -213,14 +266,42 @@ def train_from_config(config_dict: dict, device: torch.device):
         model, tensors, tokenisers, config.model.cascade_order, 
         config.tokeniser.augmented_token_fields[0],
         config.model.start_token,
-        multiclass_target_with_order_permutation=config.model.multiclass_target_with_order_permutation,
-        optimisation_config=config.optimisation, device=device)
+        optimisation_config=config.optimisation, device=device,
+        **config.model.WyckoffTrainer_args)
     trainer.train()
-    print("Training complete, generating a sample of Wykchoff genes.")
-    generated_wp = trainer.generate_structures(config.evaluation.n_structures_to_generate)
-    wp_formal_validity = len(generated_wp) / config.evaluation.n_structures_to_generate
-    wandb.run.summary["wp_formal_validity"] = wp_formal_validity
-    print(f"Wyckchoffs' formal validity: {wp_formal_validity}")
-    with gzip.open(trainer.run_path / "generated_wp.json.gz", "wt") as f:
-        json.dump(generated_wp, f)
-    wandb.save(str(trainer.run_path / "generated_wp.json.gz"), base_path=trainer.run_path, policy="now")
+    if config.model.WyckoffTrainer_args.target == "NextToken":
+        print("Training complete, generating a sample of Wykchoff genes.")
+        generated_wp = trainer.generate_structures(config.evaluation.n_structures_to_generate)
+        wp_formal_validity = len(generated_wp) / config.evaluation.n_structures_to_generate
+        wandb.run.summary["wp_formal_validity"] = wp_formal_validity
+        print(f"Wyckchoffs' formal validity: {wp_formal_validity}")
+        with gzip.open(trainer.run_path / "generated_wp.json.gz", "wt") as f:
+            json.dump(generated_wp, f)
+        wandb.save(str(trainer.run_path / "generated_wp.json.gz"), base_path=trainer.run_path, policy="now")
+        data_cache_path = Path(__file__).parent.parent.resolve() / "cache" / config.dataset / "data.pkl.gz"
+        with gzip.open(data_cache_path, "rb") as f:
+            dataset_pd = pickle.load(f)
+        del dataset_pd["train"]
+        del dataset_pd["val"]
+        print(f"Test dataset size: {len(dataset_pd['test']['site_symmetries'])}")
+        print(f"Generated dataset size: {len(generated_wp)}")
+        evaluator = StatisticalEvaluator(dataset_pd["test"])
+        ks_num_sites = evaluator.get_num_sites_ks(generated_wp)
+        ks_num_elements = evaluator.get_num_elements_ks(generated_wp)
+        ks_dof = evaluator.get_dof_ks(generated_wp)
+        wandb.run.summary["ks_num_sites_vs_test"] = ks_to_dict(ks_num_sites)
+        wandb.run.summary["ks_num_elements_vs_test"] = ks_to_dict(ks_num_elements)
+        wandb.run.summary["ks_dof_vs_test"] = ks_to_dict(ks_dof)
+        print("Kolmogorov-Smirnov statistics:")
+        print(f"Number of sites: {ks_num_sites}")
+        print(f"Number of elements: {ks_num_elements}")
+        print(f"Degrees of freedom: {ks_dof}")
+        wandb.run.summary["generated_actual_size"] = len(generated_wp)
+        wandb.run.summary["test_dataset_size"] = len(dataset_pd["test"]["site_symmetries"])
+        smac_validity_count = sum(map(smact_validity_from_record, generated_wp))
+        smac_validity_fraction = smac_validity_count / len(generated_wp)
+        print(f"SMAC-T validity: fraction {smac_validity_fraction}; count {smac_validity_count}")
+        test_smact_validity = dataset_pd["test"]["composition"].map(smac_validity_from_counter).mean()
+        print(f"SMAC-T validity on the test dataset: {test_smact_validity}")
+        wandb.run.summary["smact_validity"] = {"generated": smac_validity_fraction, "test": test_smact_validity}
+

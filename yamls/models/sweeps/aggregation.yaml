@@ -1,0 +1,21 @@
+method: grid
+metric:
+  goal: minimize
+  name: best_val_loss
+parameters:
+  base_config:
+    distribution: constant
+    value: NumUniqueTokens_MLP
+  dataset:
+    distribution: constant
+    value: mp_20_biternary
+  model:
+    parameters:
+      CascadeTransformer_args:
+        parameters:
+          token_aggregation:
+            values: [max, sum]
+          include_start_in_aggregation:
+            values: [true, false]
+          aggregation_inclsion:
+            values: [concat, add]

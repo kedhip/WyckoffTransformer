@@ -8,9 +8,16 @@ model:
     elements: 16
     site_symmetries: 16
     sites_enumeration: 4
-  multiclass_target_with_order_permutation: true
+  WyckoffTrainer_args:
+    multiclass_next_token_with_order_permutation: true
+    target: NextToken
   CascadeTransformer_args:
-    num_fully_connected_layers: 2
+    mixer_layers: 1
+    token_aggregation: max
+    include_start_in_aggregation: false,
+    aggregation_inclsion: concat,
+    outputs: "token_scores"
+    num_fully_connected_layers: 1
     use_token_sum_for_prediction: true
     learned_positional_encoding_max_size: 21
     learned_positional_encoding_only_masked: true
@@ -35,12 +42,12 @@ optimisation:
     config:
       factor: 0.8
       # note that scheduler is called every validation_period epochs
-      patience: 40
+      patience: 50
   validation_period: 10
   early_stopping_patience_epochs: 1000
   clip_grad_norm: 0.5
   epochs: 50
 tokeniser:
-  name: mp_20_naive
+  name: mp_20_CSP
 evaluation:
-  n_structures_to_generate: 100
+  n_structures_to_generate: 3000

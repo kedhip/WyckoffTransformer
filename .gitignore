@@ -6,3 +6,4 @@ checkpoints
 cache
 pytorch
 runs
+log

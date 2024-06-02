@@ -1,5 +1,7 @@
 from typing import List, Tuple
+from enum import Enum
 import logging
+logger = logging.getLogger(__name__)
 import torch
 from torch import Tensor
 
@@ -72,8 +74,8 @@ def jagged_batch_randperm(permutation_lengths: Tensor, max_sequence_length: int)
         requires_grad=False)
     # Assign 3. to PAD
     padding_mask = torch.arange(max_sequence_length, device=permutation_lengths.device).unsqueeze(0) > permutation_lengths.unsqueeze(1)
-    logging.debug("Padding mask size: %s", str(padding_mask.size()))
-    logging.debug("Padding mask #0: %s", str(padding_mask[0]))
+    logger.debug("Padding mask size: %s", str(padding_mask.size()))
+    logger.debug("Padding mask #0: %s", str(padding_mask[0]))
     random_tensor[padding_mask] = 3.
     # Assign 2. to STOP at every permutation_lengths
     stop_indices = permutation_lengths.unsqueeze(1)
@@ -82,12 +84,16 @@ def jagged_batch_randperm(permutation_lengths: Tensor, max_sequence_length: int)
     return result
 
 
-def batched_bincount(x, dim, max_value):
-    target = torch.zeros(x.shape[0], max_value, dtype=x.dtype, device=x.device)
-    values = torch.ones_like(x)
+def batched_bincount(x, dim, max_value, dtype=None):
+    if dtype is None:
+        dtype = x.dtype
+    target = torch.zeros(x.shape[0], max_value, dtype=dtype, device=x.device)
+    values = torch.ones(x.size(), dtype=dtype, device=x.device)
     target.scatter_add_(dim, x, values)
     return target
 
+
+TargetClass = Enum("TargetClass", ['NextToken', 'NumUniqueTokens'])
 
 class AugmentedCascadeDataset():
     def __init__(
@@ -192,42 +198,54 @@ class AugmentedCascadeDataset():
         self,
         known_seq_len: int,
         known_cascade_len: int,
+        target_type: TargetClass,
         multiclass_target: bool):
-            logging.debug("Known sequence length %i", known_seq_len)
-            logging.debug("Known cascade length %i", known_cascade_len)
-            augmented_data = self.get_augmentation()
-            # STOP is not included in the pure length, but is a viable target
-            target_is_viable = self.pure_sequences_lengths >= known_seq_len
-            chosen_pure_sequences_lengths = self.pure_sequences_lengths[target_is_viable]
-            # STOP is still not included in the pure length
-            permutation = jagged_batch_randperm(chosen_pure_sequences_lengths, self.max_sequence_length)
-            logging.debug("Max sequence length %i", self.max_sequence_length)
-            logging.debug("Max queried permutation length %i", chosen_pure_sequences_lengths.max())
-            logging.debug("Min queried permutation length %i", chosen_pure_sequences_lengths.min())
-            logging.debug("Permutation size (%i, %i)", *permutation.size())
-            logging.debug("Permutation #0: %s", permutation[0])
-            # Debug
-            #for queried_length, this_permutation in zip(chosen_pure_sequences_lengths, permutation):
-                #if not (this_permutation[queried_length:] == idenity_permutation[queried_length:]).all():
-                #    logging.error("Queried length: %i", queried_length)
-                #    logging.error("Permutation: %s", str(this_permutation))
-                #    raise ValueError("Permutation is not identity after the end of the sequence")
-                #assert (this_permutation[:queried_length] < queried_length).all()
-                #assert (this_permutation[queried_length:] >= queried_length).all()
-            cascade_result = []
-            for cascade_index, name in enumerate(self.cascade_order):
-                if name == self.augmented_field:
-                    cascade_vector = augmented_data[target_is_viable]
-                else:
-                    cascade_vector = self.data[name][target_is_viable]
-                permuted_cascade_vector = cascade_vector.gather(1, permutation)
-                logging.debug("Permuted cascade size (%i, %i)", *permuted_cascade_vector.size())
-                if cascade_index < known_cascade_len:
-                    cascade_result.append(permuted_cascade_vector[:, :known_seq_len + 1])
-                else:
-                    cascade_result.append(torch.cat([
-                        permuted_cascade_vector[:, :known_seq_len],
-                        self.masks[name].expand(permuted_cascade_vector.size(0), 1)], dim=1))
+
+        if target_type == TargetClass.NumUniqueTokens:
+            if multiclass_target:
+                raise ValueError("Multiclass target doesn't make sense for NumUniqueTokens")
+            if known_cascade_len != 0:
+                # In principle, it's possible, but looks like a waste of compute
+                raise NotImplementedError("NumUniqueTokens is only supported when no cascade elements are known")
+        
+        logger.debug("Known sequence length %i", known_seq_len)
+        logger.debug("Known cascade length %i", known_cascade_len)
+        augmented_data = self.get_augmentation()
+        # STOP is not included in the pure length, but is a viable target
+        target_is_viable = self.pure_sequences_lengths >= known_seq_len
+        chosen_pure_sequences_lengths = self.pure_sequences_lengths[target_is_viable]
+        # STOP is still not included in the pure length
+        permutation = jagged_batch_randperm(chosen_pure_sequences_lengths, self.max_sequence_length)
+        logger.debug("Max sequence length %i", self.max_sequence_length)
+        logger.debug("Max queried permutation length %i", chosen_pure_sequences_lengths.max())
+        logger.debug("Min queried permutation length %i", chosen_pure_sequences_lengths.min())
+        logger.debug("Permutation size (%i, %i)", *permutation.size())
+        logger.debug("Permutation #0: %s", permutation[0])
+        # Debug
+        #for queried_length, this_permutation in zip(chosen_pure_sequences_lengths, permutation):
+            #if not (this_permutation[queried_length:] == idenity_permutation[queried_length:]).all():
+            #    logger.error("Queried length: %i", queried_length)
+            #    logger.error("Permutation: %s", str(this_permutation))
+            #    raise ValueError("Permutation is not identity after the end of the sequence")
+            #assert (this_permutation[:queried_length] < queried_length).all()
+            #assert (this_permutation[queried_length:] >= queried_length).all()
+        cascade_result = []
+        cascade_targets = []
+        for cascade_index, name in enumerate(self.cascade_order):
+            logger.debug("Processing cascade #%i aka %s", cascade_index, name)
+            if name == self.augmented_field:
+                cascade_vector = augmented_data[target_is_viable]
+            else:
+                cascade_vector = self.data[name][target_is_viable]
+            permuted_cascade_vector = cascade_vector.gather(1, permutation)
+            logger.debug("Permuted cascade size (%i, %i)", *permuted_cascade_vector.size())
+            if cascade_index < known_cascade_len:
+                cascade_result.append(permuted_cascade_vector[:, :known_seq_len + 1])
+            else:
+                cascade_result.append(torch.cat([
+                    permuted_cascade_vector[:, :known_seq_len],
+                    self.masks[name].expand(permuted_cascade_vector.size(0), 1)], dim=1))
+                if target_type == TargetClass.NextToken:
                     if cascade_index == known_cascade_len:
                         if multiclass_target:
                             raw_targets = permuted_cascade_vector[:, known_seq_len:]
@@ -242,13 +260,29 @@ class AugmentedCascadeDataset():
                             #    raise ValueError("STOP missing")
                             # if (target_counts[~target_is_not_stop].sum(dim=1) > 1).any():
                             #    raise ValueError("STOP appears along other targets")
-                            logging.debug("Target counts size (%i, %i)", *target_counts.size())
+                            logger.debug("Target counts size (%i, %i)", *target_counts.size())
                             target = target_counts / target_counts.sum(1, keepdim=True)
-                            logging.debug("Target #0: %s", target[0])
+                            logger.debug("Target #0: %s", target[0])
                         else:
                             target = permuted_cascade_vector[:, known_seq_len]
                             # Debug:
                             # if (target == self.pads[self.cascade_order[known_cascade_len]]).any():
                             #    raise ValueError("PAD is not a valid target")
+                else:
+                    # We need the number of unique values, as opposed to values themselves
+                    # hence, we use bincount with bool dtype, as 
+                    # true + true = true
+                    present_classes = batched_bincount(
+                        permuted_cascade_vector[:, :known_seq_len], 1,
+                        self.num_classes[known_cascade_len], dtype=torch.bool)
+                    cascade_targets.append(present_classes.sum(1))
+                    logger.debug("Unique tokens max: %i", cascade_targets[-1].max())
+                    logger.debug("Unique tokens min: %i", cascade_targets[-1].min())
+                    logger.debug("Unique tokens mean: %f", cascade_targets[-1].float().mean())
+                    logger.debug("Unique tokens var aka std**2: %f", cascade_targets[-1].float().var())
+                    logger.debug("No. of unique tokens in %s for #0: %i", name, cascade_targets[-1][0])
+        
+        if target_type == TargetClass.NumUniqueTokens:
+            target = torch.stack(cascade_targets, dim=1)
 
-            return self.start_tokens[target_is_viable], cascade_result, target
+        return self.start_tokens[target_is_viable], cascade_result, target

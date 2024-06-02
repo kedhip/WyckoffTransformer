@@ -13,9 +13,11 @@ model:
     target: NextToken
   CascadeTransformer_args:
     mixer_layers: 1
-    num_fully_connected_layers: 1
-    outputs: "token_scores"
-    use_token_sum_for_prediction: true
+    token_aggregation: max
+    include_start_in_aggregation: false
+    aggregation_inclsion: concat
+    outputs: token_scores
+    num_fully_connected_layers: 4
     learned_positional_encoding_max_size: 21
     learned_positional_encoding_only_masked: true
     # Will be passed as is to CascadeTransformer

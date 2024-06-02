@@ -28,15 +28,16 @@ def main():
     tokeniser_config = OmegaConf.load(tokeniser_config_path)
     if len(tokeniser_config.augmented_token_fields) > 1:
         raise ValueError("Only one augmented field is supported")
-    wandb_config = dict(args.config)
-    wandb_config['tokeniser'] = tokeniser_config
-    wandb_config['dataset'] = args.dataset
-    
+    config = args.config
+    config['tokeniser'] = tokeniser_config
+    config['dataset'] = args.dataset
+
+    wandb_config = OmegaConf.to_container(args.config)
     with wandb.init(
         project="WyckoffTransformer",
         job_type="train",
         config=wandb_config):
-        train_from_config(wandb_config, args.device)
+        train_from_config(config, args.device)
 
 
 if __name__ == '__main__':

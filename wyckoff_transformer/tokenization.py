@@ -90,14 +90,17 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                     tokenisers[field].tokenise_single,
                     dtype=dtype)).to_list())
         # Conuter fields are processed into two tensors: tokenised values, and the counts
-        #for field, tokeniser_filed in config.sequence_fields.counters:
-        #    tensors[dataset_name][f"{field}_tokens"] = torch.stack(
-        #            dataset[field].map(lambda dict_:
+        # WARNING Cell variable tokeniser_filed defined in loopPylintW0640:cell-var-from-loop
+        for field, tokeniser_field in config.sequence_fields.counters.items():
+            tensors[dataset_name][f"{field}_tokens"] = \
+                    dataset[field].map(lambda dict_:
+                        torch.stack([tokenisers[tokeniser_field].tokenise_single(key, dtype=dtype)
+                            for key in dict_.keys()])).to_list()
+            tensors[dataset_name][f"{field}_counts"] = \
+                    dataset[field].map(lambda dict_:
+                        torch.tensor(tuple(dict_.values()), dtype=dtype)).to_list()
 
-                        
-                        
-        #            dtype=dtype)).to_list())
-            
+        # WARNING Cell variable field defined in loopPylintW0640:cell-var-from-loop
         for field in config.augmented_token_fields:
             augmented_field = f"{field}_augmented"
             tensors[dataset_name][augmented_field] = dataset[augmented_field].map(lambda variants:
