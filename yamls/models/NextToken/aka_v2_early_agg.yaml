@@ -12,7 +12,7 @@ model:
     multiclass_next_token_with_order_permutation: true
     target: NextToken
   CascadeTransformer_args:
-    aggregate_after_encoder: true
+    aggregate_after_encoder: false
     mixer_layers: 1
     token_aggregation: max
     include_start_in_aggregation: false

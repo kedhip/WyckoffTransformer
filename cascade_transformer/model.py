@@ -96,6 +96,7 @@ class CascadeTransformer(nn.Module):
                  learned_positional_encoding_max_size: Optional[int],
                  learned_positional_encoding_only_masked: bool,
                  token_aggregation: str|None,
+                 aggregate_after_encoder: bool,
                  include_start_in_aggregation: bool,
                  aggregation_inclsion: str,
                  num_fully_connected_layers: int,
@@ -146,6 +147,7 @@ class CascadeTransformer(nn.Module):
         # on the previous element, so care should be taken as to which head to call.
         self.token_aggregation = token_aggregation
         self.aggregation_inclsion = aggregation_inclsion
+        self.aggregate_after_encoder = aggregate_after_encoder
         self.include_start_in_aggregation = include_start_in_aggregation
         prediction_head_size = 2 * self.d_model if aggregation_inclsion == "concat" else self.d_model
         self.prediction_heads = torch.nn.ModuleList()
@@ -181,23 +183,29 @@ class CascadeTransformer(nn.Module):
         data = torch.cat([self.start_embedding(start).unsqueeze(1), cascade_embedding], dim=1)
         transformer_output = self.transformer_encoder(data, src_key_padding_mask=padding_mask)
         logging.debug("Transforer output size: %s", transformer_output.size())
+        if self.aggregate_after_encoder:
+            aggregation_input = transformer_output
+        else:
+            aggregation_input = data
+
         aggregation_start_idx = int(not self.include_start_in_aggregation)
         if self.token_aggregation == "sum":
-            aggregation = transformer_output[:, aggregation_start_idx:-1].sum(dim=1)
+            aggregation = aggregation_input[:, aggregation_start_idx:-1].sum(dim=1)
         elif self.token_aggregation == "max":
             # 2 for start and MASK. 0 or 1 would be a bug, so we let the code crash.
-            if transformer_output.size(1) == 2 and not self.include_start_in_aggregation:
+            if aggregation_input.size(1) == 2 and not self.include_start_in_aggregation:
                 # Possible opmisation: just 0. for aggregation_inclsion == "add"
-                aggregation = torch.zeros_like(transformer_output[:, 0])
+                aggregation = torch.zeros_like(aggregation_input[:, 0])
             else:
-                aggregation = transformer_output[:, aggregation_start_idx:-1].max(dim=1).values
+                aggregation = aggregation_input[:, aggregation_start_idx:-1].max(dim=1).values
+    
         if self.aggregation_inclsion == "concat":
             prediction_input = torch.cat([transformer_output[:, -1], aggregation], dim=1)
         elif self.aggregation_inclsion == "add":
             prediction_input = transformer_output[:, -1] + aggregation
         else:
             raise ValueError(f"Unknown aggregation_inclsion {self.aggregation_inclsion}")
+        
         if prediction_head is None:
             return self.the_prediction_head(prediction_input)
-        else:
-            return self.prediction_heads[prediction_head](prediction_input)
+        return self.prediction_heads[prediction_head](prediction_input)
