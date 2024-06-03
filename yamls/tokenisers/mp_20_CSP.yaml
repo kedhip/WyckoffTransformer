@@ -1,5 +1,5 @@
 # For the code to work, must be the same as the file name
-name: mp_20_naive
+name: mp_20_CSP
 deterministic: false
 # tokens will be just numbered in a random order, withot a guarantee of reproducibility
 dtype: uint8

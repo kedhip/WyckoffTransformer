@@ -201,4 +201,3 @@ class CascadeTransformer(nn.Module):
             return self.the_prediction_head(prediction_input)
         else:
             return self.prediction_heads[prediction_head](prediction_input)
-

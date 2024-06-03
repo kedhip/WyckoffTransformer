@@ -304,4 +304,3 @@ def train_from_config(config_dict: dict, device: torch.device):
         test_smact_validity = dataset_pd["test"]["composition"].map(smac_validity_from_counter).mean()
         print(f"SMAC-T validity on the test dataset: {test_smact_validity}")
         wandb.run.summary["smact_validity"] = {"generated": smac_validity_fraction, "test": test_smact_validity}
-
