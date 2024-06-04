@@ -21,7 +21,8 @@ from wyckoff_transformer.tokenization import (
     load_tensors_and_tokenisers, tensor_to_pyxtal,
     get_letter_from_ss_enum_idx, get_wp_index)
 from wyckoff_transformer.generator import WyckoffGenerator
-from wyckoff_transformer.evaluation import StatisticalEvaluator, smact_validity_from_record, smac_validity_from_counter
+from wyckoff_transformer.evaluation import (
+    StatisticalEvaluator, smact_validity_from_record, smac_validity_from_counter)
 
 
 class WyckoffTrainer():
@@ -33,6 +34,7 @@ class WyckoffTrainer():
                  augmented_field: str|None,
                  start_name: str,
                  target: TargetClass|str,
+                 evaluation_samples: int,
                  multiclass_next_token_with_order_permutation: bool,
                  optimisation_config: dict,
                  device: torch.DeviceObjType):
@@ -109,6 +111,7 @@ class WyckoffTrainer():
         self.early_stopping_patience_epochs = optimisation_config.early_stopping_patience_epochs    
         self.target = target
         self.multiclass_next_token_with_order_permutation = multiclass_next_token_with_order_permutation
+        self.evaluation_samples = evaluation_samples
 
 
     def get_loss(self,
@@ -176,20 +179,24 @@ class WyckoffTrainer():
         with torch.no_grad():
             val_loss = torch.zeros(self.cascade_len, device=self.device)
             train_loss = torch.zeros(self.cascade_len, device=self.device)
-            for known_seq_len in range(0, self.train_dataset.max_sequence_length):
-                if self.target == TargetClass.NextToken:
-                    for known_cascade_len in range(0, self.cascade_len):
-                        train_loss[known_cascade_len] += self.get_loss(
-                            self.train_dataset, known_seq_len, known_cascade_len)
-                        val_loss[known_cascade_len] += self.get_loss(
-                            self.val_dataset, known_seq_len, known_cascade_len)
-                else:
-                    train_loss += self.get_loss(self.train_dataset, known_seq_len, 0).sum(dim=0)
-                    val_loss += self.get_loss(self.val_dataset, known_seq_len, 0).sum(dim=0)
+            # Since we are sampling permutations and augmentations, and we rely on the
+            # validation loss for early stopping and learning rate scheduling, we need to
+            # average the loss over multiple samples.
+            for _ in range(self.evaluation_samples):
+                for known_seq_len in range(0, self.train_dataset.max_sequence_length):
+                    if self.target == TargetClass.NextToken:
+                        for known_cascade_len in range(0, self.cascade_len):
+                            train_loss[known_cascade_len] += self.get_loss(
+                                self.train_dataset, known_seq_len, known_cascade_len)
+                            val_loss[known_cascade_len] += self.get_loss(
+                                self.val_dataset, known_seq_len, known_cascade_len)
+                    else:
+                        train_loss += self.get_loss(self.train_dataset, known_seq_len, 0).sum(dim=0)
+                        val_loss += self.get_loss(self.val_dataset, known_seq_len, 0).sum(dim=0)
             # ln(P) = ln p(t_n|t_n-1, ..., t_1) + ... + ln p(t_2|t_1)
             # We are minimising the negative log likelihood of the whole sequences
-            val_loss /= len(self.val_dataset)
-            train_loss /= len(self.train_dataset)
+            val_loss /= self.evaluation_samples * len(self.val_dataset)
+            train_loss /= self.evaluation_samples * len(self.train_dataset)
             return val_loss, train_loss
 
 

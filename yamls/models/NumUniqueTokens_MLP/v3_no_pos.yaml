@@ -11,6 +11,7 @@ model:
   WyckoffTrainer_args:
     multiclass_next_token_with_order_permutation: true
     target: NumUniqueTokens
+    evaluation_samples: 10
   CascadeTransformer_args:
     aggregate_after_encoder: false
     mixer_layers: 1
@@ -41,8 +42,8 @@ optimisation:
     config:
       factor: 0.8
       # note that scheduler is called every validation_period epochs
-      patience: 200
-  validation_period: 10
+      patience: 20
+  validation_period: 100
   early_stopping_patience_epochs: 10000
   clip_grad_norm: 1.
   epochs: 500000
