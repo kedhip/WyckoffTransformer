@@ -6,6 +6,39 @@ from sklearn.isotonic import IsotonicRegression
 
 from cascade_transformer.dataset import AugmentedCascadeDataset, TargetClass
 
+
+class TemperatureScaling(nn.Module):
+    def __init__(self):
+        super(TemperatureScaling, self).__init__()
+        self.temperature = nn.Parameter(torch.ones(1))
+
+    def forward(self, logits):
+        # Apply temperature scaling
+        return self.temperature_scale(logits)
+
+    def temperature_scale(self, logits):
+        # Temperature scaling of logits
+        temperature = self.temperature.unsqueeze(1).expand(logits.size(0), logits.size(1))
+        return logits / temperature
+
+    def fit(self, logits, labels):
+        # Fit the temperature parameter using the validation data
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.LBFGS([self.temperature], lr=0.01, max_iter=50)
+
+        def eval():
+            optimizer.zero_grad()
+            loss = criterion(self.temperature_scale(logits), labels)
+            loss.backward()
+            return loss
+
+        print(f"Cross entropy before calibration: {criterion(logits, labels).item()}")
+        optimizer.step(eval)
+        print(f"Cross entropy after calibration: {criterion(self.temperature_scale(logits), labels).item()}")
+        print(f"Temperature: {self.temperature.item()}")
+        return self
+
+
 class VennAbersNaive():
     def __init__(self):
         self.isotonic_models = []
@@ -63,18 +96,17 @@ class WyckoffGenerator():
                         start_tokens, masked_data, target = dataset.get_masked_multiclass_cascade_data(
                             known_seq_len, known_cascade_len,
                             target_type=TargetClass.NextToken, multiclass_target=False)
-                        # We still need to one-hot encode the target so we can concatenate
-                        target = torch.nn.functional.one_hot(target, num_classes=dataset.num_classes[known_cascade_len])
                     model_output = self.model(start_tokens, masked_data, None, known_cascade_len)
-                    probas = torch.nn.functional.softmax(model_output, dim=1)
-                    # probas = model_output
-                    p_predicted.append(probas.numpy())
-                    true_targets.append(target.numpy())
-                p_predicted = np.concatenate(p_predicted, axis=0)
-                true_targets = np.concatenate(true_targets, axis=0)
-                print(f"Cross entropy for {cascade_name} before calibration: {cross_entropy(p_predicted, true_targets)}")
-                self.calibrators.append(VennAbersNaive().fit(p_predicted, true_targets))
-                print(f"Cross entropy for {cascade_name} after calibration: {cross_entropy(self.calibrators[-1].predict_proba(p_predicted), true_targets)}")
+                    # probas = torch.nn.functional.softmax(model_output, dim=1)
+                    probas = model_output
+                    p_predicted.append(probas)
+                    true_targets.append(target)
+                p_predicted = torch.concatenate(p_predicted, axis=0)
+                true_targets = torch.concatenate(true_targets, axis=0)
+                self.calibrators.append(TemperatureScaling().fit(p_predicted, true_targets))
+                #print(f"Cross entropy for {cascade_name} before calibration: {cross_entropy(p_predicted, true_targets)}")
+                #self.calibrators.append(VennAbersNaive().fit(p_predicted, true_targets))
+                #print(f"Cross entropy for {cascade_name} after calibration: {cross_entropy(self.calibrators[-1].predict_proba(p_predicted), true_targets)}")
         
 
     def generate_tensors(self, start: Tensor) -> List[Tensor]:
@@ -102,10 +134,11 @@ class WyckoffGenerator():
                     this_generation_input = [generated_cascade[:, :known_seq_len + 1] for generated_cascade in generated]
                     # print(this_generation_input[0].size())
                     model_output = self.model(start, this_generation_input, None, known_cascade_len)
+                    logits = calibrator(model_output)
                     # CONSIDER: remove probas for all special tokens aside from STOP
-                    probas = torch.nn.functional.softmax(model_output, dim=1)
+                    calibrated_probas = torch.nn.functional.softmax(logits, dim=1)
                     # calibrated_probas = probas.numpy()
                     # calibrated_probas = calibrator.predict_proba(probas.numpy())
                     generated[known_cascade_len][:, known_seq_len] = \
-                        torch.multinomial(torch.from_numpy(calibrated_probas), num_samples=1).squeeze()
+                        torch.multinomial(calibrated_probas, num_samples=1).squeeze()
             return generated

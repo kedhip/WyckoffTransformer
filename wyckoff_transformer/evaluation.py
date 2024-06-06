@@ -83,7 +83,6 @@ def smact_validity_from_record(record: Dict) -> bool:
     return smact_validity(record['species'], record['numIons'])
 
 
-
 class StatisticalEvaluator():
     def __init__(self,
                  test_dataset: pd.DataFrame):
