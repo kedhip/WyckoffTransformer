@@ -3,7 +3,6 @@ import os
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 from functools import partial
 from multiprocessing import Pool
-from io import StringIO
 import argparse
 import torch
 import json
@@ -14,6 +13,7 @@ from omegaconf import OmegaConf
 
 from wyckoff_transformer.generator import WyckoffGenerator
 from cascade_transformer.model import CascadeTransformer
+from cascade_transformer.dataset import AugmentedCascadeDataset
 from wyckoff_transformer.tokenization import (
     load_tensors_and_tokenisers, tensor_to_pyxtal,
     get_letter_from_ss_enum_idx, get_wp_index)
@@ -23,7 +23,7 @@ def main():
     parser = argparse.ArgumentParser(description="Generate structures using a Wyckoff transformer.")
     parser.add_argument("wandb_run", type=str, help="The W&B run ID.")
     parser.add_argument("output", type=Path, help="The output file.")
-    parser.add_argument("--rare-sg-threshold", type=int, default=100,
+    parser.add_argument("--rare-sg-threshold", type=int, default=10,
                         help="The threshold of underrepresented start_tokens (usually space groups)"
                         " to be dropped.")
     parser.add_argument("--n-tries", type=int, default=100,
@@ -53,8 +53,24 @@ def main():
     model.load_state_dict(torch.load(Path("runs", args.wandb_run, "best_model_params.pt"), map_location=device))
     # We need to grab any tensor from the train dataset
     max_sequence_len = tensors["train"][config.model.cascade_order[0]].size(1)
-    masks = {field: tokenisers[field].mask_token for field in config.model.cascade_order}
-    generator = WyckoffGenerator(model, config.model.cascade_order, masks, max_sequence_len)
+    
+    masks_dict = {field: tokenisers[field].mask_token for field in config.model.cascade_order}
+    pad_dict = {field: tokenisers[field].pad_token for field in config.model.cascade_order}
+    stops_dict = {field: tokenisers[field].stop_token for field in config.model.cascade_order}
+    num_classes_dict = {field: len(tokenisers[field]) for field in config.model.cascade_order}
+    validation_dataset = AugmentedCascadeDataset(
+            data=tensors["val"],
+            cascade_order=config.model.cascade_order,
+            masks=masks_dict,
+            pads=pad_dict,
+            stops=stops_dict,
+            num_classes=num_classes_dict,
+            start_field=config.model.start_token,
+            augmented_field=config.tokeniser.augmented_token_fields[0],
+            dtype=torch.long,
+            device=device)
+    generator = WyckoffGenerator(model, config.model.cascade_order, masks_dict, max_sequence_len)
+    generator.calibrate(validation_dataset)
     start = start_distribution.sample((generation_size,))
     generated_tensors = torch.stack(generator.generate_tensors(start), dim=-1)
 
