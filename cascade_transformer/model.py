@@ -6,6 +6,8 @@ from torch import Tensor
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
 from omegaconf import OmegaConf
 
+from cascade_transformer.dataset import batched_bincount
+
 
 class CascadeEmbedding(nn.Module):
     def __init__(self,
@@ -99,6 +101,7 @@ class CascadeTransformer(nn.Module):
                  aggregate_after_encoder: bool,
                  include_start_in_aggregation: bool,
                  aggregation_inclsion: str,
+                 concat_token_counts: bool,
                  num_fully_connected_layers: int,
                  mixer_layers: int,
                  outputs: str|int,
@@ -148,14 +151,20 @@ class CascadeTransformer(nn.Module):
         self.token_aggregation = token_aggregation
         self.aggregation_inclsion = aggregation_inclsion
         self.aggregate_after_encoder = aggregate_after_encoder
+        self.concat_token_counts = concat_token_counts
         self.include_start_in_aggregation = include_start_in_aggregation
         prediction_head_size = 2 * self.d_model if aggregation_inclsion == "concat" else self.d_model
         self.prediction_heads = torch.nn.ModuleList()
         if num_fully_connected_layers == 0:
             raise ValueError("num_fully_connected_layers must be at least 1 for dimensionality reasons.")
+        self.cascade = tuple(cascade)
         if outputs == "token_scores":
             for output_size, _, _ in cascade:
-                self.prediction_heads.append(get_perceptron(prediction_head_size, output_size, num_fully_connected_layers))
+                if concat_token_counts:
+                    this_head_size = prediction_head_size + output_size
+                else:
+                    this_head_size = prediction_head_size
+                self.prediction_heads.append(get_perceptron(this_head_size, output_size, num_fully_connected_layers))
         else:
             self.the_prediction_head = get_perceptron(prediction_head_size, outputs, num_fully_connected_layers)
 
@@ -198,14 +207,21 @@ class CascadeTransformer(nn.Module):
                 aggregation = torch.zeros_like(aggregation_input[:, 0])
             else:
                 aggregation = aggregation_input[:, aggregation_start_idx:-1].max(dim=1).values
+
     
         if self.aggregation_inclsion == "concat":
-            prediction_input = torch.cat([transformer_output[:, -1], aggregation], dim=1)
+            prediction_inputs = [transformer_output[:, -1], aggregation]
         elif self.aggregation_inclsion == "add":
-            prediction_input = transformer_output[:, -1] + aggregation
+            prediction_inputs = [transformer_output[:, -1] + aggregation]
         else:
             raise ValueError(f"Unknown aggregation_inclsion {self.aggregation_inclsion}")
+
+        if self.concat_token_counts:
+            token_counts = batched_bincount(cascade[prediction_head], dim=1, max_value=self.cascade[prediction_head][0])
+            prediction_inputs.append(token_counts)
         
+        prediction_input = torch.cat(prediction_inputs, dim=1)
+
         if prediction_head is None:
             return self.the_prediction_head(prediction_input)
         return self.prediction_heads[prediction_head](prediction_input)
