@@ -1,5 +1,6 @@
 from typing import Tuple, List, Optional, Iterable
 import logging
+import numpy as np
 import torch
 from torch import nn
 from torch import Tensor
@@ -65,6 +66,24 @@ def get_perceptron(input_dim: int, output_dim:int, num_layers:int) -> torch.nn.M
     return nn.Sequential(*this_sequence)
 
 
+def get_pyramid_perceptron(input_dim: int, output_dim:int, num_layers:int) -> torch.nn.Module:
+    """
+    Returns a perceptron with num_layers layers, with ReLU activation.
+    If num_layers is 1, returns a single linear layer.
+    """
+
+    if num_layers == 1:
+        return nn.Linear(input_dim, output_dim)
+    else:
+        this_sequence = []
+        layer_sizes = np.linspace(input_dim, output_dim, num_layers + 1, dtype=int)
+        for input_layer_size, output_layer_size in zip(layer_sizes[:-1], layer_sizes[1:]):
+            this_sequence.append(nn.Linear(input_layer_size, output_layer_size))
+            if len(this_sequence) < num_layers * 2 - 1:
+                this_sequence.append(nn.ReLU())
+    return nn.Sequential(*this_sequence)
+
+
 class CascadeTransformer(nn.Module):
     @classmethod
     def from_config_and_tokenisers(cls, config: OmegaConf,
@@ -106,6 +125,7 @@ class CascadeTransformer(nn.Module):
                  num_fully_connected_layers: int,
                  mixer_layers: int,
                  outputs: str|int,
+                 perceptron_shape: str,
                  TransformerEncoderLayer_args: dict,
                  TransformerEncoder_args: dict):
         """
@@ -134,6 +154,12 @@ class CascadeTransformer(nn.Module):
         self.start_embedding = nn.Embedding(n_start, self.d_model)
         self.learned_positional_encoding_max_size = learned_positional_encoding_max_size
         self.learned_positional_encoding_only_masked = learned_positional_encoding_only_masked
+        if perceptron_shape == "pyramid":
+            percepron_generator = get_pyramid_perceptron
+        elif perceptron_shape == "input":
+            percepron_generator = get_perceptron
+        else:
+            raise ValueError(f"Unknown perceptron_shape {perceptron_shape}")
         if learned_positional_encoding_max_size != 0:
             self.positions_embedding = nn.Embedding(
                 learned_positional_encoding_max_size,
@@ -146,11 +172,14 @@ class CascadeTransformer(nn.Module):
             self.mixer = nn.Linear(self.d_model, self.d_model, bias=False)
         else:
             # Hypthesis: since we concatenate embeddings, the mixer is a possible place to add non-linearity.
-            self.mixer = get_perceptron(self.d_model, self.d_model, mixer_layers)
+            self.mixer = percepron_generator(self.d_model, self.d_model, mixer_layers)
         # Note that in the normal usage, we want to condition the cascade element prediction
         # on the previous element, so care should be taken as to which head to call.
         self.token_aggregation = token_aggregation
-        self.aggregation_inclsion = aggregation_inclsion
+        if aggregation_inclsion == "None":
+            self.aggregation_inclsion = None
+        else:
+            self.aggregation_inclsion = aggregation_inclsion
         self.aggregate_after_encoder = aggregate_after_encoder
         self.concat_token_counts = concat_token_counts
         self.concat_token_presence = concat_token_presence
@@ -167,9 +196,9 @@ class CascadeTransformer(nn.Module):
                     this_head_size += output_size
                 if concat_token_presence:
                     this_head_size += output_size
-                self.prediction_heads.append(get_perceptron(this_head_size, output_size, num_fully_connected_layers))
+                self.prediction_heads.append(percepron_generator(this_head_size, output_size, num_fully_connected_layers))
         else:
-            self.the_prediction_head = get_perceptron(prediction_head_size, outputs, num_fully_connected_layers)
+            self.the_prediction_head = percepron_generator(prediction_head_size, outputs, num_fully_connected_layers)
 
 
     def forward(self,
@@ -216,6 +245,8 @@ class CascadeTransformer(nn.Module):
             prediction_inputs = [transformer_output[:, -1], aggregation]
         elif self.aggregation_inclsion == "add":
             prediction_inputs = [transformer_output[:, -1] + aggregation]
+        elif self.aggregation_inclsion is None:
+            prediction_inputs = [transformer_output[:, -1]]
         else:
             raise ValueError(f"Unknown aggregation_inclsion {self.aggregation_inclsion}")
 
