@@ -1,14 +1,12 @@
 """
 This module provides functions for reading the structures and extracting the symmetry information.
 """
-from itertools import repeat
+from typing import Optional
 from functools import partial
 from pathlib import Path
 import pickle
 import warnings
-import re
 from multiprocessing import Pool
-import numpy as np
 import pandas as pd
 from pymatgen.io.cif import CifParser
 from pymatgen.core import Structure, Element
@@ -95,7 +93,7 @@ def structure_to_sites(
     return sites_dict
 
 
-def read_MP(MP_csv: Path|str):
+def read_MP(MP_csv: Path|str, n_jobs: Optional[int] = None):
     """
     Reads a Materials Project CSV file and returns a DataFrame with structures.
 
@@ -116,7 +114,7 @@ def read_MP(MP_csv: Path|str):
             module="pymatgen.io.cif"
         )
         print("Suppressed CIF rounding warnings.")
-        with Pool() as pool:
+        with Pool(processes=n_jobs) as pool:
             MP_df["structure"] = pool.map(read_cif, MP_df["cif"])
     MP_df.drop(columns=["cif"], inplace=True)
     return MP_df
@@ -138,8 +136,8 @@ def get_composition(structure: Structure) -> dict[Element, float]:
 
 def compute_symmetry_sites(
     datasets_pd: dict[str, pd.DataFrame],
-    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "wychoffs_enumerated_by_ss.pkl.gz"
-    ) -> tuple[dict[str, pd.DataFrame], int]:
+    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "wychoffs_enumerated_by_ss.pkl.gz",
+    n_jobs: Optional[int] = None) -> tuple[dict[str, pd.DataFrame], int]:
 
     with open(wychoffs_enumerated_by_ss_file, "rb") as f:
         wychoffs_enumerated_by_ss = pickle.load(f)[0]
@@ -152,7 +150,7 @@ def compute_symmetry_sites(
 
     result = {}
     for dataset_name, dataset in datasets_pd.items():
-        with Pool() as p:
+        with Pool(processes=n_jobs) as p:
             symmetry_dataset = pd.DataFrame.from_records(
                 p.map(structure_to_sites_with_args, dataset['structure'])).set_index(dataset.index)
         symmetry_dataset["composition"] = dataset["structure"].map(get_composition)
@@ -163,8 +161,8 @@ def compute_symmetry_sites(
 def read_all_MP_csv(
     mp_path: Path = Path(__file__).parent.resolve() / "cdvae"/"data"/"mp_20",
     wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz",
-    file_format: str = "csv"
-    ) -> tuple[dict[str, pd.DataFrame], int]:
+    file_format: str = "csv",
+    n_jobs: Optional[int] = None) -> tuple[dict[str, pd.DataFrame], int]:
     """
     Reads all Materials Project CSV files and returns a dictionary of DataFrames.
 
@@ -184,6 +182,6 @@ def read_all_MP_csv(
         "test": read_MP(mp_path / f"test.{file_format}"),
         "val": read_MP(mp_path / f"val.{file_format}")
     }
-    symmetry_datasets = compute_symmetry_sites(datasets_pd, wychoffs_enumerated_by_ss_file)
+    symmetry_datasets = compute_symmetry_sites(datasets_pd, wychoffs_enumerated_by_ss_file, n_jobs=n_jobs)
     return symmetry_datasets
 

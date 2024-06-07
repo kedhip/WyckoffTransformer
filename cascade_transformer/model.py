@@ -216,6 +216,8 @@ class CascadeTransformer(nn.Module):
             prediction_inputs = [transformer_output[:, -1], aggregation]
         elif self.aggregation_inclsion == "add":
             prediction_inputs = [transformer_output[:, -1] + aggregation]
+        elif self.aggregation_inclsion is None:
+            prediction_inputs = [transformer_output[:, -1]]
         else:
             raise ValueError(f"Unknown aggregation_inclsion {self.aggregation_inclsion}")
 
