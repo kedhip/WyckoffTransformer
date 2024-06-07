@@ -127,26 +127,27 @@ class AugmentedCascadeDataset():
         self.cascade_order = cascade_order
         self.cascade_index_from_field = {name: i for i, name in enumerate(cascade_order)}
         self.augmented_field = augmented_field
-        self.augmented_field_index = cascade_order.index(augmented_field)
+        self.data = {name: data[name].type(dtype).to(device) for name in cascade_order if name != augmented_field}
+        self.max_sequence_length = next(iter(self.data.values())).size(1)
         self.masks = {name: torch.tensor(masks[name], dtype=dtype, device=device) for name in cascade_order}
         self.pads = {name: torch.tensor(pads[name], dtype=dtype, device=device) for name in cascade_order}
         self.stops = {name: torch.tensor(stops[name], dtype=dtype, device=device) for name in cascade_order}
         self.num_classes = tuple((num_classes[name] for name in cascade_order))
-
+        if augmented_field is None:
+            self.augmented_field_index = None
+        else:
+            # Ideally, we would like a nested tensor, but it doesn't support indexing we need
+            # So we use a custom data store, and indices to it
+            self.augmented_field_index = cascade_order.index(augmented_field)
+            self.augmentation_variants = torch.tensor(
+                list(map(len, data[f"{augmented_field}_augmented"])), dtype=dtype, device=device)
+            self.augmentation_start_indices = (torch.cumsum(self.augmentation_variants, dim=0) -
+                self.augmentation_variants) * self.max_sequence_length
+            # It will be used in torch.gather
+            self.augmentation_data_store = torch.cat([torch.cat(x, dim=0) for x in data[f"{augmented_field}_augmented"]],
+                dim=0).type(dtype).to(device).unsqueeze(0).expand(self.augmentation_variants.size(0), -1)
         self.start_tokens = data[start_field].type(dtype).to(device)
-        self.data = {name: data[name].type(dtype).to(device) for name in cascade_order if name != augmented_field}
         self.pure_sequences_lengths = data["pure_sequence_length"].type(dtype).to(device)
-
-        # Ideally, we would like a nested tensor, but it doesn't support indexing we need
-        # So we use a custom data store, and indices to it
-        self.max_sequence_length = next(iter(self.data.values())).size(1)
-        self.augmentation_variants = torch.tensor(
-            list(map(len, data[f"{augmented_field}_augmented"])), dtype=dtype, device=device)
-        self.augmentation_start_indices = (torch.cumsum(self.augmentation_variants, dim=0) -
-            self.augmentation_variants) * self.max_sequence_length
-        # It will be used in torch.gather
-        self.augmentation_data_store = torch.cat([torch.cat(x, dim=0) for x in data[f"{augmented_field}_augmented"]],
-            dim=0).type(dtype).to(device).unsqueeze(0).expand(self.augmentation_variants.size(0), -1)
 
 
     def __len__(self):
@@ -170,7 +171,8 @@ class AugmentedCascadeDataset():
             # assert known_seq_len < data.shape[1]
             # assert known_seq_len >= 0
 
-            augmented_data = self.get_augmentation()
+            if self.augmented_field_index is not None:
+                augmented_data = self.get_augmentation()
             if known_cascade_len == self.augmented_field_index:
                 target = augmented_data[:, known_seq_len]
             else:
@@ -210,7 +212,8 @@ class AugmentedCascadeDataset():
         
         logger.debug("Known sequence length %i", known_seq_len)
         logger.debug("Known cascade length %i", known_cascade_len)
-        augmented_data = self.get_augmentation()
+        if self.augmented_field_index is not None:
+            augmented_data = self.get_augmentation()
         # STOP is not included in the pure length, but is a viable target
         target_is_viable = self.pure_sequences_lengths >= known_seq_len
         chosen_pure_sequences_lengths = self.pure_sequences_lengths[target_is_viable]

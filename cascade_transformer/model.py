@@ -102,6 +102,7 @@ class CascadeTransformer(nn.Module):
                  include_start_in_aggregation: bool,
                  aggregation_inclsion: str,
                  concat_token_counts: bool,
+                 concat_token_presence: bool,
                  num_fully_connected_layers: int,
                  mixer_layers: int,
                  outputs: str|int,
@@ -152,6 +153,7 @@ class CascadeTransformer(nn.Module):
         self.aggregation_inclsion = aggregation_inclsion
         self.aggregate_after_encoder = aggregate_after_encoder
         self.concat_token_counts = concat_token_counts
+        self.concat_token_presence = concat_token_presence
         self.include_start_in_aggregation = include_start_in_aggregation
         prediction_head_size = 2 * self.d_model if aggregation_inclsion == "concat" else self.d_model
         self.prediction_heads = torch.nn.ModuleList()
@@ -160,10 +162,11 @@ class CascadeTransformer(nn.Module):
         self.cascade = tuple(cascade)
         if outputs == "token_scores":
             for output_size, _, _ in cascade:
+                this_head_size = prediction_head_size
                 if concat_token_counts:
-                    this_head_size = prediction_head_size + output_size
-                else:
-                    this_head_size = prediction_head_size
+                    this_head_size += output_size
+                if concat_token_presence:
+                    this_head_size += output_size
                 self.prediction_heads.append(get_perceptron(this_head_size, output_size, num_fully_connected_layers))
         else:
             self.the_prediction_head = get_perceptron(prediction_head_size, outputs, num_fully_connected_layers)
@@ -218,6 +221,10 @@ class CascadeTransformer(nn.Module):
 
         if self.concat_token_counts:
             token_counts = batched_bincount(cascade[prediction_head], dim=1, max_value=self.cascade[prediction_head][0])
+            prediction_inputs.append(token_counts)
+
+        if self.concat_token_presence:
+            token_counts = batched_bincount(cascade[prediction_head], dim=1, max_value=self.cascade[prediction_head][0], dtype=torch.bool)
             prediction_inputs.append(token_counts)
         
         prediction_input = torch.cat(prediction_inputs, dim=1)

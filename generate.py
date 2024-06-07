@@ -1,6 +1,3 @@
-# One way to be sure we don't grab any cuda
-import os
-os.environ["CUDA_VISIBLE_DEVICES"] = ""
 from functools import partial
 from multiprocessing import Pool
 import argparse
@@ -8,6 +5,7 @@ import torch
 import json
 import gzip
 import wandb
+import logging
 from pathlib import Path
 from omegaconf import OmegaConf
 
@@ -23,17 +21,21 @@ def main():
     parser = argparse.ArgumentParser(description="Generate structures using a Wyckoff transformer.")
     parser.add_argument("wandb_run", type=str, help="The W&B run ID.")
     parser.add_argument("output", type=Path, help="The output file.")
-    parser.add_argument("--rare-sg-threshold", type=int, default=10,
+    parser.add_argument("--calibrate", action="store_true", help="Calibrate the generator.")
+    parser.add_argument("--rare-sg-threshold", type=int, default=0,
                         help="The threshold of underrepresented start_tokens (usually space groups)"
                         " to be dropped.")
     parser.add_argument("--n-tries", type=int, default=100,
                         help="The number of generation tries before giving up on invalid structures.")
+    parser.add_argument("--debug", action="store_true", help="Run in debug mode.")
     args = parser.parse_args()
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
     if args.output.suffixes != [".json", ".gz"]:
         raise ValueError("Output file must be a .json.gz file.")
     device = torch.device("cpu")
-    with wandb.init(id=args.wandb_run, resume=True) as run:
-        config = OmegaConf.create(dict(run.config))
+    wandb_run = wandb.Api().run(f"WyckoffTransformer/{args.wandb_run}")
+    config = OmegaConf.create(dict(wandb_run.config))
 
     # The start tokens will be sampled from the train+validation datasets,
     # to preserve the sanctity of the test dataset and ex nihilo generation.
@@ -42,8 +44,7 @@ def main():
     del tensors["test"]
     
     max_start = len(tokenisers[config.model.start_token])
-    start_counts = torch.bincount(tensors["train"][config.model.start_token], minlength=max_start) + \
-                   torch.bincount(tensors["val"][config.model.start_token], minlength=max_start)
+    start_counts = torch.bincount(tensors["train"][config.model.start_token], minlength=max_start)
     underrepresented = start_counts < args.rare_sg_threshold
     start_counts[underrepresented] = 0
     print(f"Excluded {underrepresented.sum()} underrepresented start tokens.")
@@ -58,8 +59,14 @@ def main():
     pad_dict = {field: tokenisers[field].pad_token for field in config.model.cascade_order}
     stops_dict = {field: tokenisers[field].stop_token for field in config.model.cascade_order}
     num_classes_dict = {field: len(tokenisers[field]) for field in config.model.cascade_order}
-    validation_dataset = AugmentedCascadeDataset(
-            data=tensors["val"],
+
+    generator = WyckoffGenerator(model, config.model.cascade_order, masks_dict, max_sequence_len)
+
+    if args.calibrate:
+        selected = ~underrepresented[tensors["val"][config.model.start_token]]
+        filtered_tensors = {k: v[selected] for k, v in tensors["val"].items()}
+        validation_dataset = AugmentedCascadeDataset(
+            data=filtered_tensors,
             cascade_order=config.model.cascade_order,
             masks=masks_dict,
             pads=pad_dict,
@@ -69,8 +76,7 @@ def main():
             augmented_field=config.tokeniser.augmented_token_fields[0],
             dtype=torch.long,
             device=device)
-    generator = WyckoffGenerator(model, config.model.cascade_order, masks_dict, max_sequence_len)
-    generator.calibrate(validation_dataset)
+        generator.calibrate(validation_dataset)
     start = start_distribution.sample((generation_size,))
     generated_tensors = torch.stack(generator.generate_tensors(start), dim=-1)
 
@@ -92,4 +98,6 @@ def main():
 
 
 if __name__ == "__main__":
+    import os
+    os.environ["CUDA_VISIBLE_DEVICES"] = ""
     main()

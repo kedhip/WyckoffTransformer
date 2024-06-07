@@ -30,7 +30,7 @@ class WyckoffTrainer():
                  model: nn.Module,
                  torch_datasets: dict,
                  tokenisers: dict,
-                 cascade_order: Tuple,
+                 cascade_order: Tuple[str],
                  augmented_field: str|None,
                  start_name: str,
                  target: TargetClass|str,
@@ -217,21 +217,22 @@ class WyckoffTrainer():
                 val_loss_dict["total"] = total_val_loss.item()
                 train_loss_dict = {name: train_loss_epoch[i] for i, name in enumerate(self.cascade_order)}
                 train_loss_dict["total"] = train_loss_epoch.sum().item()
-                wandb.log({"val_loss_epoch": val_loss_dict,
-                            "train_loss_epoch": train_loss_dict,
+                wandb.log({"loss_epoch": {"val": val_loss_dict, "train": train_loss_dict},
                             "lr": self.optimizer.param_groups[0]['lr'],
                             "epoch": epoch}, commit=False)
                 if total_val_loss < best_val_loss:
                     best_val_loss = total_val_loss
                     best_val_epoch = epoch
                     torch.save(self.model.state_dict(), best_model_params_path)
-                    print(f"Epoch {epoch} val_loss_epoch {total_val_loss} saved to {best_model_params_path}")
+                    print(f"Epoch {epoch}; loss_epoch.val {total_val_loss} saved to {best_model_params_path}")
                     wandb.log({"best_val_loss": best_val_loss}, commit=False)
                 if epoch - best_val_epoch > self.early_stopping_patience_epochs:
                     print(f"Early stopping at epoch {epoch} after more than {self.early_stopping_patience_epochs}"
                            " epochs without improvement")
-                    return
+                    break
                 self.scheduler.step(total_val_loss)
+        # Make sure we log the last evaluation results
+        wandb.log(dict(), commit=True)
 
 
     def generate_structures(self, n_structures: int):
@@ -269,15 +270,21 @@ def train_from_config(config_dict: dict, device: torch.device):
     tensors, tokenisers = load_tensors_and_tokenisers(config.dataset, config.tokeniser.name)
     model = CascadeTransformer.from_config_and_tokenisers(config, tokenisers, device)
     
+    if "augmented_token_fields" in config.tokeniser and len(config.tokeniser.augmented_token_fields) == 1:
+        augmented_field = config.tokeniser.augmented_token_fields[0]
+    else:
+        augmented_field = None
     trainer = WyckoffTrainer(
         model, tensors, tokenisers, config.model.cascade_order, 
-        config.tokeniser.augmented_token_fields[0],
+        augmented_field,
         config.model.start_token,
         optimisation_config=config.optimisation, device=device,
         **config.model.WyckoffTrainer_args)
     trainer.train()
     if config.model.WyckoffTrainer_args.target == "NextToken":
-        print("Training complete, generating a sample of Wykchoff genes.")
+        print("Training complete, loading the best model")
+        model.load_state_dict(torch.load(trainer.run_path / "best_model_params.pt"))
+        print("Generating a sample of Wykchoff genes.")
         generated_wp = trainer.generate_structures(config.evaluation.n_structures_to_generate)
         wp_formal_validity = len(generated_wp) / config.evaluation.n_structures_to_generate
         wandb.run.summary["wp_formal_validity"] = wp_formal_validity

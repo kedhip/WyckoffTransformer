@@ -1,0 +1,20 @@
+# For the code to work, must be the same as the file name
+name: mp_20_elem_only
+deterministic: false
+# tokens will be just numbered in a random order, withot a guarantee of reproducibility
+dtype: uint8
+# not only memory savings, but also debug assist!
+# if we forget to propely convert dtype somewhere ahead
+# torch will highly likely complain about it
+token_fields:
+  pure_categorical:
+    - elements
+augmented_token_fields: []
+sequence_fields:
+  pure_categorical:
+    - spacegroup_number
+  # converts a Counter into tokens, uses the specified field name embedding
+  # Basically, aimed at e. g.
+  # {Element Nd: 1.0, Element Al: 8.0, Element Cu: 4.0}
+  counters:
+    composition: elements

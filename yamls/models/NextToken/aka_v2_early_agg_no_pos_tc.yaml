@@ -1,13 +1,16 @@
 model:
-  start_token: spacegroup_number
+  start_token:
+    spacegroup_number: catergorical
+    composition: many_hot
   cascade_order:
     - elements
     - site_symmetries
     - sites_enumeration
-  cascade_embedding_size:
+  embedding_size:
     elements: 32
     site_symmetries: 128
     sites_enumeration: 8
+    spacegroup_number: 32
   WyckoffTrainer_args:
     multiclass_next_token_with_order_permutation: true
     target: NextToken
