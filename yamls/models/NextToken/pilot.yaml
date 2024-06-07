@@ -13,11 +13,12 @@ model:
     target: NextToken
     evaluation_samples: 2
   CascadeTransformer_args:
+    perceptron_shape: pyramid
     concat_token_counts: false
     concat_token_presence: true
     aggregate_after_encoder: false
     mixer_layers: 1
-    token_aggregation: max
+    token_aggregation: sum
     include_start_in_aggregation: false
     aggregation_inclsion: concat
     outputs: token_scores
