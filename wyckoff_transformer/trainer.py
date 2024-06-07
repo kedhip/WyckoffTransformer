@@ -25,6 +25,9 @@ from wyckoff_transformer.evaluation import (
     StatisticalEvaluator, smact_validity_from_record, smac_validity_from_counter)
 
 
+def ks_to_dict(ks_statistic) -> Dict[str, float]:
+    return {"statistic": ks_statistic.statistic, "pvalue": ks_statistic.pvalue}
+
 class WyckoffTrainer():
     def __init__(self,
                  model: nn.Module,
@@ -235,9 +238,11 @@ class WyckoffTrainer():
         wandb.log(dict(), commit=True)
 
 
-    def generate_structures(self, n_structures: int):
+    def generate_structures(self, n_structures: int, calibrate: bool):
         generator = WyckoffGenerator(
             self.model, self.cascade_order, self.train_dataset.masks, self.train_dataset.max_sequence_length)
+        if calibrate:
+            generator.calibrate(self.val_dataset)
         max_start = self.model.start_embedding.num_embeddings
         start_counts = torch.bincount(
             self.train_dataset.start_tokens, minlength=max_start) + torch.bincount(
@@ -258,8 +263,40 @@ class WyckoffTrainer():
         return valid_structures
 
 
-def ks_to_dict(ks_statistic) -> Dict[str, float]:
-    return {"statistic": ks_statistic.statistic, "pvalue": ks_statistic.pvalue}
+    def generate_evaluate_and_log_wp(
+        self,
+        generation_name: str,
+        calibrate: bool,
+        n_structures: int,
+        evaluator: StatisticalEvaluator):
+
+        print(f"Generating a sample of Wykchoff genes named {generation_name}")
+        generated_wp = self.generate_structures(n_structures, calibrate=calibrate)
+        wp_formal_validity = len(generated_wp) / n_structures
+        wandb.run.summary["wp"][generation_name] = {"formal_validity": wp_formal_validity}
+        print(f"Wyckchoffs' formal validity: {wp_formal_validity}")
+        save_path = self.run_path / f"gnerated_wp_{generation_name}.json.gz"
+        with gzip.open(save_path, "wt") as f:
+            json.dump(generated_wp, f)
+        wandb.save(str(save_path), base_path=self.run_path, policy="now")
+        print(f"Generated dataset size: {len(generated_wp)}")
+        
+        ks_num_sites = evaluator.get_num_sites_ks(generated_wp)
+        ks_num_elements = evaluator.get_num_elements_ks(generated_wp)
+        ks_dof = evaluator.get_dof_ks(generated_wp)
+        wandb.run.summary["wp"][generation_name]["ks_num_sites_vs_test"] = ks_to_dict(ks_num_sites)
+        wandb.run.summary["wp"][generation_name]["ks_num_elements_vs_test"] = ks_to_dict(ks_num_elements)
+        wandb.run.summary["wp"][generation_name]["ks_dof_vs_test"] = ks_to_dict(ks_dof)
+        print("Kolmogorov-Smirnov statistics:")
+        print(f"Number of sites: {ks_num_sites}")
+        print(f"Number of elements: {ks_num_elements}")
+        print(f"Degrees of freedom: {ks_dof}")
+        wandb.run.summary["wp"][generation_name]["generated_actual_size"] = len(generated_wp)
+        
+        smac_validity_count = sum(map(smact_validity_from_record, generated_wp))
+        smac_validity_fraction = smac_validity_count / len(generated_wp)
+        print(f"SMAC-T validity: fraction {smac_validity_fraction}; count {smac_validity_count}")
+        wandb.run.summary["smact_validity"][generation_name] = smac_validity_fraction
 
 
 def train_from_config(config_dict: dict, device: torch.device):
@@ -284,37 +321,18 @@ def train_from_config(config_dict: dict, device: torch.device):
     if config.model.WyckoffTrainer_args.target == "NextToken":
         print("Training complete, loading the best model")
         model.load_state_dict(torch.load(trainer.run_path / "best_model_params.pt"))
-        print("Generating a sample of Wykchoff genes.")
-        generated_wp = trainer.generate_structures(config.evaluation.n_structures_to_generate)
-        wp_formal_validity = len(generated_wp) / config.evaluation.n_structures_to_generate
-        wandb.run.summary["wp_formal_validity"] = wp_formal_validity
-        print(f"Wyckchoffs' formal validity: {wp_formal_validity}")
-        with gzip.open(trainer.run_path / "generated_wp.json.gz", "wt") as f:
-            json.dump(generated_wp, f)
-        wandb.save(str(trainer.run_path / "generated_wp.json.gz"), base_path=trainer.run_path, policy="now")
         data_cache_path = Path(__file__).parent.parent.resolve() / "cache" / config.dataset / "data.pkl.gz"
         with gzip.open(data_cache_path, "rb") as f:
             dataset_pd = pickle.load(f)
         del dataset_pd["train"]
-        del dataset_pd["val"]
         print(f"Test dataset size: {len(dataset_pd['test']['site_symmetries'])}")
-        print(f"Generated dataset size: {len(generated_wp)}")
-        evaluator = StatisticalEvaluator(dataset_pd["test"])
-        ks_num_sites = evaluator.get_num_sites_ks(generated_wp)
-        ks_num_elements = evaluator.get_num_elements_ks(generated_wp)
-        ks_dof = evaluator.get_dof_ks(generated_wp)
-        wandb.run.summary["ks_num_sites_vs_test"] = ks_to_dict(ks_num_sites)
-        wandb.run.summary["ks_num_elements_vs_test"] = ks_to_dict(ks_num_elements)
-        wandb.run.summary["ks_dof_vs_test"] = ks_to_dict(ks_dof)
-        print("Kolmogorov-Smirnov statistics:")
-        print(f"Number of sites: {ks_num_sites}")
-        print(f"Number of elements: {ks_num_elements}")
-        print(f"Degrees of freedom: {ks_dof}")
-        wandb.run.summary["generated_actual_size"] = len(generated_wp)
         wandb.run.summary["test_dataset_size"] = len(dataset_pd["test"]["site_symmetries"])
-        smac_validity_count = sum(map(smact_validity_from_record, generated_wp))
-        smac_validity_fraction = smac_validity_count / len(generated_wp)
-        print(f"SMAC-T validity: fraction {smac_validity_fraction}; count {smac_validity_count}")
+        evaluator = StatisticalEvaluator(dataset_pd["test"])
         test_smact_validity = dataset_pd["test"]["composition"].map(smac_validity_from_counter).mean()
         print(f"SMAC-T validity on the test dataset: {test_smact_validity}")
-        wandb.run.summary["smact_validity"] = {"generated": smac_validity_fraction, "test": test_smact_validity}
+        wandb.run.summary["smact_validity"] = {"test": test_smact_validity}
+        wandb.run.summary["wp"] = {}
+        trainer.generate_evaluate_and_log_wp(
+            "no_calibration", calibrate=False, n_structures=config.evaluation.n_structures_to_generate, evaluator=evaluator)
+        trainer.generate_evaluate_and_log_wp(
+            "temperature_calibration", calibrate=True, n_structures=config.evaluation.n_structures_to_generate, evaluator=evaluator)
