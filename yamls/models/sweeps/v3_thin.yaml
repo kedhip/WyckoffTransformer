@@ -1,0 +1,52 @@
+method: random
+metric:
+  goal: minimize
+  name: best_val_loss
+parameters:
+  base_config:
+    distribution: constant
+    value: NextToken/v3_thin_pyramid
+  dataset:
+    distribution: constant
+    value: mp_20_biternary
+  model:
+    parameters:
+      cascade_order:
+        values: [["elements", "site_symmetries", "sites_enumeration"],
+                  ["site_symmetries", "elements", "sites_enumeration"]]
+        distribution: categorical
+      cascade_embedding_size:
+        parameters:
+          elements:
+            values: [4, 8, 16, 32]
+            distribution: categorical
+          site_symmetries:
+            values: [8, 16, 32, 64, 128]
+          sites_enumeration:
+            values: [4, 8, 16, 32]
+      CascadeTransformer_args:
+        parameters:
+          perceptron_shape:
+            values: ["pyramid", "input"]
+            distribution: categorical
+          aggregation_inclsion:
+            values: ["concat", "add", None]
+            distribution: categorical
+          token_aggregation:
+            values: ["sum", "max"]
+            distribution: categorical
+          aggregate_after_encoder:
+            values: [true, false]
+            distribution: categorical
+          TransformerEncoderLayer_args:
+            parameters:
+              nhead:
+                values: [1, 2, 4, 8]
+              dim_feedforward:
+                values: [16, 32, 64, 128, 256, 512]
+              dropout:
+                values: [0.1, 0.2, 0.3]
+          TransformerEncoder_args:
+            parameters:
+              num_layers:
+                values: [1, 2, 4]

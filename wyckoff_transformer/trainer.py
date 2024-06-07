@@ -6,6 +6,7 @@ import gzip
 import json
 import pickle
 import logging
+import numpy as np
 from multiprocessing import Pool
 import torch
 from torch import nn
@@ -273,7 +274,7 @@ class WyckoffTrainer():
         print(f"Generating a sample of Wykchoff genes named {generation_name}")
         generated_wp = self.generate_structures(n_structures, calibrate=calibrate)
         wp_formal_validity = len(generated_wp) / n_structures
-        wandb.run.summary["wp"][generation_name] = {"formal_validity": wp_formal_validity}
+        wandb.run.summary["formal_validity"][generation_name] = wp_formal_validity
         print(f"Wyckchoffs' formal validity: {wp_formal_validity}")
         save_path = self.run_path / f"gnerated_wp_{generation_name}.json.gz"
         with gzip.open(save_path, "wt") as f:
@@ -281,10 +282,14 @@ class WyckoffTrainer():
         wandb.save(str(save_path), base_path=self.run_path, policy="now")
         print(f"Generated dataset size: {len(generated_wp)}")
         
-        ks_num_sites = evaluator.get_num_sites_ks(generated_wp)
-        ks_num_elements = evaluator.get_num_elements_ks(generated_wp)
+        ks_num_sites, generated_num_sites = evaluator.get_num_sites_ks(generated_wp, return_counts=True)
+        num_sites_bins = np.arange(0, 21)
+        num_sites_hist = np.histogram(generated_num_sites, bins=num_sites_bins)
+        wandb.run.summary["num_sites"][generation_name] = {"hist": wandb.Histogram(np_histogram=num_sites_hist)}
+        
+        ks_num_elements, generated_num_elements = evaluator.get_num_elements_ks(generated_wp, return_counts=True)
         ks_dof = evaluator.get_dof_ks(generated_wp)
-        wandb.run.summary["wp"][generation_name]["ks_num_sites_vs_test"] = ks_to_dict(ks_num_sites)
+        wandb.run.summary["wp"][generation_name] = {"ks_num_sites_vs_test": ks_to_dict(ks_num_sites)}
         wandb.run.summary["wp"][generation_name]["ks_num_elements_vs_test"] = ks_to_dict(ks_num_elements)
         wandb.run.summary["wp"][generation_name]["ks_dof_vs_test"] = ks_to_dict(ks_dof)
         print("Kolmogorov-Smirnov statistics:")
@@ -323,14 +328,22 @@ def train_from_config(config_dict: dict, device: torch.device):
         model.load_state_dict(torch.load(trainer.run_path / "best_model_params.pt"))
         data_cache_path = Path(__file__).parent.parent.resolve() / "cache" / config.dataset / "data.pkl.gz"
         with gzip.open(data_cache_path, "rb") as f:
-            dataset_pd = pickle.load(f)
-        del dataset_pd["train"]
-        print(f"Test dataset size: {len(dataset_pd['test']['site_symmetries'])}")
-        wandb.run.summary["test_dataset_size"] = len(dataset_pd["test"]["site_symmetries"])
-        evaluator = StatisticalEvaluator(dataset_pd["test"])
-        test_smact_validity = dataset_pd["test"]["composition"].map(smac_validity_from_counter).mean()
+            datasets_pd = pickle.load(f)
+        del datasets_pd["train"]
+        del datasets_pd["val"]
+
+        test_no_sites = datasets_pd['test']['site_symmetries'].map(len).values
+        num_sites_bins = np.arange(0, 21)
+        test_no_sites_hist = np.histogram(test_no_sites, bins=num_sites_bins)
+        wandb.run.summary["num_sites"] = {"test": {"hist": wandb.Histogram(np_histogram=test_no_sites_hist)}}
+
+        print(f"Test dataset size: {len(datasets_pd['test']['site_symmetries'])}")
+        wandb.run.summary["test_dataset_size"] = len(datasets_pd["test"]["site_symmetries"])
+        evaluator = StatisticalEvaluator(datasets_pd["test"])
+        test_smact_validity = datasets_pd["test"]["composition"].map(smac_validity_from_counter).mean()
         print(f"SMAC-T validity on the test dataset: {test_smact_validity}")
         wandb.run.summary["smact_validity"] = {"test": test_smact_validity}
+        wandb.run.summary["formal_validity"] = {}
         wandb.run.summary["wp"] = {}
         trainer.generate_evaluate_and_log_wp(
             "no_calibration", calibrate=False, n_structures=config.evaluation.n_structures_to_generate, evaluator=evaluator)
