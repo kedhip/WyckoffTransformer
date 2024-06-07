@@ -150,7 +150,10 @@ class CascadeTransformer(nn.Module):
         # Note that in the normal usage, we want to condition the cascade element prediction
         # on the previous element, so care should be taken as to which head to call.
         self.token_aggregation = token_aggregation
-        self.aggregation_inclsion = aggregation_inclsion
+        if aggregation_inclsion == "None":
+            self.aggregation_inclsion = None
+        else:
+            self.aggregation_inclsion = aggregation_inclsion
         self.aggregate_after_encoder = aggregate_after_encoder
         self.concat_token_counts = concat_token_counts
         self.concat_token_presence = concat_token_presence
