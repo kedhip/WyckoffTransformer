@@ -6,28 +6,25 @@ model:
     - sites_enumeration
   cascade_embedding_size:
     elements: 16
-    site_symmetries: 16
+    site_symmetries: 128
     sites_enumeration: 4
   WyckoffTrainer_args:
     multiclass_next_token_with_order_permutation: true
     target: NextToken
   CascadeTransformer_args:
     mixer_layers: 1
-    token_aggregation: max
-    include_start_in_aggregation: false,
-    aggregation_inclsion: concat,
-    outputs: "token_scores"
     num_fully_connected_layers: 1
+    outputs: "token_scores"
     use_token_sum_for_prediction: true
     learned_positional_encoding_max_size: 21
     learned_positional_encoding_only_masked: true
     # Will be passed as is to CascadeTransformer
     TransformerEncoderLayer_args:
-      nhead: 2
-      dim_feedforward: 32
-      dropout: 0.1
+      nhead: 4
+      dim_feedforward: 512
+      dropout: 0.2
     TransformerEncoder_args:
-      num_layers: 2
+      num_layers: 4
       # Nested tensors are broken in the current version of PyTorch
       # https://github.com/pytorch/pytorch/issues/97111
       # We also don't need them as we ensure that batches all have the same length in WychoffTrainer
@@ -36,7 +33,7 @@ optimisation:
   optimiser:
     name: SGD
     config:
-      lr: 0.1
+      lr: 0.2
   scheduler:
     name: ReduceLROnPlateau
     config:
@@ -44,10 +41,10 @@ optimisation:
       # note that scheduler is called every validation_period epochs
       patience: 50
   validation_period: 10
-  early_stopping_patience_epochs: 1000
-  clip_grad_norm: 0.5
-  epochs: 50
+  early_stopping_patience_epochs: 6000
+  clip_grad_norm: 1.
+  epochs: 50000
 tokeniser:
-  name: mp_20_CSP
+  name: mp_20_naive
 evaluation:
-  n_structures_to_generate: 3000
+  n_structures_to_generate: 1000

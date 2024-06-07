@@ -1,0 +1,23 @@
+method: grid
+metric:
+  goal: minimize
+  name: best_val_loss
+parameters:
+  base_config:
+    distribution: constant
+    value: wyckoff_transformer_autumn_sea
+  dataset:
+    distribution: constant
+    value: mp_20_biternary
+  model:
+    parameters:
+      cascade_order:
+        values: [["elements", "site_symmetries", "sites_enumeration"],
+                  ["site_symmetries", "elements", "sites_enumeration"]]
+        distribution: categorical
+      CascadeTransformer_args:
+        parameters:
+          use_token_sum_for_prediction:
+            values: [true, false]
+          learned_positional_encoding_max_size:
+            values: [0, 21]

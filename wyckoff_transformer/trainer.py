@@ -1,73 +1,67 @@
-from typing import Tuple
+from typing import Tuple, Dict
 from random import randint
-import pathlib
-import datetime
+from functools import partial
+from pathlib import Path
+import gzip
+import json
+import pickle
+import logging
+from multiprocessing import Pool
 import torch
 from torch import nn
 from torch import Tensor
-import wandb
 from omegaconf import OmegaConf
+import pyxtal
+import wandb
 
-from cascade_transformer.dataset import AugmentedCascadeDataset
+
+from cascade_transformer.dataset import AugmentedCascadeDataset, TargetClass
 from cascade_transformer.model import CascadeTransformer
-from wyckoff_transformer.tokenization import load_tensors_and_tokenisers
+from wyckoff_transformer.tokenization import (
+    load_tensors_and_tokenisers, tensor_to_pyxtal,
+    get_letter_from_ss_enum_idx, get_wp_index)
+from wyckoff_transformer.generator import WyckoffGenerator
+from wyckoff_transformer.evaluation import (
+    StatisticalEvaluator, smact_validity_from_record, smac_validity_from_counter)
 
-
-class WyckoffGenerator():
-    def __init__(self,
-                 model: nn.Module,
-                 cascade_order: Tuple,
-                 mask: dict,
-                 max_len: int,
-                 device: str,
-                 dtype = torch.int64):
-        self.model = model
-        self.max_len = max_len
-        self.cascade_order = cascade_order
-        self.device = device
-        self.mask_tensor = torch.tensor([mask[name] for name in cascade_order], dtype=dtype, device=device)
-
-
-    def generate_tensors(self, start: Tensor) -> Tensor:
-        """
-        Generates a sequence of tokens.
-
-        Arguments:
-            start: The start token. It should be a tensor of shape [batch_size, 1, len(cascade_order)].
-
-        Returns:
-            The generated sequence of tokens. It has shape [batch_size, max_len, len(cascade_order)].
-        """
-        self.model.eval()
-        with torch.no_grad():
-            batch_size = start.size(0)
-            generated = [torch.empty(batch_size, self.max_len, dtype=start.dtype, device=self.device) \
-                for _ in range(len(self.cascade_order))]
-            for known_seq_len in range(self.max_len):
-                for known_cascade_len in range(len(self.cascade_order)):
-                    masked_data = get_masked_cascade_data(
-                        generated, self.mask_tensor, known_seq_len, known_cascade_len)
-                    model_output = self.model(start, masked_data, None, known_cascade_len)
-                    probas = torch.nn.functional.softmax(model_output, dim=1)
-                    # +1 as START
-                    generated[known_cascade_len][:, known_seq_len] = torch.multinomial(probas, num_samples=1).squeeze()
-            return generated
 
 class WyckoffTrainer():
     def __init__(self,
                  model: nn.Module,
                  torch_datasets: dict,
                  tokenisers: dict,
-                 cascade_order: Tuple,
+                 cascade_order: Tuple[str],
                  augmented_field: str|None,
                  start_name: str,
-                 device: torch.DeviceObjType,
-                 optimisation_config: dict):
+                 target: TargetClass|str,
+                 evaluation_samples: int,
+                 multiclass_next_token_with_order_permutation: bool,
+                 optimisation_config: dict,
+                 device: torch.DeviceObjType):
+        """
+        Args:
+            multiclass_next_token_with_order_permutation: Train a permutation-invariant model by permuting the sequences,
+                    If the target is the next token, predict the 0-th cascade field as a multiclass target.
+                    You might also want to ensure that the model is permutation-invariant; pay attention to the positional encoding.
+            target: the target to predict. One of:
+                next_token: predict the next token in the cascade&sequence.
+                num_unique_tokens: predict the number of unique tokens in the cascade&sequence encountered so far.
+                    Intended for debugging the ability of the model to count.
+        """
         # Nothing else will work in foreseeable future
         self.dtype = torch.int64
-        # Sequences have difference lengths, so we need to make sure that
-        # long sequences don't dominate the loss
-        self.criterion = nn.CrossEntropyLoss(reduction="sum")
+        if isinstance(target, str):
+            target = TargetClass[target]
+        if target == TargetClass.NextToken:
+            # Sequences have difference lengths, so we need to make sure that
+            # long sequences don't dominate the loss
+            self.criterion = nn.CrossEntropyLoss(reduction="sum")
+        elif target == TargetClass.NumUniqueTokens:
+            if not multiclass_next_token_with_order_permutation:
+                raise NotImplementedError("NumUniqueTokens is not implemented without permutations")
+            self.criterion = nn.MSELoss(reduction="none")
+        else:
+            raise ValueError(f"Unknown target: {target}")
 
         self.optimizer = getattr(torch.optim, optimisation_config.optimiser.name)(
             model.parameters(), **optimisation_config.optimiser.config)
@@ -75,17 +69,22 @@ class WyckoffTrainer():
             self.optimizer, 'min', **optimisation_config.scheduler.config)
         
         self.model = model
+        self.tokenisers = tokenisers
         self.device = device
         self.augmented_field = augmented_field
 
         masks_dict = {field: tokenisers[field].mask_token for field in cascade_order}
         pad_dict = {field: tokenisers[field].pad_token for field in cascade_order}
+        stops_dict = {field: tokenisers[field].stop_token for field in cascade_order}
+        num_classes_dict = {field: len(tokenisers[field]) for field in cascade_order}
 
         self.train_dataset = AugmentedCascadeDataset(
             data=torch_datasets["train"],
             cascade_order=cascade_order,
             masks=masks_dict,
             pads=pad_dict,
+            stops=stops_dict,
+            num_classes=num_classes_dict,
             start_field=start_name,
             augmented_field=augmented_field,
             dtype=self.dtype,
@@ -96,36 +95,71 @@ class WyckoffTrainer():
             cascade_order=cascade_order,
             masks=masks_dict,
             pads=pad_dict,
+            stops=stops_dict,
+            num_classes=num_classes_dict,
             start_field=start_name,
             augmented_field=augmented_field,
             dtype=self.dtype,
             device=device)
-        assert self.train_dataset.sequence_length == self.val_dataset.sequence_length
+        assert self.train_dataset.max_sequence_length == self.val_dataset.max_sequence_length
     
         self.clip_grad_norm = optimisation_config.clip_grad_norm
         self.cascade_len = len(cascade_order)
         self.cascade_order = cascade_order
         self.epochs = optimisation_config.epochs
         self.validation_period = optimisation_config.validation_period
-        self.early_stopping_patience_epochs = optimisation_config.early_stopping_patience_epochs
+        self.early_stopping_patience_epochs = optimisation_config.early_stopping_patience_epochs    
+        self.target = target
+        self.multiclass_next_token_with_order_permutation = multiclass_next_token_with_order_permutation
+        self.evaluation_samples = evaluation_samples
 
 
     def get_loss(self,
         dataset: AugmentedCascadeDataset,
         known_seq_len: int,
         known_cascade_len: int) -> Tensor:
-        start_tokens, masked_data, target = dataset.get_masked_cascade_data(known_seq_len, known_cascade_len)
-        # No padding, as we have already discarded the padding
-        prediction = self.model(start_tokens, masked_data, None, known_cascade_len)
+        logging.debug("Known sequence length: %i", known_seq_len)
+        logging.debug("Known cascade lenght: %i", known_cascade_len)
+        if self.multiclass_next_token_with_order_permutation:
+            if self.target == TargetClass.NextToken:
+                # Once we have sampled the first cascade field, the prediction target is no longer mutliclass
+                # However, we still need to permute the sequence so that the autoregression is
+                # permutation-invariant.
+                start_tokens, masked_data, target = dataset.get_masked_multiclass_cascade_data(
+                    known_seq_len, known_cascade_len, multiclass_target=(known_cascade_len == 0),
+                    target_type=self.target)
+            elif self.target == TargetClass.NumUniqueTokens:
+                start_tokens, masked_data, target = dataset.get_masked_multiclass_cascade_data(
+                    known_seq_len, known_cascade_len, multiclass_target=False, target_type=self.target)
+                logging.debug("Target: %s", target)
+                # Counts are integers, as they should be, but MSE needs a float
+                target = target.float()
+        else:
+            start_tokens, masked_data, target = dataset.get_masked_cascade_data(known_seq_len, known_cascade_len)
+        if self.target == TargetClass.NextToken:    
+            # No padding, as we have already discarded the padding
+            prediction = self.model(start_tokens, masked_data, None, known_cascade_len)
+        elif self.target == TargetClass.NumUniqueTokens:
+            # No padding, as we have already discarded the padding
+            prediction = self.model(start_tokens, masked_data, None, None)
         return self.criterion(prediction, target)
 
 
     def train_epoch(self):
         self.model.train()
         self.optimizer.zero_grad(set_to_none=True)
-        known_seq_len = randint(0, self.train_dataset.sequence_length - 1)
-        known_cascade_len = randint(0, self.cascade_len - 1)
+        known_seq_len = randint(0, self.train_dataset.max_sequence_length - 1)
+        if self.target == TargetClass.NextToken:
+            known_cascade_len = randint(0, self.cascade_len - 1)
+        elif self.target == TargetClass.NumUniqueTokens:
+            known_cascade_len = 0
         loss = self.get_loss(self.train_dataset, known_seq_len, known_cascade_len)
+        if self.target == TargetClass.NumUniqueTokens:
+            # Predictions are [batch_size, cascade_size]
+            # Unreduced MSE is [batch_size, cascade_size]
+            # We avoid averating them at the level of self.criterion, so we can log
+            # the loss for each cascade field separately.
+            loss = loss.mean()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
         self.optimizer.step()
@@ -142,83 +176,145 @@ class WyckoffTrainer():
             The average loss on the validation dataset.
         """
         self.model.eval()
-        val_loss = torch.zeros(self.cascade_len, device=self.device)
-        train_loss = torch.zeros(self.cascade_len, device=self.device)
         with torch.no_grad():
-            for known_seq_len in range(0, self.train_dataset.sequence_length):
-                for known_cascade_len in range(0, self.cascade_len):
-                    train_loss[known_cascade_len] += self.get_loss(
-                        self.train_dataset, known_seq_len, known_cascade_len)
-                    val_loss[known_cascade_len] += self.get_loss(
-                        self.val_dataset, known_seq_len, known_cascade_len)
+            val_loss = torch.zeros(self.cascade_len, device=self.device)
+            train_loss = torch.zeros(self.cascade_len, device=self.device)
+            # Since we are sampling permutations and augmentations, and we rely on the
+            # validation loss for early stopping and learning rate scheduling, we need to
+            # average the loss over multiple samples.
+            for _ in range(self.evaluation_samples):
+                for known_seq_len in range(0, self.train_dataset.max_sequence_length):
+                    if self.target == TargetClass.NextToken:
+                        for known_cascade_len in range(0, self.cascade_len):
+                            train_loss[known_cascade_len] += self.get_loss(
+                                self.train_dataset, known_seq_len, known_cascade_len)
+                            val_loss[known_cascade_len] += self.get_loss(
+                                self.val_dataset, known_seq_len, known_cascade_len)
+                    else:
+                        train_loss += self.get_loss(self.train_dataset, known_seq_len, 0).sum(dim=0)
+                        val_loss += self.get_loss(self.val_dataset, known_seq_len, 0).sum(dim=0)
             # ln(P) = ln p(t_n|t_n-1, ..., t_1) + ... + ln p(t_2|t_1)
             # We are minimising the negative log likelihood of the whole sequences
-            return val_loss / len(self.val_dataset), \
-                   train_loss / len(self.train_dataset)
+            val_loss /= self.evaluation_samples * len(self.val_dataset)
+            train_loss /= self.evaluation_samples * len(self.train_dataset)
+            return val_loss, train_loss
 
 
     def train(self):
         best_val_loss = float('inf')
         best_val_epoch = 0
-        run_path = pathlib.Path("checkpoints", datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
-        run_path.mkdir(parents=True)
-        best_model_params_path = run_path / "best_model_params.pt"
-        
+        self.run_path = Path("runs", wandb.run.id)
+        self.run_path.mkdir(exist_ok=False)
+        best_model_params_path = self.run_path / "best_model_params.pt"
+        wandb.save(str(best_model_params_path), base_path=self.run_path, policy="live")
+
         for epoch in range(self.epochs):
             self.train_epoch()
             if epoch % self.validation_period == 0:
                 val_loss_epoch, train_loss_epoch = self.evaluate()
-                val_loss_dict = {name: val_loss_epoch[i].item() for i, name in enumerate(self.cascade_order)}
+                val_loss_dict = {name: val_loss_epoch[i] for i, name in enumerate(self.cascade_order)}
                 total_val_loss = val_loss_epoch.sum()
                 val_loss_dict["total"] = total_val_loss.item()
-                train_loss_dict = {name: train_loss_epoch[i].item() for i, name in enumerate(self.cascade_order)}
+                train_loss_dict = {name: train_loss_epoch[i] for i, name in enumerate(self.cascade_order)}
                 train_loss_dict["total"] = train_loss_epoch.sum().item()
-                wandb.log({"val_loss_epoch": val_loss_dict,
-                            "train_loss_epoch": train_loss_dict,
+                wandb.log({"loss_epoch": {"val": val_loss_dict, "train": train_loss_dict},
                             "lr": self.optimizer.param_groups[0]['lr'],
                             "epoch": epoch}, commit=False)
                 if total_val_loss < best_val_loss:
                     best_val_loss = total_val_loss
                     best_val_epoch = epoch
                     torch.save(self.model.state_dict(), best_model_params_path)
-                    wandb.save(str(best_model_params_path))
-                    print(f"Epoch {epoch} val_loss_epoch {total_val_loss} saved to {best_model_params_path}")
+                    print(f"Epoch {epoch}; loss_epoch.val {total_val_loss} saved to {best_model_params_path}")
                     wandb.log({"best_val_loss": best_val_loss}, commit=False)
                 if epoch - best_val_epoch > self.early_stopping_patience_epochs:
                     print(f"Early stopping at epoch {epoch} after more than {self.early_stopping_patience_epochs}"
                            " epochs without improvement")
-                    return
+                    break
                 self.scheduler.step(total_val_loss)
+        # Make sure we log the last evaluation results
+        wandb.log(dict(), commit=True)
+
+
+    def generate_structures(self, n_structures: int):
+        generator = WyckoffGenerator(
+            self.model, self.cascade_order, self.train_dataset.masks, self.train_dataset.max_sequence_length)
+        max_start = self.model.start_embedding.num_embeddings
+        start_counts = torch.bincount(
+            self.train_dataset.start_tokens, minlength=max_start) + torch.bincount(
+                self.val_dataset.start_tokens, minlength=max_start)
+        start_tensor = torch.distributions.Categorical(probs=start_counts.float()).sample((n_structures,))
+        generated_tensors = torch.stack(
+            generator.generate_tensors(start_tensor), dim=-1)
+
+        letter_from_ss_enum_idx = get_letter_from_ss_enum_idx(self.tokenisers['sites_enumeration'])
+        to_pyxtal = partial(tensor_to_pyxtal,
+                            tokenisers=self.tokenisers,
+                            cascade_order=self.cascade_order,
+                            letter_from_ss_enum_idx=letter_from_ss_enum_idx,
+                            wp_index=get_wp_index())
+        with Pool() as p:
+            structures = p.starmap(to_pyxtal, zip(start_tensor.detach().cpu(), generated_tensors.detach().cpu()))
+        valid_structures = [s for s in structures if s is not None]
+        return valid_structures
+
+
+def ks_to_dict(ks_statistic) -> Dict[str, float]:
+    return {"statistic": ks_statistic.statistic, "pvalue": ks_statistic.pvalue}
 
 
 def train_from_config(config_dict: dict, device: torch.device):
     config = OmegaConf.create(config_dict)
-    if len(config.tokeniser.augmented_token_fields) > 1:
-        raise ValueError("Only one augmented field is supported")
-
+    if config.model.WyckoffTrainer_args.multiclass_next_token_with_order_permutation and not config.model.CascadeTransformer_args.learned_positional_encoding_only_masked:
+        raise ValueError("Multiclass target with order permutation requires learned positional encoding only masked, ",
+                         "otherwise the Transformer is not permutation invariant.")
     tensors, tokenisers = load_tensors_and_tokenisers(config.dataset, config.tokeniser.name)
-
-    if "cascade_order" in config.model:
-        cascade_order = config.model.cascade_order
-        print(f"Using cascade order {cascade_order}")
+    model = CascadeTransformer.from_config_and_tokenisers(config, tokenisers, device)
+    
+    if "augmented_token_fields" in config.tokeniser and len(config.tokeniser.augmented_token_fields) == 1:
+        augmented_field = config.tokeniser.augmented_token_fields[0]
     else:
-        cascade_order = tuple(config.model.cascade_embedding_size.keys())
-
-    full_cascade = dict()
-    for field in cascade_order:
-        full_cascade[field] = (len(tokenisers[field]),
-                               config.model.cascade_embedding_size[field],
-                               tokenisers[field].pad_token)
-
-    model = CascadeTransformer(
-        n_start=len(tokenisers[config.model.start_token]),
-        cascade=full_cascade.values(),
-        **config.model.CascadeTransformer_args
-        ).to(device)
-
-
+        augmented_field = None
     trainer = WyckoffTrainer(
-        model, tensors, tokenisers, tuple(full_cascade.keys()), 
-        config.tokeniser.augmented_token_fields[0],
-        config.model.start_token, device, optimisation_config=config.optimisation)
+        model, tensors, tokenisers, config.model.cascade_order, 
+        augmented_field,
+        config.model.start_token,
+        optimisation_config=config.optimisation, device=device,
+        **config.model.WyckoffTrainer_args)
     trainer.train()
+    if config.model.WyckoffTrainer_args.target == "NextToken":
+        print("Training complete, loading the best model")
+        model.load_state_dict(torch.load(trainer.run_path / "best_model_params.pt"))
+        print("Generating a sample of Wykchoff genes.")
+        generated_wp = trainer.generate_structures(config.evaluation.n_structures_to_generate)
+        wp_formal_validity = len(generated_wp) / config.evaluation.n_structures_to_generate
+        wandb.run.summary["wp_formal_validity"] = wp_formal_validity
+        print(f"Wyckchoffs' formal validity: {wp_formal_validity}")
+        with gzip.open(trainer.run_path / "generated_wp.json.gz", "wt") as f:
+            json.dump(generated_wp, f)
+        wandb.save(str(trainer.run_path / "generated_wp.json.gz"), base_path=trainer.run_path, policy="now")
+        data_cache_path = Path(__file__).parent.parent.resolve() / "cache" / config.dataset / "data.pkl.gz"
+        with gzip.open(data_cache_path, "rb") as f:
+            dataset_pd = pickle.load(f)
+        del dataset_pd["train"]
+        del dataset_pd["val"]
+        print(f"Test dataset size: {len(dataset_pd['test']['site_symmetries'])}")
+        print(f"Generated dataset size: {len(generated_wp)}")
+        evaluator = StatisticalEvaluator(dataset_pd["test"])
+        ks_num_sites = evaluator.get_num_sites_ks(generated_wp)
+        ks_num_elements = evaluator.get_num_elements_ks(generated_wp)
+        ks_dof = evaluator.get_dof_ks(generated_wp)
+        wandb.run.summary["ks_num_sites_vs_test"] = ks_to_dict(ks_num_sites)
+        wandb.run.summary["ks_num_elements_vs_test"] = ks_to_dict(ks_num_elements)
+        wandb.run.summary["ks_dof_vs_test"] = ks_to_dict(ks_dof)
+        print("Kolmogorov-Smirnov statistics:")
+        print(f"Number of sites: {ks_num_sites}")
+        print(f"Number of elements: {ks_num_elements}")
+        print(f"Degrees of freedom: {ks_dof}")
+        wandb.run.summary["generated_actual_size"] = len(generated_wp)
+        wandb.run.summary["test_dataset_size"] = len(dataset_pd["test"]["site_symmetries"])
+        smac_validity_count = sum(map(smact_validity_from_record, generated_wp))
+        smac_validity_fraction = smac_validity_count / len(generated_wp)
+        print(f"SMAC-T validity: fraction {smac_validity_fraction}; count {smac_validity_count}")
+        test_smact_validity = dataset_pd["test"]["composition"].map(smac_validity_from_counter).mean()
+        print(f"SMAC-T validity on the test dataset: {test_smact_validity}")
+        wandb.run.summary["smact_validity"] = {"generated": smac_validity_fraction, "test": test_smact_validity}
