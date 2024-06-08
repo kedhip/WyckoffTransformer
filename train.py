@@ -15,11 +15,15 @@ def main():
     parser.add_argument("device", type=torch.device, help="Device to train on")
     parser.add_argument("--debug", action="store_true", help="Debug mode")
     parser.add_argument("--run-path", type=Path, default=Path("runs"), help="Set the path for saving run data")
+    parser.add_argument("--torch-num-thread", type=int, help="Number of threads for torch")
     args = parser.parse_args()
 
     if args.debug:
         torch.autograd.set_detect_anomaly(True)
         logging.basicConfig(level=logging.DEBUG)
+
+    if args.torch_num_thread:
+        torch.set_num_threads(args.torch_num_thread)
 
     if args.device.type == "cuda":
         # UserWarning: TensorFloat32 tensor cores for float32 matrix multiplication available but not enabled. Consider setting `torch.set_float32_matmul_precision('high')` for better performance.
