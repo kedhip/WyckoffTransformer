@@ -89,7 +89,7 @@ class StatisticalEvaluator():
         self.test_dataset = test_dataset
         self.dof_counter = None
 
-    def get_num_sites_ks(self, generated_structures: Iterable[Dict]) -> float:
+    def get_num_sites_ks(self, generated_structures: Iterable[Dict], return_counts:bool=False) -> float:
         """
         Computes the Kolmogorov-Smirnov statistic between the numbers of sites in the 
         generated structures and the test dataset. Note that Kolmorogov-Smirnov statistic doesn't
@@ -100,10 +100,13 @@ class StatisticalEvaluator():
         """
         test_num_sites = self.test_dataset['site_symmetries'].map(len)
         generated_num_sites = [sum(map(len, wygene['sites'])) for wygene in generated_structures]
-        return kstest(test_num_sites, generated_num_sites)
+        if return_counts:
+            return kstest(test_num_sites, generated_num_sites), generated_num_sites
+        else:
+            return kstest(test_num_sites, generated_num_sites)
 
 
-    def get_num_elements_ks(self, generated_structures: Iterable[Dict]) -> float:
+    def get_num_elements_ks(self, generated_structures: Iterable[Dict], return_counts:bool=False) -> float:
         """
         Computes the Kolmogorov-Smirnov statistic between the numbers of elements in the 
         generated structures and the test dataset. Note that Kolmorogov-Smirnov statistic doesn't
@@ -114,7 +117,10 @@ class StatisticalEvaluator():
         """
         test_num_elements = self.test_dataset['elements'].map(count_unique)
         generated_num_elements = [len(frozenset(record["species"])) for record in generated_structures]
-        return kstest(test_num_elements, generated_num_elements)
+        if return_counts:
+            return kstest(test_num_elements, generated_num_elements), generated_num_elements
+        else:
+            return kstest(test_num_elements, generated_num_elements)
 
 
     def get_dof_ks(self, generated_structures: Iterable[Dict]) -> float:
