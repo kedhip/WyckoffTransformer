@@ -14,6 +14,7 @@ def main():
     parser.add_argument("dataset", type=str, default="mp_20_biternary", help="Dataset to use")
     parser.add_argument("device", type=torch.device, help="Device to train on")
     parser.add_argument("--debug", action="store_true", help="Debug mode")
+    parser.add_argument("--run-path", type=Path, default=Path("runs"), help="Set the path for saving run data")
     args = parser.parse_args()
 
     if args.debug:
@@ -39,7 +40,7 @@ def main():
         project="WyckoffTransformer",
         job_type="train",
         config=wandb_config):
-        train_from_config(config, args.device)
+        train_from_config(config, args.device, run_path=args.run_path)
 
 
 if __name__ == '__main__':
