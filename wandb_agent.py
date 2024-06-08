@@ -7,7 +7,7 @@ import torch
 from wyckoff_transformer.trainer import train_from_config
 
 
-def agent_function(device):
+def agent_function(device, run_path):
     wandb.init()
     base_config_name = wandb.config.base_config
     base_config = OmegaConf.load(Path(__file__).parent.resolve() / "yamls" / "models" / f"{base_config_name}.yaml")
@@ -17,7 +17,7 @@ def agent_function(device):
     if len(tokeniser_config.augmented_token_fields) > 1:
         raise ValueError("Only one augmented field is supported")
     final_config['tokeniser'] = tokeniser_config
-    train_from_config(final_config, device)
+    train_from_config(final_config, device, run_path=run_path)
 
 
 def main():
@@ -26,6 +26,7 @@ def main():
     parser.add_argument("device", type=torch.device, help="Device to train on")
     parser.add_argument("--project", type=str, default="WyckoffTransformer", help="The WanDB project name")
     parser.add_argument("--count", type=int, default=2, help="The number of sweep config trials to try")
+    parser.add_argument("--run-path", type=Path, default=Path("runs"), help="Set the path for saving run data")
     args = parser.parse_args()
     if args.device.type == "cuda":
         # UserWarning: TensorFloat32 tensor cores for float32 matrix multiplication available but not enabled. Consider setting `torch.set_float32_matmul_precision('high')` for better performance.
@@ -33,7 +34,7 @@ def main():
     else:
         # Leave two to our GPU brothers, and one for the system
         torch.set_num_threads(19)
-    wandb.agent(args.sweep_id, function=partial(agent_function, device=args.device),
+    wandb.agent(args.sweep_id, function=partial(agent_function, device=args.device, run_path=args.run_path),
                 project=args.project, count=args.count)
 
 

@@ -41,6 +41,7 @@ class WyckoffTrainer():
                  evaluation_samples: int,
                  multiclass_next_token_with_order_permutation: bool,
                  optimisation_config: dict,
+                 run_path: Optional[Path] = Path("runs"),
                  device: torch.DeviceObjType):
         """
         Args:
@@ -54,6 +55,7 @@ class WyckoffTrainer():
         """
         # Nothing else will work in foreseeable future
         self.dtype = torch.int64
+        self.run_path = run_path / wandb.run.id
         if isinstance(target, str):
             target = TargetClass[target]
         if target == TargetClass.NextToken:
@@ -207,7 +209,6 @@ class WyckoffTrainer():
     def train(self):
         best_val_loss = float('inf')
         best_val_epoch = 0
-        self.run_path = Path("runs", wandb.run.id)
         self.run_path.mkdir(exist_ok=False)
         best_model_params_path = self.run_path / "best_model_params.pt"
         wandb.save(str(best_model_params_path), base_path=self.run_path, policy="live")
@@ -304,7 +305,7 @@ class WyckoffTrainer():
         wandb.run.summary["smact_validity"][generation_name] = smac_validity_fraction
 
 
-def train_from_config(config_dict: dict, device: torch.device):
+def train_from_config(config_dict: dict, device: torch.device, run_path: Optional[Path] = Path("runs")):
     config = OmegaConf.create(config_dict)
     if config.model.WyckoffTrainer_args.multiclass_next_token_with_order_permutation and not config.model.CascadeTransformer_args.learned_positional_encoding_only_masked:
         raise ValueError("Multiclass target with order permutation requires learned positional encoding only masked, ",
@@ -321,6 +322,7 @@ def train_from_config(config_dict: dict, device: torch.device):
         augmented_field,
         config.model.start_token,
         optimisation_config=config.optimisation, device=device,
+        run_path=run_path,
         **config.model.WyckoffTrainer_args)
     trainer.train()
     if config.model.WyckoffTrainer_args.target == "NextToken":
