@@ -27,13 +27,13 @@ def main():
     parser.add_argument("--project", type=str, default="WyckoffTransformer", help="The WanDB project name")
     parser.add_argument("--count", type=int, default=2, help="The number of sweep config trials to try")
     parser.add_argument("--run-path", type=Path, default=Path("runs"), help="Set the path for saving run data")
+    parser.add_argument("--torch-num-thread", type=int, default=19, help="Number of threads for torch")
     args = parser.parse_args()
     if args.device.type == "cuda":
         # UserWarning: TensorFloat32 tensor cores for float32 matrix multiplication available but not enabled. Consider setting `torch.set_float32_matmul_precision('high')` for better performance.
         torch.set_float32_matmul_precision('high')
-    else:
-        # Leave two to our GPU brothers, and one for the system
-        torch.set_num_threads(19)
+
+    torch.set_num_threads(args.torch_num_thread)
     wandb.agent(args.sweep_id, function=partial(agent_function, device=args.device, run_path=args.run_path),
                 project=args.project, count=args.count)
 
