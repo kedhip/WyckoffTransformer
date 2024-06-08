@@ -281,6 +281,9 @@ class WyckoffTrainer():
             json.dump(generated_wp, f)
         wandb.save(str(save_path), base_path=self.run_path, policy="now")
         print(f"Generated dataset size: {len(generated_wp)}")
+        if len(generated_wp) == 0:
+            print("No structures generated, skipping evaluation")
+            return
         
         ks_num_sites, generated_num_sites = evaluator.get_num_sites_ks(generated_wp, return_counts=True)
         num_sites_bins = np.arange(0, 21)
