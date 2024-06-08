@@ -1,10 +1,10 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from enum import Enum
 import logging
-logger = logging.getLogger(__name__)
 import torch
 from torch import Tensor
 
+logger = logging.getLogger(__name__)
 
 def randint_tensor(high: torch.Tensor) -> Tensor:
     """
@@ -106,6 +106,7 @@ class AugmentedCascadeDataset():
         num_classes: dict[str, int],
         start_field: str,
         augmented_field: str,
+        batch_size: Optional[int] = None,
         dtype: torch.dtype = torch.int64,
         device: str = "cpu"):
         """
@@ -121,10 +122,18 @@ class AugmentedCascadeDataset():
             masks: A dictionary of mask values for each field
             start_field: The name of the field that should be used as the start token.
             augmented_field: The name of the field that should be augmented.
+            batch_size: The batch size of the dataset. It is applied before cutting the PAD targets,
+                and there will be the end of the dataset, so the actual batches might be smaller.
             dtype: The dtype of the tensors.
             device: The device of the tensors.
         """
         self.device = device
+        self.batch_size = batch_size
+        self.__len__ = len(data[cascade_order[0]])
+        if batch_size is not None:
+            self.this_shuffle_order = torch.randperm(self.__len__, device=device)
+            self.next_batch_index = 0
+            self.max_batch_index = self.__len__ // batch_size
         self.cascade_order = cascade_order
         self.cascade_index_from_field = {name: i for i, name in enumerate(cascade_order)}
         self.augmented_field = augmented_field
@@ -169,6 +178,8 @@ class AugmentedCascadeDataset():
         self,
         known_seq_len: int,
         known_cascade_len: int):
+            if self.batch_size is not None:
+                raise NotImplementedError("Batch size is not supported for get_masked_cascade_data")
             # assert known_seq_len < data.shape[1]
             # assert known_seq_len >= 0
 
@@ -215,16 +226,36 @@ class AugmentedCascadeDataset():
         logger.debug("Known cascade length %i", known_cascade_len)
         if self.augmented_field_index is not None:
             augmented_data = self.get_augmentation()
-        # STOP is not included in the pure length, but is a viable target
-        target_is_viable = self.pure_sequences_lengths >= known_seq_len
-        chosen_pure_sequences_lengths = self.pure_sequences_lengths[target_is_viable]
+
+        if self.batch_size is not None:
+            # Duck typing...
+            batch_target_is_viable = ()
+            # A good research question would be optimising this by removing the invalid targets first,
+            # and batching later, but then we'll need to do something to avoid bias
+            # towards longer sequences
+            while len(batch_target_is_viable) == 0:
+                batch_start = self.next_batch_index * self.batch_size
+                batch_end = (self.next_batch_index + 1) * self.batch_size
+                batch_selection = self.this_shuffle_order[batch_start:batch_end]
+                # STOP is not included in the pure length, but is a viable target
+                target_is_viable = self.pure_sequences_lengths[batch_selection] >= known_seq_len
+                batch_target_is_viable = batch_selection[target_is_viable]
+                if batch_end >= self.__len__:
+                    self.this_shuffle_order = torch.randperm(self.__len__, device=self.device)
+                    self.next_batch_index = 0
+                else:
+                    self.next_batch_index += 1
+        else:
+            batch_target_is_viable = self.pure_sequences_lengths >= known_seq_len
+
+        chosen_pure_sequences_lengths = self.pure_sequences_lengths[batch_target_is_viable]
         # STOP is still not included in the pure length
         permutation = jagged_batch_randperm(chosen_pure_sequences_lengths, self.max_sequence_length)
         logger.debug("Max sequence length %i", self.max_sequence_length)
-        logger.debug("Max queried permutation length %i", chosen_pure_sequences_lengths.max())
-        logger.debug("Min queried permutation length %i", chosen_pure_sequences_lengths.min())
-        logger.debug("Permutation size (%i, %i)", *permutation.size())
-        logger.debug("Permutation #0: %s", permutation[0])
+        # logger.debug("Max queried permutation length %i", chosen_pure_sequences_lengths.max())
+        # logger.debug("Min queried permutation length %i", chosen_pure_sequences_lengths.min())
+        # logger.debug("Permutation size (%i, %i)", *permutation.size())
+        # logger.debug("Permutation #0: %s", permutation[0])
         # Debug
         #for queried_length, this_permutation in zip(chosen_pure_sequences_lengths, permutation):
             #if not (this_permutation[queried_length:] == idenity_permutation[queried_length:]).all():
@@ -238,11 +269,11 @@ class AugmentedCascadeDataset():
         for cascade_index, name in enumerate(self.cascade_order):
             logger.debug("Processing cascade #%i aka %s", cascade_index, name)
             if name == self.augmented_field:
-                cascade_vector = augmented_data[target_is_viable]
+                cascade_vector = augmented_data[batch_target_is_viable]
             else:
-                cascade_vector = self.data[name][target_is_viable]
+                cascade_vector = self.data[name][batch_target_is_viable]
             permuted_cascade_vector = cascade_vector.gather(1, permutation)
-            logger.debug("Permuted cascade size (%i, %i)", *permuted_cascade_vector.size())
+            # logger.debug("Permuted cascade size (%i, %i)", *permuted_cascade_vector.size())
             if cascade_index < known_cascade_len:
                 cascade_result.append(permuted_cascade_vector[:, :known_seq_len + 1])
             else:
@@ -264,9 +295,9 @@ class AugmentedCascadeDataset():
                             #    raise ValueError("STOP missing")
                             # if (target_counts[~target_is_not_stop].sum(dim=1) > 1).any():
                             #    raise ValueError("STOP appears along other targets")
-                            logger.debug("Target counts size (%i, %i)", *target_counts.size())
+                            # logger.debug("Target counts size (%i, %i)", *target_counts.size())
                             target = target_counts / target_counts.sum(1, keepdim=True)
-                            logger.debug("Target #0: %s", target[0])
+                            # logger.debug("Target #0: %s", target[0])
                         else:
                             target = permuted_cascade_vector[:, known_seq_len]
                             # Debug:
@@ -280,13 +311,13 @@ class AugmentedCascadeDataset():
                         permuted_cascade_vector[:, :known_seq_len], 1,
                         self.num_classes[known_cascade_len], dtype=torch.bool)
                     cascade_targets.append(present_classes.sum(1))
-                    logger.debug("Unique tokens max: %i", cascade_targets[-1].max())
-                    logger.debug("Unique tokens min: %i", cascade_targets[-1].min())
-                    logger.debug("Unique tokens mean: %f", cascade_targets[-1].float().mean())
-                    logger.debug("Unique tokens var aka std**2: %f", cascade_targets[-1].float().var())
-                    logger.debug("No. of unique tokens in %s for #0: %i", name, cascade_targets[-1][0])
+                    # logger.debug("Unique tokens max: %i", cascade_targets[-1].max())
+                    # logger.debug("Unique tokens min: %i", cascade_targets[-1].min())
+                    # logger.debug("Unique tokens mean: %f", cascade_targets[-1].float().mean())
+                    # logger.debug("Unique tokens var aka std**2: %f", cascade_targets[-1].float().var())
+                    # logger.debug("No. of unique tokens in %s for #0: %i", name, cascade_targets[-1][0])
         
         if target_type == TargetClass.NumUniqueTokens:
             target = torch.stack(cascade_targets, dim=1)
 
-        return self.start_tokens[target_is_viable], cascade_result, target
+        return self.start_tokens[batch_target_is_viable], cascade_result, target

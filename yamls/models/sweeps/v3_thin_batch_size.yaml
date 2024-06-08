@@ -1,0 +1,17 @@
+method: grid
+metric:
+  goal: minimize
+  name: loss.epoch.val_best
+parameters:
+  base_config:
+    distribution: constant
+    value: NextToken/v3_thin_pyramid
+  dataset:
+    distribution: constant
+    value: mp_20_biternary
+  model:
+    parameters:
+      WyckoffTrainer_args:
+        parameters:
+          batch_size:
+            values: [64, 128, 265, 512, 1024, 2048, 4096, None]

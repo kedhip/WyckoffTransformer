@@ -41,6 +41,7 @@ class WyckoffTrainer():
                  multiclass_next_token_with_order_permutation: bool,
                  optimisation_config: dict,
                  device: torch.DeviceObjType,
+                 batch_size: Optional[int] = None,
                  run_path: Optional[Path] = Path("runs")):
         """
         Args:
@@ -54,6 +55,7 @@ class WyckoffTrainer():
         """
         # Nothing else will work in foreseeable future
         self.dtype = torch.int64
+        self.batch_size = batch_size
         self.run_path = run_path / wandb.run.id
         if isinstance(target, str):
             target = TargetClass[target]
@@ -92,6 +94,7 @@ class WyckoffTrainer():
             num_classes=num_classes_dict,
             start_field=start_name,
             augmented_field=augmented_field,
+            batch_size=batch_size,
             dtype=self.dtype,
             device=self.device)
         
@@ -117,6 +120,11 @@ class WyckoffTrainer():
         self.target = target
         self.multiclass_next_token_with_order_permutation = multiclass_next_token_with_order_permutation
         self.evaluation_samples = evaluation_samples
+        if batch_size is None:
+            self.batches_per_epoch = 1
+        else:
+            # Round up, as the last batch might be smaller, but is still a batch
+            self.batches_per_epoch = -(-len(self.train_dataset) // batch_size)
 
 
     def get_loss(self,
@@ -152,25 +160,26 @@ class WyckoffTrainer():
 
     def train_epoch(self):
         self.model.train()
-        self.optimizer.zero_grad(set_to_none=True)
-        known_seq_len = randint(0, self.train_dataset.max_sequence_length - 1)
-        if self.target == TargetClass.NextToken:
-            known_cascade_len = randint(0, self.cascade_len - 1)
-        elif self.target == TargetClass.NumUniqueTokens:
-            known_cascade_len = 0
-        loss = self.get_loss(self.train_dataset, known_seq_len, known_cascade_len)
-        if self.target == TargetClass.NumUniqueTokens:
-            # Predictions are [batch_size, cascade_size]
-            # Unreduced MSE is [batch_size, cascade_size]
-            # We avoid averating them at the level of self.criterion, so we can log
-            # the loss for each cascade field separately.
-            loss = loss.mean()
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
-        self.optimizer.step()
-        wandb.log({"train_loss_batch": loss,
-                   "known_seq_len": known_seq_len,
-                   "known_cascade_len": known_cascade_len})
+        for _ in range(self.batches_per_epoch):
+            self.optimizer.zero_grad(set_to_none=True)
+            known_seq_len = randint(0, self.train_dataset.max_sequence_length - 1)
+            if self.target == TargetClass.NextToken:
+                known_cascade_len = randint(0, self.cascade_len - 1)
+            elif self.target == TargetClass.NumUniqueTokens:
+                known_cascade_len = 0
+            loss = self.get_loss(self.train_dataset, known_seq_len, known_cascade_len)
+            if self.target == TargetClass.NumUniqueTokens:
+                # Predictions are [batch_size, cascade_size]
+                # Unreduced MSE is [batch_size, cascade_size]
+                # We avoid averating them at the level of self.criterion, so we can log
+                # the loss for each cascade field separately.
+                loss = loss.mean()
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
+            self.optimizer.step()
+            wandb.log({"loss.batch.train": loss,
+                       "known_seq_len": known_seq_len,
+                       "known_cascade_len": known_cascade_len})
 
 
     def evaluate(self) -> Tensor:
@@ -211,7 +220,12 @@ class WyckoffTrainer():
         self.run_path.mkdir(exist_ok=False)
         best_model_params_path = self.run_path / "best_model_params.pt"
         wandb.save(str(best_model_params_path), base_path=self.run_path, policy="live")
-
+        wandb.define_metric("loss.epoch.val.total", step_metric="epoch", goal="minimize")
+        wandb.define_metric("loss.epoch.train.total", step_metric="epoch", goal="minimize")
+        wandb.define_metric("loss.epoch.val_best", step_metric="epoch", goal="minimize")
+        wandb.define_metric("lr", step_metric="epoch")
+        wandb.define_metric("known_seq_len", hidden=True)
+        wandb.define_metric("known_cascade_len", hidden=True)
         for epoch in range(self.epochs):
             self.train_epoch()
             if epoch % self.validation_period == 0:
@@ -221,7 +235,7 @@ class WyckoffTrainer():
                 val_loss_dict["total"] = total_val_loss.item()
                 train_loss_dict = {name: train_loss_epoch[i] for i, name in enumerate(self.cascade_order)}
                 train_loss_dict["total"] = train_loss_epoch.sum().item()
-                wandb.log({"loss_epoch": {"val": val_loss_dict, "train": train_loss_dict},
+                wandb.log({"loss.epoch": {"val": val_loss_dict, "train": train_loss_dict},
                             "lr": self.optimizer.param_groups[0]['lr'],
                             "epoch": epoch}, commit=False)
                 if total_val_loss < best_val_loss:
@@ -229,7 +243,7 @@ class WyckoffTrainer():
                     best_val_epoch = epoch
                     torch.save(self.model.state_dict(), best_model_params_path)
                     print(f"Epoch {epoch}; loss_epoch.val {total_val_loss} saved to {best_model_params_path}")
-                    wandb.log({"best_val_loss": best_val_loss}, commit=False)
+                    wandb.log({"loss.epoch.val_best": best_val_loss}, commit=False)
                 if epoch - best_val_epoch > self.early_stopping_patience_epochs:
                     print(f"Early stopping at epoch {epoch} after more than {self.early_stopping_patience_epochs}"
                            " epochs without improvement")
