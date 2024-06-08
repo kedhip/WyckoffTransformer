@@ -1,4 +1,4 @@
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Optional
 from random import randint
 from functools import partial
 from pathlib import Path
@@ -6,13 +6,12 @@ import gzip
 import json
 import pickle
 import logging
-import numpy as np
 from multiprocessing import Pool
+import numpy as np
 import torch
 from torch import nn
 from torch import Tensor
 from omegaconf import OmegaConf
-import pyxtal
 import wandb
 
 
@@ -41,8 +40,8 @@ class WyckoffTrainer():
                  evaluation_samples: int,
                  multiclass_next_token_with_order_permutation: bool,
                  optimisation_config: dict,
-                 run_path: Optional[Path] = Path("runs"),
-                 device: torch.DeviceObjType):
+                 device: torch.DeviceObjType,
+                 run_path: Optional[Path] = Path("runs")):
         """
         Args:
             multiclass_next_token_with_order_permutation: Train a permutation-invariant model by permuting the sequences,
