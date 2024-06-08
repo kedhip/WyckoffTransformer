@@ -106,7 +106,9 @@ class WyckoffGenerator():
                     model_output = self.model(start_tokens, masked_data, None, known_cascade_len)
                     # Enought data for separate calibration
                     if target.size(0) >= calibration_element_count_threshold:
-                        self.calibrators[known_cascade_len].append(TemperatureScaling().fit(model_output, target))
+                        # If model_output and target are on different devices, not our problem
+                        self.calibrators[known_cascade_len].append(TemperatureScaling().to(target.device).fit(
+                            model_output, target))
                     # Not enough data for separate calibration, so we gather all the data in the tail
                     else:
                         tail_predictions.append(model_output)
@@ -115,7 +117,7 @@ class WyckoffGenerator():
                 tail_targets = torch.concatenate(tail_targets, axis=0)
                 if tail_predictions.size(0) < calibration_element_count_threshold:
                     logger.warning("Tail too small, %i when requested %i", tail_predictions.size(0), calibration_element_count_threshold)
-                self.tail_calibrators.append(TemperatureScaling().fit(tail_predictions, tail_targets))
+                self.tail_calibrators.append(TemperatureScaling().to(tail_targets.device).fit(tail_predictions, tail_targets))
                 #print(f"Cross entropy for {cascade_name} before calibration: {cross_entropy(p_predicted, true_targets)}")
                 #self.calibrators.append(VennAbersNaive().fit(p_predicted, true_targets))
                 #print(f"Cross entropy for {cascade_name} after calibration: {cross_entropy(self.calibrators[-1].predict_proba(p_predicted), true_targets)}")

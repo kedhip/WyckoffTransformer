@@ -124,6 +124,7 @@ class AugmentedCascadeDataset():
             dtype: The dtype of the tensors.
             device: The device of the tensors.
         """
+        self.device = device
         self.cascade_order = cascade_order
         self.cascade_index_from_field = {name: i for i, name in enumerate(cascade_order)}
         self.augmented_field = augmented_field
