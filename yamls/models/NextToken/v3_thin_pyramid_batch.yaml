@@ -38,19 +38,18 @@ model:
       enable_nested_tensor: false
 optimisation:
   optimiser:
+    lr_per_sqrt_n_samples: 0.0014
     name: SGD
-    config:
-      lr: 0.2
   scheduler:
     name: ReduceLROnPlateau
     config:
       factor: 0.8
       # note that scheduler is called every validation_period epochs
-      patience: 20
-  validation_period: 1000
-  early_stopping_patience_epochs: 100000
+      patience: 10
+  validation_period: 10
+  early_stopping_patience_epochs: 1000
   clip_grad_norm: 2.
-  epochs: 1000000
+  epochs: 100000
 tokeniser:
   name: mp_20_CSP
 evaluation:

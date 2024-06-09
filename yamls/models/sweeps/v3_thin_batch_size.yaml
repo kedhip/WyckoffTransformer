@@ -5,7 +5,7 @@ metric:
 parameters:
   base_config:
     distribution: constant
-    value: NextToken/v3_thin_pyramid
+    value: NextToken/v3_thin_pyramid_batch
   dataset:
     distribution: constant
     value: mp_20_biternary
@@ -14,4 +14,4 @@ parameters:
       WyckoffTrainer_args:
         parameters:
           batch_size:
-            values: [64, 128, 265, 512, 1024, 2048, 4096, None]
+            values: [64, 128, 265, 512, 1024, 2048, 4096, 8192, 16384, None]

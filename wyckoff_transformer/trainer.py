@@ -61,7 +61,7 @@ class WyckoffTrainer():
             target = TargetClass[target]
         if target == TargetClass.NextToken:
             # Sequences have difference lengths, so we need to make sure that
-            # long sequences don't dominate the loss
+            # long sequences don't dominate the loss, so we don't average the loss
             self.criterion = nn.CrossEntropyLoss(reduction="sum")
         elif target == TargetClass.NumUniqueTokens:
             if not multiclass_next_token_with_order_permutation:
@@ -69,11 +69,6 @@ class WyckoffTrainer():
             self.criterion = nn.MSELoss(reduction="none")
         else:
             raise ValueError(f"Unknown target: {target}")
-
-        self.optimizer = getattr(torch.optim, optimisation_config.optimiser.name)(
-            model.parameters(), **optimisation_config.optimiser.config)
-        self.scheduler = getattr(torch.optim.lr_scheduler, optimisation_config.scheduler.name)(
-            self.optimizer, 'min', **optimisation_config.scheduler.config)
         
         self.model = model
         self.tokenisers = tokenisers
@@ -98,6 +93,21 @@ class WyckoffTrainer():
             dtype=self.dtype,
             device=self.device)
         
+        if "lr_per_sqrt_n_samples" in optimisation_config.optimiser:
+            if "config" in optimisation_config.optimiser and "lr" in optimisation_config.optimiser.config:
+                raise ValueError("Cannot specify both lr and lr_per_sqrt_n_samples")
+            if batch_size is None:
+                samples_per_step = len(self.train_dataset)
+            else:
+                samples_per_step = batch_size
+            optimisation_config.optimiser.update(
+                {"config": {"lr": optimisation_config.optimiser.lr_per_sqrt_n_samples * samples_per_step**0.5}})
+                
+        self.optimizer = getattr(torch.optim, optimisation_config.optimiser.name)(
+            model.parameters(), **optimisation_config.optimiser.config)
+        self.scheduler = getattr(torch.optim.lr_scheduler, optimisation_config.scheduler.name)(
+            self.optimizer, 'min', **optimisation_config.scheduler.config)
+
         self.val_dataset = AugmentedCascadeDataset(
             data=torch_datasets["val"],
             cascade_order=cascade_order,
@@ -109,6 +119,7 @@ class WyckoffTrainer():
             augmented_field=augmented_field,
             dtype=self.dtype,
             device=device)
+
         assert self.train_dataset.max_sequence_length == self.val_dataset.max_sequence_length
     
         self.clip_grad_norm = optimisation_config.clip_grad_norm
@@ -171,7 +182,7 @@ class WyckoffTrainer():
             if self.target == TargetClass.NumUniqueTokens:
                 # Predictions are [batch_size, cascade_size]
                 # Unreduced MSE is [batch_size, cascade_size]
-                # We avoid averating them at the level of self.criterion, so we can log
+                # We avoid averaging them at the level of self.criterion, so we can log
                 # the loss for each cascade field separately.
                 loss = loss.mean()
             loss.backward()
