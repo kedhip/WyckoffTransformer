@@ -165,7 +165,7 @@ class AugmentedCascadeDataset():
 
 
     # Compilation is safe since the function only ever uses the same data
-    @torch.compile
+    @torch.compile(fullgraph=True)
     def get_augmentation(self):
         augnementation_selection = randint_tensor(self.augmentation_variants)
         selection_start = augnementation_selection*self.max_sequence_length + self.augmentation_start_indices

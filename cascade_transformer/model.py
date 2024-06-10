@@ -63,7 +63,7 @@ def get_perceptron(input_dim: int, output_dim:int, num_layers:int) -> torch.nn.M
             this_sequence.append(nn.Linear(input_dim, input_dim))
             this_sequence.append(nn.ReLU())
         this_sequence.append(nn.Linear(input_dim, output_dim))
-    return nn.Sequential(*this_sequence)
+    return torch.compile(nn.Sequential(*this_sequence), fullgraph=True)
 
 
 def get_pyramid_perceptron(input_dim: int, output_dim:int, num_layers:int) -> torch.nn.Module:
@@ -81,7 +81,7 @@ def get_pyramid_perceptron(input_dim: int, output_dim:int, num_layers:int) -> to
             this_sequence.append(nn.Linear(input_layer_size, output_layer_size))
             if len(this_sequence) < num_layers * 2 - 1:
                 this_sequence.append(nn.ReLU())
-    return nn.Sequential(*this_sequence)
+    return torch.compile(nn.Sequential(*this_sequence), fullgraph=True)
 
 
 class CascadeTransformer(nn.Module):

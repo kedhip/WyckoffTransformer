@@ -339,7 +339,9 @@ def train_from_config(config_dict: dict, device: torch.device, run_path: Optiona
                          "otherwise the Transformer is not permutation invariant.")
     tensors, tokenisers = load_tensors_and_tokenisers(config.dataset, config.tokeniser.name)
     model = CascadeTransformer.from_config_and_tokenisers(config, tokenisers, device)
-    
+    # Our hihgly dynamic concat-heavy workflow doesn't benefit much from compilation
+    # torch._dynamo.config.cache_size_limit = 128
+    # model = torch.compile(model, dynamic=True)
     if "augmented_token_fields" in config.tokeniser and len(config.tokeniser.augmented_token_fields) == 1:
         augmented_field = config.tokeniser.augmented_token_fields[0]
     else:
