@@ -74,8 +74,6 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
         map(itemgetter(config.token_fields.pure_categorical[0]),
             datasets_pd.values()))))
     
-
-
     tensors = defaultdict(dict)
     for dataset_name, dataset in datasets_pd.items():
         for field in config.token_fields.pure_categorical:

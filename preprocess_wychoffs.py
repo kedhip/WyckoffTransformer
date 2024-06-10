@@ -19,6 +19,7 @@ def enumerate_wychoffs_by_ss(output_file: Path = Path("cache", "wychoffs_enumera
     enum_from_ss_letter = defaultdict(dict)
     ss_from_letter = defaultdict(dict)
     letter_from_ss_enum = defaultdict(lambda: defaultdict(dict))
+    multiplicity_from_ss_enum = defaultdict(lambda: defaultdict(dict))
     for spacegroup_number in range(1, N_3D_SPACEGROUPS + 1):
         group = Group(spacegroup_number)
         ss_counts = Counter()
@@ -30,9 +31,11 @@ def enumerate_wychoffs_by_ss(output_file: Path = Path("cache", "wychoffs_enumera
             ss_from_letter[spacegroup_number][wp.letter] = wp.site_symm
             enum_from_ss_letter[spacegroup_number][wp.letter] = ss_counts[wp.site_symm]
             letter_from_ss_enum[spacegroup_number][wp.site_symm][ss_counts[wp.site_symm]] = wp.letter
+            multiplicity_from_ss_enum[spacegroup_number][wp.site_symm][ss_counts[wp.site_symm]] = wp.multiplicity
             ss_counts[wp.site_symm] += 1
     with open(output_file, "wb") as f:
-        pickle.dump((dict(enum_from_ss_letter), dict(letter_from_ss_enum), dict(ss_from_letter)), f)
+        pickle.dump((dict(enum_from_ss_letter), dict(letter_from_ss_enum),
+            dict(ss_from_letter), dict(multiplicity_from_ss_enum)), f)
 
 
 def get_augmentation_dict():
