@@ -9,14 +9,13 @@ from enum import Enum
 from pathlib import Path
 import gzip
 import pickle
-from pandas import DataFrame
+from pandas import DataFrame, Series
 import torch
 import omegaconf
-
-
 from pyxtal.symmetry import Group
 
 ServiceToken = Enum('ServiceToken', ['PAD', 'STOP', 'MASK'])
+logger = logging.getLogger(__name__)
 
 class EnumeratingTokeniser(dict):
     @classmethod
@@ -53,6 +52,33 @@ class EnumeratingTokeniser(dict):
     def tokenise_single(self, token, **tensor_args) -> torch.Tensor:
         return torch.tensor(self[token], **tensor_args)
 
+class FeatureEngineer(dict):
+    def __init__(self,
+            mapping: dict,
+            inputs: Tuple[str, str, str],
+            stop_token: Optional[int] = None,
+            pad_token: Optional[int] = None,
+            mask_token: Optional[int] = None):
+        super().__init__(mapping)
+        self.inputs = inputs
+        self.stop_token = stop_token
+        self.pad_token = pad_token
+        self.mask_token = mask_token
+
+    def get_feature_tensor(self,
+        record: Series,
+        original_max_len: int,
+        **tensor_args) -> torch.Tensor:
+
+        res = []
+        # No need to write the general solution, for now we only need multiplicity
+        # WARNING(kazeevn): only one structure is supported:
+        # the first input is sequence-level, the next two are token-level
+        for i in range(len(record[self.inputs[1]])):
+            res.append(self[record[self.inputs[0]]][record[self.inputs[1]][i]][record[self.inputs[2]][i]])
+        padding = [self.pad_token] * (original_max_len - len(res))
+        return torch.tensor(res + [self.stop_token] + padding, **tensor_args)
+
 
 def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                      config: omegaconf.OmegaConf) -> \
@@ -68,6 +94,30 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
         all_tokens = frozenset(chain.from_iterable(map(lambda df: frozenset(df[sequence_field].tolist()), datasets_pd.values())))
         tokenisers[sequence_field] = EnumeratingTokeniser.from_token_set(all_tokens, max_tokens)
 
+    raw_engineered_tokenisers = {}
+    if "engineered" in config.token_fields:
+        for engineered_field_name, engineered_field_definiton in config.token_fields.engineered.items():
+            if engineered_field_definiton.type != "map":
+                raise ValueError("Only map engineered_field fields are supported")
+            if len(engineered_field_definiton.inputs) != 3:
+                raise NotImplementedError("Only 3 inputs are supported")
+            with gzip.open(Path(__file__).parent.parent.resolve() / "cache" / "engeneers" / f"{engineered_field_name}.pkl.gz", "rb") as f:
+                raw_tokeniser = pickle.load(f)
+            # Now we need to convert the token values to token indices
+            this_tokeniser = defaultdict(lambda: defaultdict(dict))
+            for level_one_key, level_one_dict in raw_tokeniser.items():
+                try:
+                    level_one_idx = tokenisers[engineered_field_definiton.inputs[0]][level_one_key]
+                    for level_two_key, level_two_dict in level_one_dict.items():
+                        level_two_idx = tokenisers[engineered_field_definiton.inputs[1]][level_two_key]
+                        for level_three_key, level_three_value in level_two_dict.items():
+                            level_three_idx = tokenisers[engineered_field_definiton.inputs[2]][level_three_key]
+                            this_tokeniser[level_one_idx][level_two_idx][level_three_idx] = level_three_value
+                except KeyError:
+                    logger.debug("Key not found in tokeniser, so it isn't in the dataset")
+            tokenisers[engineered_field_name] = FeatureEngineer(this_tokeniser, engineered_field_definiton.inputs)
+            raw_engineered_tokenisers[engineered_field_name] = raw_tokeniser
+
     # We don't check consistency among the fields here
     # The value is for the original sequences, withot service tokens
     original_max_len = max(map(len, chain.from_iterable(
@@ -82,6 +132,15 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                     tokenisers[field].tokenise_sequence,
                     original_max_len=original_max_len,
                     dtype=dtype)).to_list())
+
+        if "engineered" in config.token_fields:
+            for field in config.token_fields.engineered:
+                tensors[dataset_name][field] = torch.stack(
+                    dataset.apply(partial(
+                        raw_engineered_tokenisers[field].get_feature_tensor,
+                        original_max_len=original_max_len,
+                        dtype=dtype), axis=1).to_list())
+
         for field in config.sequence_fields.pure_categorical:
             tensors[dataset_name][field] = torch.stack(
                 dataset[field].map(partial(
@@ -108,6 +167,7 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
         # Assuming all the fields have the same length
         tensors[dataset_name]["pure_sequence_length"] = torch.tensor(
             dataset[config.token_fields.pure_categorical[0]].map(len).to_list(), dtype=dtype)
+
     return tensors, tokenisers
 
 
@@ -197,23 +257,23 @@ def tensor_to_pyxtal(
         if (this_token_cascade == stop_tokens).any():
             break
         if (this_token_cascade == pad_tokens).any():
-            logging.info("PAD token in generated sequence")
+            logger.info("PAD token in generated sequence")
             return None
         if (this_token_cascade == mask_tokens).any():
-            logging.info("MASK token in generated sequence")
+            logger.info("MASK token in generated sequence")
             return None
         element_idx, ss_idx, enum_idx = this_token_cascade.tolist()
         ss = tokenisers["site_symmetries"].to_token[ss_idx]
         try:
             wp_letter = letter_from_ss_enum_idx[space_group_real][ss][enum_idx]
         except KeyError:
-            logging.info("Invalid combination: space group %i, site symmetry %s, enum token %i", space_group_real,
+            logger.info("Invalid combination: space group %i, site symmetry %s, enum token %i", space_group_real,
                          ss, enum_idx)
             return None
         try:
             our_site = available_sites[ss][wp_letter]
         except KeyError:
-            logging.info("Repeated special WP: %i, %s, %s", space_group_real, ss, wp_letter)
+            logger.info("Repeated special WP: %i, %s, %s", space_group_real, ss, wp_letter)
             return None
         element = tokenisers["elements"].to_token[element_idx]
         pyxtal_args[element][0] += our_site[0]
@@ -221,13 +281,13 @@ def tensor_to_pyxtal(
         if our_site[1] == 0: # The position is special
             del available_sites[ss][wp_letter]
     if enforced_min_elements is not None and len(pyxtal_args.keys()) < enforced_min_elements:
-        logging.info("Not enough elements")
+        logger.info("Not enough elements")
         return None
     if enforced_max_elements is not None and len(pyxtal_args.keys()) > enforced_max_elements:
-        logging.info("Too many elements")
+        logger.info("Too many elements")
         return None
     if len(pyxtal_args) == 0:
-        logging.info("No structure generated, STOP in the first token")
+        logger.info("No structure generated, STOP in the first token")
         return None
     return {
             "group": space_group_real,

@@ -160,10 +160,6 @@ class AugmentedCascadeDataset():
         self.pure_sequences_lengths = data["pure_sequence_length"].type(dtype).to(device)
 
 
-    def __len__(self):
-        return next(iter(self.data.values())).size(0)
-
-
     # Compilation is safe since the function only ever uses the same data
     @torch.compile(fullgraph=True)
     def get_augmentation(self):

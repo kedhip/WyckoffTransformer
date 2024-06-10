@@ -14,6 +14,13 @@ token_fields:
     # for each site symmetry, hence the order is not important,
     # and it's a bona fide categorical field.
     - sites_enumeration
+  engineered:
+    multiplicity:
+      type: map
+      inputs:
+      - spacegroup_number
+      - site_symmetries
+      - sites_enumeration
 augmented_token_fields:
   # must be named <field-name>_augmented in the dataframe
   - sites_enumeration
