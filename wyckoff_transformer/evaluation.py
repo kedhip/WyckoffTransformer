@@ -79,8 +79,39 @@ def smact_validity(comp, count,
         return False
 
 
+def smact_validity_optimised(
+                   comp, count,
+                   use_pauling_test=True,
+                   include_alloys=True):
+    elem_symbols = comp
+    element_set = frozenset(elem_symbols)
+    if len(element_set) == 1:
+        return True
+    if include_alloys and element_set.issubset(smact.metals):
+        return True
+    
+    space = smact.element_dictionary(elem_symbols)
+    electronegs = [e.pauling_eneg for e in space.values()]
+    ox_combos = [e.oxidation_states for e in space.values()]
+
+    threshold = max(count)
+    stoichs = [(c,) for c in count]
+    for ox_states in product(*ox_combos):
+        cn_r = smact.neutral_ratios_iter(ox_states, stoichs=stoichs, threshold=threshold)
+        if any(True for _ in cn_r):
+            if not use_pauling_test:
+                return True
+            try:
+                if smact.screening.pauling_test(ox_states, electronegs):
+                    return True
+            except TypeError:
+                # if no electronegativity data, assume it is okay
+                return True
+    return False
+
+
 def smact_validity_from_record(record: Dict) -> bool:
-    return smact_validity(record['species'], record['numIons'])
+    return smact_validity_optimised(record['species'], record['numIons'])
 
 
 class StatisticalEvaluator():
@@ -140,17 +171,29 @@ class StatisticalEvaluator():
 
 
 def smac_validity_from_counter(counter: Dict[Element, float]) -> bool:
-    return smact_validity(tuple((elem.symbol for elem in counter.keys())), tuple(map(int, counter.values())))
+    return smact_validity_optimised(tuple((elem.symbol for elem in counter.keys())), tuple(map(int, counter.values())))
 
 
-if __name__ == "__main__":
+def main():
+    print("Loading data")
     import gzip, json
     with gzip.open("runs/l82pxye5/generated_wp.json.gz", "rb") as f:
         generated_structures = json.load(f)
-    print(sum(map(smact_validity_from_record, generated_structures)) / len(generated_structures))
+    print("Testing naive and optimised SMACT validity functions")
+    optimised_validity = list(map(smact_validity_from_record, generated_structures))
+    naive_validity = list(map(smact_validity, (record['species'] for record in generated_structures), (record['numIons'] for record in generated_structures)))
+    assert naive_validity == optimised_validity
+    print(sum(optimised_validity) / len(generated_structures))
     with gzip.open("cache/mp_20_biternary/data.pkl.gz", "rb") as f:
         dataset_pd = pd.read_pickle(f)
     test_dataset = dataset_pd['test']
     # Compute SMACT for the test dataset
     test_smact_valid = test_dataset.composition.map(smac_validity_from_counter)
+    test_smact_valid_naive = test_dataset.composition.map(lambda counter: smact_validity(tuple((elem.symbol for elem in counter.keys())), tuple(map(int, counter.values()))))
+    assert test_smact_valid_naive.equals(test_smact_valid)
     print(test_smact_valid.sum() / len(test_smact_valid))
+    print("Asserts passed")
+
+
+if __name__ == "__main__":
+    main()    
