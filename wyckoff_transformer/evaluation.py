@@ -80,10 +80,9 @@ def smact_validity(comp, count,
 
 
 def smact_validity_optimised(
-                   comp, count,
+                   elem_symbols, count,
                    use_pauling_test=True,
                    include_alloys=True):
-    elem_symbols = comp
     element_set = frozenset(elem_symbols)
     if len(element_set) == 1:
         return True
