@@ -110,6 +110,9 @@ def smact_validity_optimised(
 
 
 def smact_validity_from_record(record: Dict) -> bool:
+    """
+    Computes the SMACT validity of a record in pyxtal.from_random arguments format.
+    """
     return smact_validity_optimised(record['species'], record['numIons'])
 
 
