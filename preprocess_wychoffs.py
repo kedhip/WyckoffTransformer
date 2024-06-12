@@ -20,7 +20,7 @@ def enumerate_wychoffs_by_ss(output_file: Path = Path("cache", "wychoffs_enumera
     enum_from_ss_letter = defaultdict(dict)
     ss_from_letter = defaultdict(dict)
     letter_from_ss_enum = defaultdict(lambda: defaultdict(dict))
-    multiplicity_from_ss_enum = defaultdict(lambda: defaultdict(dict))
+    multiplicity_from_ss_enum = dict()
     max_multiplicity = 0
     for spacegroup_number in range(1, N_3D_SPACEGROUPS + 1):
         group = Group(spacegroup_number)
@@ -33,16 +33,17 @@ def enumerate_wychoffs_by_ss(output_file: Path = Path("cache", "wychoffs_enumera
             ss_from_letter[spacegroup_number][wp.letter] = wp.site_symm
             enum_from_ss_letter[spacegroup_number][wp.letter] = ss_counts[wp.site_symm]
             letter_from_ss_enum[spacegroup_number][wp.site_symm][ss_counts[wp.site_symm]] = wp.letter
-            multiplicity_from_ss_enum[spacegroup_number][wp.site_symm][ss_counts[wp.site_symm]] = wp.multiplicity
+            multiplicity_from_ss_enum[(spacegroup_number, wp.site_symm, ss_counts[wp.site_symm])] = wp.multiplicity
             max_multiplicity = max(max_multiplicity, wp.multiplicity)
             ss_counts[wp.site_symm] += 1
     with open(output_file, "wb") as f:
         pickle.dump((dict(enum_from_ss_letter), dict(letter_from_ss_enum),
             dict(ss_from_letter)), f)
-    engineered_path = Path("cache", "engeneers")
+    engineered_path = Path("cache", "engineers")
     engineered_path.mkdir(exist_ok=True)
     multiplicity_engineer = FeatureEngineer(
         multiplicity_from_ss_enum, ("spacegroup_number", "site_symmetries", "sites_enumeration"),
+        name="multiplicity",
         stop_token=max_multiplicity + 1, mask_token=max_multiplicity + 2, pad_token=0)
     with gzip.open(engineered_path / "multiplicity.pkl.gz", "wb") as f:
         pickle.dump(multiplicity_engineer, f)

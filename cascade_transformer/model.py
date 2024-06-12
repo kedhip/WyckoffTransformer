@@ -23,7 +23,7 @@ class CascadeEmbedding(nn.Module):
         super().__init__()
         self.embeddings = torch.nn.ModuleList()
         self.total_embedding_dim = 0
-        for n, d, pad in cascade:
+        for n, d, pad, _ in cascade:
             if d is None:
                 self.embeddings.append(None)
                 self.total_embedding_dim += 1
@@ -92,17 +92,14 @@ class CascadeTransformer(nn.Module):
         if len(config.tokeniser.augmented_token_fields) > 1:
             raise ValueError("Only one augmented field is supported")
 
-        if "cascade_order" in config.model:
-            cascade_order = config.model.cascade_order
-            logging.info("Using cascade order %s", cascade_order)
-        else:
-            cascade_order = tuple(config.model.cascade_embedding_size.keys())
+        cascade_order = config.model.cascade.order
 
         full_cascade = dict()
         for field in cascade_order:
             full_cascade[field] = (len(tokenisers[field]),
-                                config.model.cascade_embedding_size[field],
-                                tokenisers[field].pad_token)
+                                   config.model.cascade.embedding_size[field],
+                                   tokenisers[field].pad_token,
+                                   config.model.cascade.is_target[field])
 
         return cls(
             n_start=len(tokenisers[config.model.start_token]),
@@ -141,9 +138,10 @@ class CascadeTransformer(nn.Module):
 
         Arguments:
             n_start: Number of possible start tokens,
-            cascade: a tuple of tuples (N_i, d_i, pad_i), where N_i is the number of possible values for the i-th token,
+            cascade: a tuple of tuples (N_i, d_i, pad_i, is_target), where N_i is the number of possible values for the i-th token,
                 d_i is the dimensionality of the i-th token embedding. If d_i is None, the token is not embedded.
                 pad_i is padding_idx to be passed to torch.nn.Embedding
+                is_target is a boolean, if True, the model will have a separate head for predicting this token.
             token_aggregation: When predicting, concatenate to the MASK token aggregated values of all the tokens.
         """
         super().__init__()
@@ -190,13 +188,16 @@ class CascadeTransformer(nn.Module):
             raise ValueError("num_fully_connected_layers must be at least 1 for dimensionality reasons.")
         self.cascade = tuple(cascade)
         if outputs == "token_scores":
-            for output_size, _, _ in cascade:
-                this_head_size = prediction_head_size
-                if concat_token_counts:
-                    this_head_size += output_size
-                if concat_token_presence:
-                    this_head_size += output_size
-                self.prediction_heads.append(percepron_generator(this_head_size, output_size, num_fully_connected_layers))
+            for output_size, _, _, is_target in cascade:
+                if is_target:
+                    this_head_size = prediction_head_size
+                    if concat_token_counts:
+                        this_head_size += output_size
+                    if concat_token_presence:
+                        this_head_size += output_size
+                    self.prediction_heads.append(percepron_generator(this_head_size, output_size, num_fully_connected_layers))
+                else:
+                    self.prediction_heads.append(None)
         else:
             self.the_prediction_head = percepron_generator(prediction_head_size, outputs, num_fully_connected_layers)
 

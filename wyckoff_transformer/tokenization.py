@@ -1,7 +1,7 @@
 from typing import Dict, Iterable, Set, FrozenSet, Optional, List, Tuple
 from copy import deepcopy
 import logging
-from itertools import chain
+from itertools import chain, repeat
 from operator import attrgetter, itemgetter
 from functools import partial
 from collections import defaultdict
@@ -9,7 +9,7 @@ from enum import Enum
 from pathlib import Path
 import gzip
 import pickle
-from pandas import DataFrame, Series
+from pandas import DataFrame, Series, MultiIndex
 import torch
 import omegaconf
 from pyxtal.symmetry import Group
@@ -52,32 +52,99 @@ class EnumeratingTokeniser(dict):
     def tokenise_single(self, token, **tensor_args) -> torch.Tensor:
         return torch.tensor(self[token], **tensor_args)
 
-class FeatureEngineer(dict):
+
+class FeatureEngineer():
     def __init__(self,
-            mapping: dict,
-            inputs: Tuple[str, str, str],
+            data: Dict[Tuple, int]|Series,
+            inputs: Optional[Tuple] = None,
+            name: Optional[str] = None,
             stop_token: Optional[int] = None,
             pad_token: Optional[int] = None,
             mask_token: Optional[int] = None):
-        super().__init__(mapping)
-        self.inputs = inputs
+        if isinstance(data, Series):
+            if inputs is not None or name is not None:
+                raise ValueError("If data is a DataFrame, inputs and name should be None")
+            self.db = data
+        else:
+            index = MultiIndex.from_tuples(data.keys(), names=inputs)
+            self.db = Series(data=data.values(), index=index, name=name)
+        self.inputs = self.db.index.names
         self.stop_token = stop_token
         self.pad_token = pad_token
         self.mask_token = mask_token
+        self.default_value = 0
 
-    def get_feature_tensor(self,
+    def get_feature_tensor_from_series(self,
         record: Series,
         original_max_len: int,
         **tensor_args) -> torch.Tensor:
 
-        res = []
+        indexed_record = record.loc[self.db.index.names]
         # No need to write the general solution, for now we only need multiplicity
         # WARNING(kazeevn): only one structure is supported:
-        # the first input is sequence-level, the next two are token-level
-        for i in range(len(record[self.inputs[1]])):
-            res.append(self[record[self.inputs[0]]][record[self.inputs[1]][i]][record[self.inputs[2]][i]])
+        # the first input is sequence-level, the next two are token-level        
+        this_db = self.db.loc[indexed_record.iloc[0]]
+        # Beautiful, but slow
+        res = this_db.loc[map(tuple, zip(*indexed_record.iloc[1:]))].to_list()
+        # Since in our infinite wisdom we decided to compute multiplicity
+        # two times, we might as well just check
+        if self.db.name in record.index:
+            assert record[self.db.name] == res
         padding = [self.pad_token] * (original_max_len - len(res))
         return torch.tensor(res + [self.stop_token] + padding, **tensor_args)
+    
+    def get_feature_from_token_batch(
+        self,
+        level_0: torch.Tensor,
+        levels_plus: List[torch.Tensor]):
+        """
+        Every tensor has shape [batch_size]
+        """
+        return self.db.reindex(map(tuple, zip(level_0, *levels_plus)), fill_value=self.default_value).values
+        #return self.db.loc[map(tuple, zip(level_0, *levels_plus))].to_list()
+
+
+class DummyItemGetter():
+    def __getitem__(self, key):
+        return key
+
+
+class PassThroughTokeniser():
+    def __init__(self, min_value:int, max_value:int,
+        stop_token: Optional[int] = None,
+        pad_token: Optional[int] = None,
+        mask_token: Optional[int] = None):
+        """
+        min_value and max_value should include the service tokens
+        """
+
+        self.min_value = min_value
+        self.max_value = max_value
+        self.stop_token = stop_token
+        self.pad_token = pad_token
+        self.mask_token = mask_token
+        self.to_token = DummyItemGetter()
+    
+    def __len__(self):
+        return self.max_value - self.min_value + 1
+
+    def __getitem__(self, token):
+        return token
+
+
+def tokenise_engineer(
+    engineer: FeatureEngineer,
+    tokenisers: EnumeratingTokeniser):
+
+    tokenised_data = {}
+    for index, value in engineer.db.items():
+        try:
+            new_index = tuple((tokenisers[field][this_index] for field, this_index in zip(engineer.db.index.names, index)))
+        except KeyError:
+            continue
+        tokenised_data[new_index] = value
+    return FeatureEngineer(tokenised_data, engineer.db.index.names, name=engineer.db.name,
+        stop_token=engineer.stop_token, pad_token=engineer.pad_token, mask_token=engineer.mask_token)
 
 
 def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
@@ -94,29 +161,27 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
         all_tokens = frozenset(chain.from_iterable(map(lambda df: frozenset(df[sequence_field].tolist()), datasets_pd.values())))
         tokenisers[sequence_field] = EnumeratingTokeniser.from_token_set(all_tokens, max_tokens)
 
-    raw_engineered_tokenisers = {}
+    raw_engineers = {}
+    token_engineers = dict()
     if "engineered" in config.token_fields:
         for engineered_field_name, engineered_field_definiton in config.token_fields.engineered.items():
             if engineered_field_definiton.type != "map":
                 raise ValueError("Only map engineered_field fields are supported")
             if len(engineered_field_definiton.inputs) != 3:
                 raise NotImplementedError("Only 3 inputs are supported")
-            with gzip.open(Path(__file__).parent.parent.resolve() / "cache" / "engeneers" / f"{engineered_field_name}.pkl.gz", "rb") as f:
-                raw_tokeniser = pickle.load(f)
+            with gzip.open(Path(__file__).parent.parent.resolve() / "cache" / "engineers" / f"{engineered_field_name}.pkl.gz", "rb") as f:
+                raw_engineer = pickle.load(f)
+            raw_engineers[engineered_field_name] = raw_engineer
             # Now we need to convert the token values to token indices
-            this_tokeniser = defaultdict(lambda: defaultdict(dict))
-            for level_one_key, level_one_dict in raw_tokeniser.items():
-                try:
-                    level_one_idx = tokenisers[engineered_field_definiton.inputs[0]][level_one_key]
-                    for level_two_key, level_two_dict in level_one_dict.items():
-                        level_two_idx = tokenisers[engineered_field_definiton.inputs[1]][level_two_key]
-                        for level_three_key, level_three_value in level_two_dict.items():
-                            level_three_idx = tokenisers[engineered_field_definiton.inputs[2]][level_three_key]
-                            this_tokeniser[level_one_idx][level_two_idx][level_three_idx] = level_three_value
-                except KeyError:
-                    logger.debug("Key not found in tokeniser, so it isn't in the dataset")
-            tokenisers[engineered_field_name] = FeatureEngineer(this_tokeniser, engineered_field_definiton.inputs)
-            raw_engineered_tokenisers[engineered_field_name] = raw_tokeniser
+            token_engineers[engineered_field_name] = tokenise_engineer(raw_engineer, tokenisers)
+            # The values haven't changed, only the keys, so we can reuse the stop, pad, and mask tokens
+
+            tokenisers[engineered_field_name] = PassThroughTokeniser(
+                min(token_engineers[engineered_field_name].db.min().min(), raw_engineer.stop_token, raw_engineer.pad_token, raw_engineer.mask_token),
+                max(token_engineers[engineered_field_name].db.max().max(), raw_engineer.stop_token, raw_engineer.pad_token, raw_engineer.mask_token),
+                stop_token = raw_engineer.stop_token,
+                pad_token = raw_engineer.pad_token,
+                mask_token = raw_engineer.mask_token)
 
     # We don't check consistency among the fields here
     # The value is for the original sequences, withot service tokens
@@ -137,9 +202,10 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
             for field in config.token_fields.engineered:
                 tensors[dataset_name][field] = torch.stack(
                     dataset.apply(partial(
-                        raw_engineered_tokenisers[field].get_feature_tensor,
+                        raw_engineers[field].get_feature_tensor_from_series,
                         original_max_len=original_max_len,
                         dtype=dtype), axis=1).to_list())
+                logger.debug("Engineered field %s shape %s", field, tensors[dataset_name][field].shape)
 
         for field in config.sequence_fields.pure_categorical:
             tensors[dataset_name][field] = torch.stack(
@@ -168,7 +234,7 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
         tensors[dataset_name]["pure_sequence_length"] = torch.tensor(
             dataset[config.token_fields.pure_categorical[0]].map(len).to_list(), dtype=dtype)
 
-    return tensors, tokenisers
+    return tensors, tokenisers, token_engineers
 
 
 def load_tensors_and_tokenisers(
@@ -181,7 +247,8 @@ def load_tensors_and_tokenisers(
         tensors = pickle.load(f)
     with gzip.open(this_cache_path / 'tokenisers' / f'{config_name}.pkl.gz', "rb") as f:
         tokenisers = pickle.load(f)
-    return tensors, tokenisers
+        token_engineers = pickle.load(f)
+    return tensors, tokenisers, token_engineers
 
 
 def get_wp_index() -> dict:

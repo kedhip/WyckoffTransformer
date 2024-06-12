@@ -129,11 +129,10 @@ class AugmentedCascadeDataset():
         """
         self.device = device
         self.batch_size = batch_size
-        self.__len__ = len(data[cascade_order[0]])
+        self.num_examples = len(data[cascade_order[0]])
         if batch_size is not None:
-            self.this_shuffle_order = torch.randperm(self.__len__, device=device)
+            self.this_shuffle_order = torch.randperm(self.num_examples, device=device)
             self.next_batch_index = 0
-            self.max_batch_index = self.__len__ // batch_size
         self.cascade_order = cascade_order
         self.cascade_index_from_field = {name: i for i, name in enumerate(cascade_order)}
         self.augmented_field = augmented_field
@@ -158,6 +157,10 @@ class AugmentedCascadeDataset():
                 dim=0).type(dtype).to(device).unsqueeze(0).expand(self.augmentation_variants.size(0), -1)
         self.start_tokens = data[start_field].type(dtype).to(device)
         self.pure_sequences_lengths = data["pure_sequence_length"].type(dtype).to(device)
+
+
+    def __len__(self):
+        return self.num_examples
 
 
     # Compilation is safe since the function only ever uses the same data
@@ -209,7 +212,8 @@ class AugmentedCascadeDataset():
         known_seq_len: int,
         known_cascade_len: int,
         target_type: TargetClass,
-        multiclass_target: bool):
+        multiclass_target: bool,
+        no_batch: bool = False):
 
         if target_type == TargetClass.NumUniqueTokens:
             if multiclass_target:
@@ -223,7 +227,7 @@ class AugmentedCascadeDataset():
         if self.augmented_field_index is not None:
             augmented_data = self.get_augmentation()
 
-        if self.batch_size is not None:
+        if self.batch_size is not None and not no_batch:
             # Duck typing...
             batch_target_is_viable = ()
             # A good research question would be optimising this by removing the invalid targets first,
@@ -231,13 +235,14 @@ class AugmentedCascadeDataset():
             # towards longer sequences
             while len(batch_target_is_viable) == 0:
                 batch_start = self.next_batch_index * self.batch_size
-                batch_end = (self.next_batch_index + 1) * self.batch_size
+                batch_end = batch_start + self.batch_size
                 batch_selection = self.this_shuffle_order[batch_start:batch_end]
+                logging.debug("The current batch size is %i", len(batch_selection))
                 # STOP is not included in the pure length, but is a viable target
                 target_is_viable = self.pure_sequences_lengths[batch_selection] >= known_seq_len
                 batch_target_is_viable = batch_selection[target_is_viable]
-                if batch_end >= self.__len__:
-                    self.this_shuffle_order = torch.randperm(self.__len__, device=self.device)
+                if batch_end >= self.num_examples:
+                    self.this_shuffle_order = torch.randperm(self.num_examples, device=self.device)
                     self.next_batch_index = 0
                 else:
                     self.next_batch_index += 1

@@ -33,7 +33,9 @@ class WyckoffTrainer():
                  model: nn.Module,
                  torch_datasets: dict,
                  tokenisers: dict,
+                 token_engineers: dict,
                  cascade_order: Tuple[str],
+                 cascade_is_target: Dict[str, bool],
                  augmented_field: str|None,
                  start_name: str,
                  target: TargetClass|str,
@@ -53,6 +55,12 @@ class WyckoffTrainer():
                 num_unique_tokens: predict the number of unique tokens in the cascade&sequence encountered so far.
                     Intended for debugging the ability of the model to count.
         """
+        is_target_in_order = [cascade_is_target[field] for field in cascade_order]
+        if not all(is_target_in_order[:-1]):
+            raise NotImplementedError("Only one not targret field is supported at the moment and it must be the last")
+        self.cascade_target_count = sum(is_target_in_order)
+        self.token_engineers = token_engineers
+        self.cascade_is_target = cascade_is_target
         # Nothing else will work in foreseeable future
         self.dtype = torch.int64
         self.batch_size = batch_size
@@ -141,7 +149,8 @@ class WyckoffTrainer():
     def get_loss(self,
         dataset: AugmentedCascadeDataset,
         known_seq_len: int,
-        known_cascade_len: int) -> Tensor:
+        known_cascade_len: int,
+        no_batch: bool) -> Tensor:
         logging.debug("Known sequence length: %i", known_seq_len)
         logging.debug("Known cascade lenght: %i", known_cascade_len)
         if self.multiclass_next_token_with_order_permutation:
@@ -175,10 +184,10 @@ class WyckoffTrainer():
             self.optimizer.zero_grad(set_to_none=True)
             known_seq_len = randint(0, self.train_dataset.max_sequence_length - 1)
             if self.target == TargetClass.NextToken:
-                known_cascade_len = randint(0, self.cascade_len - 1)
+                known_cascade_len = randint(0, self.cascade_target_count - 1)
             elif self.target == TargetClass.NumUniqueTokens:
                 known_cascade_len = 0
-            loss = self.get_loss(self.train_dataset, known_seq_len, known_cascade_len)
+            loss = self.get_loss(self.train_dataset, known_seq_len, known_cascade_len, False)
             if self.target == TargetClass.NumUniqueTokens:
                 # Predictions are [batch_size, cascade_size]
                 # Unreduced MSE is [batch_size, cascade_size]
@@ -210,14 +219,14 @@ class WyckoffTrainer():
             for _ in range(self.evaluation_samples):
                 for known_seq_len in range(0, self.train_dataset.max_sequence_length):
                     if self.target == TargetClass.NextToken:
-                        for known_cascade_len in range(0, self.cascade_len):
+                        for known_cascade_len in range(0, self.cascade_target_count):
                             train_loss[known_cascade_len] += self.get_loss(
-                                self.train_dataset, known_seq_len, known_cascade_len)
+                                self.train_dataset, known_seq_len, known_cascade_len, True)
                             val_loss[known_cascade_len] += self.get_loss(
-                                self.val_dataset, known_seq_len, known_cascade_len)
+                                self.val_dataset, known_seq_len, known_cascade_len, True)
                     else:
-                        train_loss += self.get_loss(self.train_dataset, known_seq_len, 0).sum(dim=0)
-                        val_loss += self.get_loss(self.val_dataset, known_seq_len, 0).sum(dim=0)
+                        train_loss += self.get_loss(self.train_dataset, known_seq_len, 0, True).sum(dim=0)
+                        val_loss += self.get_loss(self.val_dataset, known_seq_len, 0, True).sum(dim=0)
             # ln(P) = ln p(t_n|t_n-1, ..., t_1) + ... + ln p(t_2|t_1)
             # We are minimising the negative log likelihood of the whole sequences
             val_loss /= self.evaluation_samples * len(self.val_dataset)
@@ -266,7 +275,8 @@ class WyckoffTrainer():
 
     def generate_structures(self, n_structures: int, calibrate: bool):
         generator = WyckoffGenerator(
-            self.model, self.cascade_order, self.train_dataset.masks, self.train_dataset.max_sequence_length)
+            self.model, self.cascade_order, self.cascade_is_target, self.token_engineers,
+             self.train_dataset.masks, self.train_dataset.max_sequence_length)
         if calibrate:
             generator.calibrate(self.val_dataset)
         max_start = self.model.start_embedding.num_embeddings
@@ -337,7 +347,7 @@ def train_from_config(config_dict: dict, device: torch.device, run_path: Optiona
     if config.model.WyckoffTrainer_args.multiclass_next_token_with_order_permutation and not config.model.CascadeTransformer_args.learned_positional_encoding_only_masked:
         raise ValueError("Multiclass target with order permutation requires learned positional encoding only masked, ",
                          "otherwise the Transformer is not permutation invariant.")
-    tensors, tokenisers = load_tensors_and_tokenisers(config.dataset, config.tokeniser.name)
+    tensors, tokenisers, token_engineers = load_tensors_and_tokenisers(config.dataset, config.tokeniser.name)
     model = CascadeTransformer.from_config_and_tokenisers(config, tokenisers, device)
     # Our hihgly dynamic concat-heavy workflow doesn't benefit much from compilation
     # torch._dynamo.config.cache_size_limit = 128
@@ -347,7 +357,8 @@ def train_from_config(config_dict: dict, device: torch.device, run_path: Optiona
     else:
         augmented_field = None
     trainer = WyckoffTrainer(
-        model, tensors, tokenisers, config.model.cascade_order, 
+        model, tensors, tokenisers, token_engineers, config.model.cascade.order,
+        config.model.cascade.is_target,
         augmented_field,
         config.model.start_token,
         optimisation_config=config.optimisation, device=device,
