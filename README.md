@@ -12,7 +12,7 @@ echo "WANDB_ENTITY=symmetry-advantage" > .env
 python preprocess_wychoffs.py
 # Read CIF structures and find the Wychoff positions
 # A CPU-intensive operations
-python mp_20_utils.py mp_20_biternary --cache-dataset
+python cache_a_dataset.py mp_20_biternary
 # Tokenise a dataset
 python tokenise_a_dataset.py mp_20_biternary yamls/tokenisers/mp_20_naive.yaml
 ```

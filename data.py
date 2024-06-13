@@ -3,6 +3,7 @@ This module provides functions for reading the structures and extracting the sym
 """
 from typing import Optional
 from functools import partial
+from collections import Counter
 from pathlib import Path
 import pickle
 import warnings
@@ -10,9 +11,7 @@ from multiprocessing import Pool
 import pandas as pd
 from pymatgen.io.cif import CifParser
 from pymatgen.core import Structure, Element
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pyxtal import pyxtal
-from sklearn.model_selection import train_test_split
 
 from preprocess_wychoffs import get_augmentation_dict
 
@@ -46,10 +45,7 @@ def structure_to_sites(
             Defaults to 0.1, as in Materials Project.
 
     Returns:
-        dict: A dictionary with the following keys:
-            - symmetry_sites: list of lists of strings, where each string is a site symmetry
-            - symmetry_elements: list of pymatgen Element objects
-            - spacegroup_number: int
+        dict
     """
     pyxtal_structure = pyxtal()
     pyxtal_structure.from_seed(structure, tol=tol)
@@ -120,6 +116,19 @@ def read_MP(MP_csv: Path|str, n_jobs: Optional[int] = None):
     return MP_df
 
 
+def get_composition_from_symmetry_sites(record: pd.Series) -> dict:
+    """
+    Returns the composition of a record as a dictionary.
+
+    Returns:
+        dict: A dictionary with the elements as keys and the number of atoms as values.
+    """
+    result = Counter()
+    for element, multiplicity in zip(record["elements"], record["multiplicity"]):
+        result[element] += multiplicity
+    return result
+
+
 def get_composition(structure: Structure) -> dict[Element, float]:
     """
     Returns the composition of a structure as a dictionary.
@@ -153,7 +162,7 @@ def compute_symmetry_sites(
         with Pool(processes=n_jobs) as p:
             symmetry_dataset = pd.DataFrame.from_records(
                 p.map(structure_to_sites_with_args, dataset['structure'])).set_index(dataset.index)
-        symmetry_dataset["composition"] = dataset["structure"].map(get_composition)
+        symmetry_dataset["composition"] = symmetry_dataset.apply(get_composition_from_symmetry_sites, axis=1)
         result[dataset_name] = symmetry_dataset
     return result
 
