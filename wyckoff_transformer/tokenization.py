@@ -9,6 +9,7 @@ from enum import Enum
 from pathlib import Path
 import gzip
 import pickle
+import numpy as np
 from pandas import DataFrame, Series, MultiIndex
 import torch
 import omegaconf
@@ -26,9 +27,15 @@ class SpaceGroupEncoder(dict):
     """
     @classmethod
     def from_sg_set(cls, all_space_groups: Set[int]|FrozenSet[int]):
+        symbols = ("P", "A", "C", "I", "R", "F")
+        symbols_one_hot_matrix = np.eye(len(symbols))
+        symbol_to_one_hot = dict(zip(symbols, symbols_one_hot_matrix))
         all_spgs_raw = dict()
         for group_number in all_space_groups:
-            all_spgs_raw[group_number] = Group(group_number).get_spg_symmetry_object().to_matrix_representation_spg().ravel()
+            group = Group(group_number)
+            all_spgs_raw[group_number] = np.concatenate(
+                [group.get_spg_symmetry_object().to_matrix_representation_spg().ravel(),
+                 symbol_to_one_hot[group.symbol[0]]])
         all_spgs_sum = sum(all_spgs_raw.values())
         varying_indices = ~((all_spgs_sum == 0) | (all_spgs_sum == len(all_spgs_raw)))
         logger.info("Space group one-hot encoding: %i groups, %i varying elements", len(all_space_groups), varying_indices.sum())
@@ -135,7 +142,6 @@ class FeatureEngineer():
         Every tensor has shape [batch_size]
         """
         return self.db.reindex(map(tuple, zip(level_0, *levels_plus)), fill_value=self.default_value).values
-        #return self.db.loc[map(tuple, zip(level_0, *levels_plus))].to_list()
 
 
 class DummyItemGetter():

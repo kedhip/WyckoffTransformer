@@ -1,6 +1,6 @@
 import unittest
 import torch
-from ..model import get_cascade_target, get_masked_cascade_data
+from ..model import  get_masked_cascade_data
 
 class TestCascadeData(unittest.TestCase):
     def setUp(self):
