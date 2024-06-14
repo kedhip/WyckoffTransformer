@@ -18,6 +18,7 @@ model:
     target: NextToken
     evaluation_samples: 2
   CascadeTransformer_args:
+    start_type: categorial
     perceptron_shape: pyramid
     concat_token_counts: false
     concat_token_presence: true

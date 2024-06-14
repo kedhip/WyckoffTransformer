@@ -22,7 +22,7 @@ from wyckoff_transformer.tokenization import (
     get_letter_from_ss_enum_idx, get_wp_index)
 from wyckoff_transformer.generator import WyckoffGenerator
 from wyckoff_transformer.evaluation import (
-    StatisticalEvaluator, smact_validity_from_record, smac_validity_from_counter)
+    StatisticalEvaluator, timed_smact_validity_from_record, smac_validity_from_counter)
 
 
 def ks_to_dict(ks_statistic) -> Dict[str, float]:
@@ -339,7 +339,7 @@ class WyckoffTrainer():
         print(f"Degrees of freedom: {ks_dof}")
         wandb.run.summary["wp"][generation_name]["generated_actual_size"] = len(generated_wp)
         
-        smac_validity_count = sum(map(smact_validity_from_record, generated_wp))
+        smac_validity_count = sum(map(timed_smact_validity_from_record, generated_wp))
         smac_validity_fraction = smac_validity_count / len(generated_wp)
         print(f"SMAC-T validity: fraction {smac_validity_fraction}; count {smac_validity_count}")
         wandb.run.summary["smact_validity"][generation_name] = smac_validity_fraction
