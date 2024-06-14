@@ -1,7 +1,7 @@
 from typing import Dict, Iterable, Set, FrozenSet, Optional, List, Tuple
 from copy import deepcopy
 import logging
-from itertools import chain, repeat
+from itertools import chain
 from operator import attrgetter, itemgetter
 from functools import partial
 from collections import defaultdict
@@ -16,6 +16,40 @@ from pyxtal.symmetry import Group
 
 ServiceToken = Enum('ServiceToken', ['PAD', 'STOP', 'MASK'])
 logger = logging.getLogger(__name__)
+
+
+class SpaceGroupEncoder(dict):
+    """
+    Encodes the spacegroup number as a one-hot tensor via
+    get_spg_symmetry_object().to_matrix_representation_spg()
+    Removes constants among the present groups.
+    """
+    @classmethod
+    def from_sg_set(cls, all_space_groups: Set[int]|FrozenSet[int]):
+        all_spgs_raw = dict()
+        for group_number in all_space_groups:
+            all_spgs_raw[group_number] = Group(group_number).get_spg_symmetry_object().to_matrix_representation_spg().ravel()
+        all_spgs_sum = sum(all_spgs_raw.values())
+        varying_indices = ~((all_spgs_sum == 0) | (all_spgs_sum == len(all_spgs_raw)))
+        logger.info("Space group one-hot encoding: %i groups, %i varying elements", len(all_space_groups), varying_indices.sum())
+        instance = cls()
+        for group_number, spg in all_spgs_raw.items():
+            instance[group_number] = spg[varying_indices]
+        return instance
+
+
+    def encode_spacegroups(self, space_groups: Iterable[int], **tensor_args) -> torch.Tensor:
+        """
+        Returns a one-hot encoded vector for each space group.
+        Args:
+            space_groups [batch_size]: An iterable of space group numbers.
+        Returns:
+            [batch_size, n_features]: A tensor with one-hot encoded space groups.
+            n_fetures depends on the number of varying elements in the space groups present
+            in constructor, so it might be different for different datsets.
+        """
+        return torch.stack([torch.from_numpy(self[sg]) for sg in space_groups]).to(**tensor_args)
+
 
 class EnumeratingTokeniser(dict):
     @classmethod
@@ -157,9 +191,16 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
         all_tokens = frozenset(chain.from_iterable(chain.from_iterable(map(itemgetter(token_field), datasets_pd.values()))))
         tokenisers[token_field] = EnumeratingTokeniser.from_token_set(all_tokens, max_tokens)
 
-    for sequence_field in config.sequence_fields.pure_categorical:
-        all_tokens = frozenset(chain.from_iterable(map(lambda df: frozenset(df[sequence_field].tolist()), datasets_pd.values())))
-        tokenisers[sequence_field] = EnumeratingTokeniser.from_token_set(all_tokens, max_tokens)
+    if "pure_categorical" in config.sequence_fields:
+        # Cell variable sequence_field defined in loopPylintW0640:cell-var-from-loop
+        for sequence_field in config.sequence_fields.pure_categorical:
+            all_tokens = frozenset(chain.from_iterable(map(lambda df: frozenset(df[sequence_field].tolist()), datasets_pd.values())))
+            tokenisers[sequence_field] = EnumeratingTokeniser.from_token_set(all_tokens, max_tokens)
+    
+    if "space_group" in config.sequence_fields:
+        for sequence_field in config.sequence_fields.space_group:
+            all_space_groups = frozenset(chain.from_iterable(map(itemgetter(sequence_field), datasets_pd.values())))
+            tokenisers[sequence_field] = SpaceGroupEncoder.from_sg_set(all_space_groups)
 
     raw_engineers = {}
     token_engineers = dict()
@@ -206,13 +247,19 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                         original_max_len=original_max_len,
                         dtype=dtype), axis=1).to_list())
                 logger.debug("Engineered field %s shape %s", field, tensors[dataset_name][field].shape)
+        
+        if "pure_categorical" in config.sequence_fields:
+            for field in config.sequence_fields.pure_categorical:
+                tensors[dataset_name][field] = torch.stack(
+                    dataset[field].map(partial(
+                        tokenisers[field].tokenise_single,
+                        dtype=dtype)).to_list())
 
-        for field in config.sequence_fields.pure_categorical:
-            tensors[dataset_name][field] = torch.stack(
-                dataset[field].map(partial(
-                    tokenisers[field].tokenise_single,
-                    dtype=dtype)).to_list())
-        # Conuter fields are processed into two tensors: tokenised values, and the counts
+        if "space_group" in config.sequence_fields:
+            for field in config.sequence_fields.space_group:
+                tensors[dataset_name][field] = tokenisers[field].encode_spacegroups(dataset[field], dtype=dtype)
+
+        # Counter fields are processed into two tensors: tokenised values, and the counts
         # WARNING Cell variable tokeniser_filed defined in loopPylintW0640:cell-var-from-loop
         for field, tokeniser_field in config.sequence_fields.counters.items():
             tensors[dataset_name][f"{field}_tokens"] = \

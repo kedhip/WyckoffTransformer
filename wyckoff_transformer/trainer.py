@@ -38,6 +38,7 @@ class WyckoffTrainer():
                  cascade_is_target: Dict[str, bool],
                  augmented_field: str|None,
                  start_name: str,
+                 start_dtype: torch.dtype,
                  target: TargetClass|str,
                  evaluation_samples: int,
                  multiclass_next_token_with_order_permutation: bool,
@@ -99,6 +100,7 @@ class WyckoffTrainer():
             augmented_field=augmented_field,
             batch_size=batch_size,
             dtype=self.dtype,
+            start_dtype=start_dtype,
             device=self.device)
         
         if "lr_per_sqrt_n_samples" in optimisation_config.optimiser:
@@ -126,6 +128,7 @@ class WyckoffTrainer():
             start_field=start_name,
             augmented_field=augmented_field,
             dtype=self.dtype,
+            start_dtype=start_dtype,
             device=device)
 
         assert self.train_dataset.max_sequence_length == self.val_dataset.max_sequence_length
@@ -356,6 +359,13 @@ def train_from_config(config_dict: dict, device: torch.device, run_path: Optiona
         augmented_field = config.tokeniser.augmented_token_fields[0]
     else:
         augmented_field = None
+    if config.model.CascadeTransformer_args.start_type == "categorial":
+        start_dtype = torch.int64
+    # one-hots are encoded by a linear layer
+    elif config.model.CascadeTransformer_args.start_type == "one_hot":
+        start_dtype = torch.float32
+    else:
+        raise ValueError(f"Unknown start type: {config.model.CascadeTransformer_args.start_type}")
     trainer = WyckoffTrainer(
         model, tensors, tokenisers, token_engineers, config.model.cascade.order,
         config.model.cascade.is_target,
@@ -363,6 +373,7 @@ def train_from_config(config_dict: dict, device: torch.device, run_path: Optiona
         config.model.start_token,
         optimisation_config=config.optimisation, device=device,
         run_path=run_path,
+        start_dtype=start_dtype,
         **config.model.WyckoffTrainer_args)
     trainer.train()
     if config.model.WyckoffTrainer_args.target == "NextToken":

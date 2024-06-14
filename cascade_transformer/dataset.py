@@ -108,6 +108,7 @@ class AugmentedCascadeDataset():
         augmented_field: str,
         batch_size: Optional[int] = None,
         dtype: torch.dtype = torch.int64,
+        start_dtype: torch.dtype = torch.int64,
         device: str = "cpu"):
         """
         A class for contaning augmented cascade datasets.
@@ -155,7 +156,7 @@ class AugmentedCascadeDataset():
             # It will be used in torch.gather
             self.augmentation_data_store = torch.cat([torch.cat(x, dim=0) for x in data[f"{augmented_field}_augmented"]],
                 dim=0).type(dtype).to(device).unsqueeze(0).expand(self.augmentation_variants.size(0), -1)
-        self.start_tokens = data[start_field].type(dtype).to(device)
+        self.start_tokens = data[start_field].type(start_dtype).to(device)
         self.pure_sequences_lengths = data["pure_sequence_length"].type(dtype).to(device)
 
 

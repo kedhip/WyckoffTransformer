@@ -100,16 +100,23 @@ class CascadeTransformer(nn.Module):
                                    config.model.cascade.embedding_size[field],
                                    tokenisers[field].pad_token,
                                    config.model.cascade.is_target[field])
+        if config.model.CascadeTransformer_args.start_type == "categorial":
+            n_start = len(tokenisers[config.model.start_token])
+        elif config.model.CascadeTransformer_args.start_type == "one_hot":
+            n_start = len(next(iter(tokenisers[config.model.start_token].values())))
+        else:
+            raise ValueError(f"Unknown start_type {config.start_type}")
 
         return cls(
-            n_start=len(tokenisers[config.model.start_token]),
+            n_start=n_start,
             cascade=full_cascade.values(),
             **config.model.CascadeTransformer_args
             ).to(device)
 
 
     def __init__(self,
-                 n_start: int,
+                 start_type: str,    
+                 n_start: int|None,
                  cascade: Tuple[Tuple[int, int|None, int], ...],
                  learned_positional_encoding_max_size: Optional[int],
                  learned_positional_encoding_only_masked: bool,
@@ -137,7 +144,9 @@ class CascadeTransformer(nn.Module):
         PAD is padding. Not predicted.
 
         Arguments:
-            n_start: Number of possible start tokens,
+            start_type: "one_hot" or "categorial". If categorial, n_start must be provided and the start token will be embedded.
+                If one_hot, n_start is ignored and the start token will be treated as a one-hot vector, embedded via a linear layer.
+            n_start: Number of possible start tokens or dimensionality of the one-hot start token.
             cascade: a tuple of tuples (N_i, d_i, pad_i, is_target), where N_i is the number of possible values for the i-th token,
                 d_i is the dimensionality of the i-th token embedding. If d_i is None, the token is not embedded.
                 pad_i is padding_idx to be passed to torch.nn.Embedding
@@ -149,7 +158,10 @@ class CascadeTransformer(nn.Module):
         self.d_model = self.embedding.total_embedding_dim
         self.encoder_layers = TransformerEncoderLayer(self.d_model, batch_first=True, **TransformerEncoderLayer_args)
         self.transformer_encoder = TransformerEncoder(self.encoder_layers, **TransformerEncoder_args)
-        self.start_embedding = nn.Embedding(n_start, self.d_model)
+        if start_type == "categorial":
+            self.start_embedding = nn.Embedding(n_start, self.d_model)
+        elif start_type == "one_hot":
+            self.start_embedding = nn.Linear(n_start, self.d_model)
         self.learned_positional_encoding_max_size = learned_positional_encoding_max_size
         self.learned_positional_encoding_only_masked = learned_positional_encoding_only_masked
         if perceptron_shape == "pyramid":

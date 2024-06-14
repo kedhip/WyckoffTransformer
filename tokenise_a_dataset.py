@@ -27,7 +27,7 @@ def main():
     for name, dataset in datasets_pd.items():
         print(f"{name}: {len(dataset)}")
     tensors, tokenisers, token_engineers = tokenise_dataset(datasets_pd, config)
-    if args.debug:
+    if args.debug and "multiplicity" in token_engineers:
         index = 0
         multiplicities_from_tokens = token_engineers["multiplicity"].get_feature_from_token_batch(
             tensors["val"]["spacegroup_number"].tolist(),
