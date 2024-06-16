@@ -4,7 +4,7 @@ import logging
 from itertools import chain
 from operator import attrgetter, itemgetter
 from functools import partial
-from collections import defaultdict
+from collections import defaultdict, UserDict
 from enum import Enum
 from pathlib import Path
 import gzip
@@ -17,6 +17,12 @@ from pyxtal.symmetry import Group
 
 ServiceToken = Enum('ServiceToken', ['PAD', 'STOP', 'MASK'])
 logger = logging.getLogger(__name__)
+
+class TupleDict(UserDict):
+    def __getitem__(self, key):
+        if isinstance(key, tuple):
+            return super().__getitem__(key)
+        return super().__getitem__(tuple(key))
 
 
 class SpaceGroupEncoder(dict):
@@ -40,8 +46,13 @@ class SpaceGroupEncoder(dict):
         varying_indices = ~((all_spgs_sum == 0) | (all_spgs_sum == len(all_spgs_raw)))
         logger.info("Space group one-hot encoding: %i groups, %i varying elements", len(all_space_groups), varying_indices.sum())
         instance = cls()
+        # Numpy array is unhashable, so we convert it to tuple for compatibility reasons
+        instance.np_dict = dict()
+        instance.to_token = TupleDict()
         for group_number, spg in all_spgs_raw.items():
-            instance[group_number] = spg[varying_indices]
+            instance.np_dict[group_number] = spg[varying_indices]
+            instance[group_number] = tuple(spg[varying_indices])
+            instance.to_token[tuple(spg[varying_indices])] = group_number
         return instance
 
 
@@ -55,7 +66,7 @@ class SpaceGroupEncoder(dict):
             n_fetures depends on the number of varying elements in the space groups present
             in constructor, so it might be different for different datsets.
         """
-        return torch.stack([torch.from_numpy(self[sg]) for sg in space_groups]).to(**tensor_args)
+        return torch.stack([torch.from_numpy(self.np_dict[sg]) for sg in space_groups]).to(**tensor_args)
 
 
 class EnumeratingTokeniser(dict):
@@ -95,6 +106,19 @@ class EnumeratingTokeniser(dict):
 
 
 class FeatureEngineer():
+    @classmethod
+    def wp_symmetries(cls, space_groups, wp_letters):
+        symmetry_matrices = defaultdict(dict)
+        for group_number, these_wps in zip(space_groups, wp_letters):
+            group = Group(group_number)
+            for wp_letter in these_wps:
+                wp = group.get_wp_by_letter(wp_letter)
+                wp.get_site_symmetry()
+                #if key not in symmetry_matrices:
+
+            
+            
+
     def __init__(self,
             data: Dict[Tuple, int]|Series,
             inputs: Optional[Tuple] = None,
@@ -367,7 +391,11 @@ def tensor_to_pyxtal(
     mask_tokens = torch.tensor([tokenisers[field].mask_token for field in pyxtal_cascade_order], device=wp_tensor.device)
     pad_tokens = torch.tensor([tokenisers[field].pad_token for field in pyxtal_cascade_order], device=wp_tensor.device)
 
-    space_group_real = tokenisers["spacegroup_number"].to_token[space_group_tensor.item()]
+    if space_group_tensor.size() == (1,):
+        space_group_input = space_group_tensor.item()
+    else:
+        space_group_input = space_group_tensor.numpy()
+    space_group_real = tokenisers["spacegroup_number"].to_token[space_group_input]
     pyxtal_args = defaultdict(lambda: [0, []])
     available_sites = deepcopy(wp_index[space_group_real])
     for this_token_cascade in cononical_wp_tensor:

@@ -22,11 +22,8 @@ from wyckoff_transformer.tokenization import (
     get_letter_from_ss_enum_idx, get_wp_index)
 from wyckoff_transformer.generator import WyckoffGenerator
 from wyckoff_transformer.evaluation import (
-    StatisticalEvaluator, timed_smact_validity_from_record, smac_validity_from_counter)
+    evaluate_and_log, StatisticalEvaluator, smac_validity_from_counter)
 
-
-def ks_to_dict(ks_statistic) -> Dict[str, float]:
-    return {"statistic": ks_statistic.statistic, "pvalue": ks_statistic.pvalue}
 
 class WyckoffTrainer():
     def __init__(self,
@@ -282,11 +279,16 @@ class WyckoffTrainer():
              self.train_dataset.masks, self.train_dataset.max_sequence_length)
         if calibrate:
             generator.calibrate(self.val_dataset)
-        max_start = self.model.start_embedding.num_embeddings
-        start_counts = torch.bincount(
-            self.train_dataset.start_tokens, minlength=max_start) + torch.bincount(
-                self.val_dataset.start_tokens, minlength=max_start)
-        start_tensor = torch.distributions.Categorical(probs=start_counts.float()).sample((n_structures,))
+        if self.model.start_type == "categorial":
+            max_start = self.model.start_embedding.num_embeddings
+            start_counts = torch.bincount(
+                self.train_dataset.start_tokens, minlength=max_start) + torch.bincount(
+                    self.val_dataset.start_tokens, minlength=max_start)
+            start_tensor = torch.distributions.Categorical(probs=start_counts.float()).sample((n_structures,))
+        elif self.model.start_type == "one_hot":
+            # We are going to sample with replacement from train+val datasets
+            all_starts = torch.cat([self.train_dataset.start_tokens, self.val_dataset.start_tokens], dim=0)
+            start_tensor = all_starts[torch.randint(len(all_starts), (n_structures,))]
         generated_tensors = torch.stack(
             generator.generate_tensors(start_tensor), dim=-1)
 
@@ -300,49 +302,16 @@ class WyckoffTrainer():
             structures = p.starmap(to_pyxtal, zip(start_tensor.detach().cpu(), generated_tensors.detach().cpu()))
         valid_structures = [s for s in structures if s is not None]
         return valid_structures
-
-
+    
     def generate_evaluate_and_log_wp(
         self,
         generation_name: str,
         calibrate: bool,
         n_structures: int,
         evaluator: StatisticalEvaluator):
-
-        print(f"Generating a sample of Wykchoff genes named {generation_name}")
-        generated_wp = self.generate_structures(n_structures, calibrate=calibrate)
-        wp_formal_validity = len(generated_wp) / n_structures
-        wandb.run.summary["formal_validity"][generation_name] = wp_formal_validity
-        print(f"Wyckchoffs' formal validity: {wp_formal_validity}")
-        save_path = self.run_path / f"gnerated_wp_{generation_name}.json.gz"
-        with gzip.open(save_path, "wt") as f:
-            json.dump(generated_wp, f)
-        wandb.save(str(save_path), base_path=self.run_path, policy="now")
-        print(f"Generated dataset size: {len(generated_wp)}")
-        if len(generated_wp) == 0:
-            print("No structures generated, skipping evaluation")
-            return
         
-        ks_num_sites, generated_num_sites = evaluator.get_num_sites_ks(generated_wp, return_counts=True)
-        num_sites_bins = np.arange(0, 21)
-        num_sites_hist = np.histogram(generated_num_sites, bins=num_sites_bins)
-        wandb.run.summary["num_sites"][generation_name] = {"hist": wandb.Histogram(np_histogram=num_sites_hist)}
-        
-        ks_num_elements, generated_num_elements = evaluator.get_num_elements_ks(generated_wp, return_counts=True)
-        ks_dof = evaluator.get_dof_ks(generated_wp)
-        wandb.run.summary["wp"][generation_name] = {"ks_num_sites_vs_test": ks_to_dict(ks_num_sites)}
-        wandb.run.summary["wp"][generation_name]["ks_num_elements_vs_test"] = ks_to_dict(ks_num_elements)
-        wandb.run.summary["wp"][generation_name]["ks_dof_vs_test"] = ks_to_dict(ks_dof)
-        print("Kolmogorov-Smirnov statistics:")
-        print(f"Number of sites: {ks_num_sites}")
-        print(f"Number of elements: {ks_num_elements}")
-        print(f"Degrees of freedom: {ks_dof}")
-        wandb.run.summary["wp"][generation_name]["generated_actual_size"] = len(generated_wp)
-        
-        smac_validity_count = sum(map(timed_smact_validity_from_record, generated_wp))
-        smac_validity_fraction = smac_validity_count / len(generated_wp)
-        print(f"SMAC-T validity: fraction {smac_validity_fraction}; count {smac_validity_count}")
-        wandb.run.summary["smact_validity"][generation_name] = smac_validity_fraction
+        generated_wp = self.generate_structures(n_structures, calibrate)
+        evaluate_and_log(generated_wp, generation_name, n_structures, evaluator)
 
 
 def train_from_config(config_dict: dict, device: torch.device, run_path: Optional[Path] = Path("runs")):

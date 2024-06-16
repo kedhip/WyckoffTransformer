@@ -41,29 +41,6 @@ class TemperatureScaling(nn.Module):
         return self
 
 
-class VennAbersNaive():
-    def __init__(self):
-        self.isotonic_models = []
-
-    def fit(self, logits: np.array, targets: np.array):
-        for class_idx in range(targets.shape[1]):
-            ir = IsotonicRegression(out_of_bounds='clip')
-            self.isotonic_models.append(ir.fit(logits[:, class_idx], targets[:, class_idx]))
-        return self
-    
-    def predict_proba(self, logits: np.array):
-        calibrated_probs = np.zeros_like(logits)
-        for class_idx, ir in enumerate(self.isotonic_models):
-            calibrated_probs[:, class_idx] = ir.transform(logits[:, class_idx])
-        calibrated_probs /= calibrated_probs.sum(axis=1, keepdims=True)
-        return calibrated_probs
-
-
-def cross_entropy(predictions, targets, epsilon=1e-8):
-    predictions = np.clip(predictions, epsilon, 1. - epsilon)
-    return (-np.log(predictions) * targets).sum(axis=1).mean()
-
-
 class WyckoffGenerator():
     def __init__(self,
                  model: nn.Module,
@@ -125,9 +102,6 @@ class WyckoffGenerator():
                 if tail_predictions.size(0) < calibration_element_count_threshold:
                     logger.warning("Tail too small, %i when requested %i", tail_predictions.size(0), calibration_element_count_threshold)
                 self.tail_calibrators.append(TemperatureScaling().to(tail_targets.device).fit(tail_predictions, tail_targets))
-                #print(f"Cross entropy for {cascade_name} before calibration: {cross_entropy(p_predicted, true_targets)}")
-                #self.calibrators.append(VennAbersNaive().fit(p_predicted, true_targets))
-                #print(f"Cross entropy for {cascade_name} after calibration: {cross_entropy(self.calibrators[-1].predict_proba(p_predicted), true_targets)}")
         
 
     def generate_tensors(self, start: Tensor) -> List[Tensor]:
@@ -149,8 +123,12 @@ class WyckoffGenerator():
             generated = []
             for field in self.cascade_order:
                 generated.append(torch.full((batch_size, self.max_sequence_len), self.masks[field],
-                                            dtype=start.dtype, device=start.device))
+                                            dtype=torch.int64, device=start.device))
             cascade_index_by_name = {name: idx for idx, name in enumerate(self.cascade_order)}
+            if len(start.size()) > 1:
+                start_converted = list(map(tuple, start.tolist()))
+            else:
+                start_converted = start.tolist()
             for known_seq_len in range(self.max_sequence_len):
                 for known_cascade_len, cascade_name in enumerate(self.cascade_order):
                     if self.cascade_is_target[cascade_name]:
@@ -182,5 +160,5 @@ class WyckoffGenerator():
                         #print(this_generation_input[0].shape)
                         generated[known_cascade_len][:, known_seq_len] = \
                             torch.from_numpy(
-                                self.token_engineers[cascade_name].get_feature_from_token_batch(start.tolist(), this_engineer_input))
+                                self.token_engineers[cascade_name].get_feature_from_token_batch(start_converted, this_engineer_input))
             return generated

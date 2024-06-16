@@ -5,14 +5,17 @@ model:
       - elements
       - site_symmetries
       - sites_enumeration
+      - multiplicity
     is_target:
       elements: true
       site_symmetries: true
       sites_enumeration: true
+      multiplicity: false
     embedding_size:
       elements: 16
       site_symmetries: 16
-      sites_enumeration: 8
+      sites_enumeration: 7
+      multiplicity: null
   WyckoffTrainer_args:
     multiclass_next_token_with_order_permutation: true
     target: NextToken
@@ -57,6 +60,6 @@ optimisation:
   clip_grad_norm: 2.
   epochs: 1000000
 tokeniser:
-  name: mp_20_sg
+  name: mp_20_sg_multiplicity
 evaluation:
   n_structures_to_generate: 10000

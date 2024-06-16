@@ -1,4 +1,4 @@
-from typing import Dict, Iterable
+from typing import Dict, Iterable, List
 from itertools import chain, product
 from collections import defaultdict
 from functools import partial
@@ -11,6 +11,10 @@ from pymatgen.core import Element
 from wrapt_timeout_decorator import timeout
 import smact
 import smact.screening
+import wandb
+import logging
+
+logger = logging.getLogger(__name__)
 
 def count_unique(x: Iterable) -> int:
     return len(frozenset(x))
@@ -128,6 +132,7 @@ def timed_smact_validity_from_record(record: Dict, apply_gcd: bool=True) -> bool
     try:
         return smact_validity_optimised(record['species'], record['numIons'], apply_gcd=apply_gcd)
     except TimeoutError:
+        logger.debug("SMAC-T validitiy timed out, returning False")
         return False
 
 
@@ -189,6 +194,51 @@ class StatisticalEvaluator():
 
 def smac_validity_from_counter(counter: Dict[Element, float], apply_gcd=True) -> bool:
     return smact_validity_optimised(tuple((elem.symbol for elem in counter.keys())), tuple(map(int, counter.values())), apply_gcd=apply_gcd)
+
+
+def ks_to_dict(ks_statistic) -> Dict[str, float]:
+    return {"statistic": ks_statistic.statistic, "pvalue": ks_statistic.pvalue}
+
+
+def evaluate_and_log(
+    generated_wp: List[Dict],
+    generation_name: str,
+    attempted_n_structures: int,
+    evaluator: StatisticalEvaluator):
+
+    wp_formal_validity = len(generated_wp) / attempted_n_structures
+    wandb.run.summary["formal_validity"][generation_name] = wp_formal_validity
+    print(f"Wyckchoffs' formal validity: {wp_formal_validity}")
+
+    print(f"Generated dataset size: {len(generated_wp)}")
+    if len(generated_wp) == 0:
+        print("No structures generated, skipping evaluation")
+        return
+    
+    ks_num_sites, generated_num_sites = evaluator.get_num_sites_ks(generated_wp, return_counts=True)
+    num_sites_bins = np.arange(0, 21)
+    num_sites_hist = np.histogram(generated_num_sites, bins=num_sites_bins)
+    wandb.run.summary["num_sites"][generation_name] = {"hist": wandb.Histogram(np_histogram=num_sites_hist)}
+    
+    ks_num_elements, generated_num_elements = evaluator.get_num_elements_ks(generated_wp, return_counts=True)
+    num_elements_bins = np.arange(1, 10)
+    num_elements_hist = np.histogram(generated_num_elements, bins=num_elements_bins)
+    wandb.run.summary.update({"num_elements": {generation_name: {"hist": wandb.Histogram(np_histogram=num_elements_hist)}}})
+    
+    ks_dof = evaluator.get_dof_ks(generated_wp)
+    wandb.run.summary["wp"][generation_name] = {"ks_num_sites_vs_test": ks_to_dict(ks_num_sites)}
+    wandb.run.summary["wp"][generation_name]["ks_num_elements_vs_test"] = ks_to_dict(ks_num_elements)
+    wandb.run.summary["wp"][generation_name]["ks_dof_vs_test"] = ks_to_dict(ks_dof)
+    print("Kolmogorov-Smirnov statistics:")
+    print(f"Number of sites: {ks_num_sites}")
+    print(f"Number of elements: {ks_num_elements}")
+    print(f"Degrees of freedom: {ks_dof}")
+    wandb.run.summary["wp"][generation_name]["generated_actual_size"] = len(generated_wp)
+    
+    smac_validity_count = sum(map(timed_smact_validity_from_record, generated_wp))
+    smac_validity_fraction = smac_validity_count / len(generated_wp)
+    print(f"SMAC-T validity: fraction {smac_validity_fraction}; count {smac_validity_count}")
+    wandb.run.summary["smact_validity"][generation_name] = smac_validity_fraction
 
 
 def main():

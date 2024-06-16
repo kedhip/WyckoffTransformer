@@ -158,6 +158,7 @@ class CascadeTransformer(nn.Module):
         self.d_model = self.embedding.total_embedding_dim
         self.encoder_layers = TransformerEncoderLayer(self.d_model, batch_first=True, **TransformerEncoderLayer_args)
         self.transformer_encoder = TransformerEncoder(self.encoder_layers, **TransformerEncoder_args)
+        self.start_type = start_type
         if start_type == "categorial":
             self.start_embedding = nn.Embedding(n_start, self.d_model)
         elif start_type == "one_hot":
