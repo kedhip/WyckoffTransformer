@@ -13,6 +13,7 @@ def main():
     parser.add_argument("config", type=Path, help="The configuration file")
     parser.add_argument("dataset", type=str, default="mp_20_biternary", help="Dataset to use")
     parser.add_argument("device", type=torch.device, help="Device to train on")
+    parser.add_argument("--pilot", action="store_true", help="Run a pilot run by setting epochs to 101")
     parser.add_argument("--debug", action="store_true", help="Debug mode")
     parser.add_argument("--run-path", type=Path, default=Path("runs"), help="Set the path for saving run data")
     parser.add_argument("--torch-num-thread", type=int, help="Number of threads for torch")
@@ -30,6 +31,13 @@ def main():
         torch.set_float32_matmul_precision('high')
         
     config = OmegaConf.load(args.config)
+    if args.pilot:
+        print("Pilot run; overwriting epochs to 101")
+        config['optimisation']['epochs'] = 101
+        config['optimisation']['validation_period'] = 50
+        tags = ["pilot"]
+    else:
+        tags = []
     config['name'] = args.config.stem
     config['dataset'] = args.dataset
 
@@ -40,9 +48,11 @@ def main():
     config['tokeniser'] = tokeniser_config
 
     wandb_config = OmegaConf.to_container(config)
+
     with wandb.init(
         project="WyckoffTransformer",
         job_type="train",
+        tags=tags,
         config=wandb_config):
         train_from_config(config, args.device, run_path=args.run_path)
 

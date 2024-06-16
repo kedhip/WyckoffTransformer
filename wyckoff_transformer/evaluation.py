@@ -127,7 +127,7 @@ def smact_validity_from_record(record: Dict, apply_gcd: bool=True) -> bool:
     return smact_validity_optimised(record['species'], record['numIons'], apply_gcd=apply_gcd)
 
 
-@timeout(30)
+@timeout(15)
 def timed_smact_validity_from_record(record: Dict, apply_gcd: bool=True) -> bool:
     try:
         return smact_validity_optimised(record['species'], record['numIons'], apply_gcd=apply_gcd)
