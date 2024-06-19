@@ -239,7 +239,6 @@ class WyckoffTrainer():
         best_val_epoch = 0
         self.run_path.mkdir(exist_ok=False)
         best_model_params_path = self.run_path / "best_model_params.pt"
-        wandb.save(best_model_params_path, base_path=self.run_path, policy="live")
         wandb.define_metric("loss.epoch.val.total", step_metric="epoch", goal="minimize")
         wandb.define_metric("loss.epoch.train.total", step_metric="epoch", goal="minimize")
         wandb.define_metric("loss.epoch.val_best", step_metric="epoch", goal="minimize")
@@ -262,6 +261,7 @@ class WyckoffTrainer():
                     best_val_loss = total_val_loss
                     best_val_epoch = epoch
                     torch.save(self.model.state_dict(), best_model_params_path)
+                    wandb.save(best_model_params_path, base_path=self.run_path, policy="live")
                     print(f"Epoch {epoch}; loss_epoch.val {total_val_loss} saved to {best_model_params_path}")
                     wandb.log({"loss.epoch.val_best": best_val_loss}, commit=False)
                 if epoch - best_val_epoch > self.early_stopping_patience_epochs:

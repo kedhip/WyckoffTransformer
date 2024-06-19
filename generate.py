@@ -21,6 +21,10 @@ def main():
     parser = argparse.ArgumentParser(description="Generate structures using a Wyckoff transformer.")
     parser.add_argument("wandb_run", type=str, help="The W&B run ID.")
     parser.add_argument("output", type=Path, help="The output file.")
+    parser.add_argument("--initial-n-samples", type=int, help="The number of samples to try"
+        " before filtering out the invalid ones.")
+    parser.add_argument("--firm-n-samples", type=int, help="The number of samples after generation, "
+        "subsampling the valid ones if nesessary.")
     parser.add_argument("--update-wandb", action="store_true", help="Update the W&B run with the "
         "generated structures and quality metrics.")
     parser.add_argument("--calibrate", action="store_true", help="Calibrate the generator.")
@@ -39,8 +43,7 @@ def main():
 
     # The start tokens will be sampled from the train+validation datasets,
     # to preserve the sanctity of the test dataset and ex nihilo generation.
-    tensors, tokenisers, engineers = load_tensors_and_tokenisers(config.dataset, config.tokeniser.name)    
-    generation_size = config.evaluation.n_structures_to_generate
+    tensors, tokenisers, engineers = load_tensors_and_tokenisers(config.dataset, config.tokeniser.name)
     del tensors["test"]
     
     model = CascadeTransformer.from_config_and_tokenisers(config, tokenisers, device)
@@ -79,6 +82,10 @@ def main():
 
     # Should we maybe sample wih replacement?
     all_starts = torch.cat([tensors["train"][config.model.start_token], tensors["val"][config.model.start_token]], dim=0)
+    if args.initial_n_samples is None:
+        generation_size = config.evaluation.n_structures_to_generate
+    else:
+        generation_size = args.initial_n_samples
     if generation_size > len(all_starts):
         raise NotImplementedError("Naive sampling doesn't support the larger generation sizes.")
     permutation = torch.randperm(all_starts.size(0))
@@ -97,6 +104,11 @@ def main():
     generated_wp = [s for s in generated_wp if s is not None]
     wp_formal_validity = len(generated_wp) / generation_size
     print(f"Wyckchoffs formal validity: {wp_formal_validity}")
+    if args.firm_n_samples is not None:
+        if len(generated_wp) >= args.firm_n_samples:
+            generated_wp = generated_wp[:args.firm_n_samples]
+        else:
+            raise ValueError("Not enough valid structures to subsample.")
     with gzip.open(args.output, "wt") as f:
         json.dump(generated_wp, f)
 
