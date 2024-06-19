@@ -239,7 +239,7 @@ class WyckoffTrainer():
         best_val_epoch = 0
         self.run_path.mkdir(exist_ok=False)
         best_model_params_path = self.run_path / "best_model_params.pt"
-        wandb.save(str(best_model_params_path), base_path=self.run_path, policy="live")
+        wandb.save(best_model_params_path, base_path=self.run_path, policy="live")
         wandb.define_metric("loss.epoch.val.total", step_metric="epoch", goal="minimize")
         wandb.define_metric("loss.epoch.train.total", step_metric="epoch", goal="minimize")
         wandb.define_metric("loss.epoch.val_best", step_metric="epoch", goal="minimize")
@@ -248,7 +248,7 @@ class WyckoffTrainer():
         wandb.define_metric("known_cascade_len", hidden=True)
         for epoch in range(self.epochs):
             self.train_epoch()
-            if epoch % self.validation_period == 0:
+            if epoch % self.validation_period == 0 or epoch == self.epochs - 1:
                 val_loss_epoch, train_loss_epoch = self.evaluate()
                 val_loss_dict = {name: val_loss_epoch[i] for i, name in enumerate(self.cascade_order)}
                 total_val_loss = val_loss_epoch.sum()
@@ -268,7 +268,10 @@ class WyckoffTrainer():
                     print(f"Early stopping at epoch {epoch} after more than {self.early_stopping_patience_epochs}"
                            " epochs without improvement")
                     break
-                self.scheduler.step(total_val_loss)
+                # Don't step the scheduler on the tail epoch, to presereve
+                # patience behaviour
+                if epoch % self.validation_period == 0:
+                    self.scheduler.step(total_val_loss)
         # Make sure we log the last evaluation results
         wandb.log(dict(), commit=True)
 
@@ -311,6 +314,10 @@ class WyckoffTrainer():
         evaluator: StatisticalEvaluator):
         
         generated_wp = self.generate_structures(n_structures, calibrate)
+        file_name = self.run_path / f"generated_wp_{generation_name}.json.gz"
+        with gzip.open(file_name, "wt") as f:
+            json.dump(generated_wp, f)
+        wandb.save(file_name, base_path=self.run_path, policy="now")
         evaluate_and_log(generated_wp, generation_name, n_structures, evaluator)
 
 
