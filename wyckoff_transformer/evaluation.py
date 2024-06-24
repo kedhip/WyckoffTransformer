@@ -1,10 +1,10 @@
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Optional
 from itertools import chain, product
 from collections import defaultdict
 from functools import partial
 from math import gcd
 import numpy as np
-from scipy.stats import kstest
+from scipy.stats import kstest, chi2_contingency
 import pandas as pd
 from pyxtal.symmetry import Group
 from pymatgen.core import Element
@@ -13,6 +13,8 @@ import smact
 import smact.screening
 import wandb
 import logging
+from pathlib import Path
+import pickle
 
 logger = logging.getLogger(__name__)
 
@@ -136,11 +138,54 @@ def timed_smact_validity_from_record(record: Dict, apply_gcd: bool=True) -> bool
         return False
 
 
+def record_to_augmented_fingerprints(row):
+    """
+    Computes a fingerprint for each possible Wyckoff position enumeration.
+    """
+    spacegroup_number = row["spacegroup_number"]
+    def get_augmentation_fingerprint(augmentation):
+        site_symmetries = frozenset(map(tuple, zip(row["elements"], row["site_symmetries"], augmentation)))
+        return (spacegroup_number, site_symmetries)
+    return frozenset(map(get_augmentation_fingerprint, row["sites_enumeration_augmented"]))
+
+
+def generated_to_fingerprint(wy_dict, letter_to_ss, letter_to_enum):
+    elements = []
+    site_symmetries = []
+    site_enumerations = []
+    for specie, sites in zip(wy_dict["species"], wy_dict["sites"]):
+        element = Element(specie)
+        for site in sites:
+            elements.append(element)
+            site_symmetries.append(letter_to_ss[wy_dict["group"]][site[-1:]])
+            site_enumerations.append(letter_to_enum[wy_dict["group"]][site[-1:]])
+    return (
+        wy_dict["group"],
+        frozenset(map(tuple, zip(elements, site_symmetries, site_enumerations))),
+    )
+
+
 class StatisticalEvaluator():
     def __init__(self,
-                 test_dataset: pd.DataFrame):
+                 test_dataset: pd.DataFrame,
+                 train_dataset: Optional[pd.DataFrame] = None):
         self.test_dataset = test_dataset
         self.dof_counter = None
+        if train_dataset is not None:
+            self.train_fingerprints = frozenset(chain.from_iterable(train_dataset.apply(record_to_augmented_fingerprints, axis=1)))
+            with open(Path(__file__).parent.parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz", "rb") as f:
+                self.letter_to_enum, _ , self.letter_to_ss = pickle.load(f)[:3]
+            self.generated_to_fingerprint = partial(
+                generated_to_fingerprint, letter_to_ss=self.letter_to_ss, letter_to_enum=self.letter_to_enum)
+        self.test_novelty = None
+        self.test_sg_counts = self.test_dataset['spacegroup_number'].value_counts()
+
+    def get_test_novelty(self):
+        # Just a single augmentation variant per structure
+        if self.test_novelty is None:
+            test_fp = self.test_dataset.apply(record_to_augmented_fingerprints, axis=1).map(lambda x: next(iter(x)))
+            self.test_novelty = sum((fp not in self.train_fingerprints for fp in test_fp)) / len(test_fp)
+        return self.test_novelty
 
     def get_num_sites_ks(self, generated_structures: Iterable[Dict], return_counts:bool=False) -> float:
         """
@@ -175,7 +220,6 @@ class StatisticalEvaluator():
         else:
             return kstest(test_num_elements, generated_num_elements)
 
-
     def get_dof_ks(self, generated_structures: Iterable[Dict]) -> float:
         """
         Computes the Kolmogorov-Smirnov statistic between the degrees of freedom in the 
@@ -190,6 +234,45 @@ class StatisticalEvaluator():
         test_dof = self.test_dataset['dof'].apply(sum)
         generated_dof = [self.dof_counter.get_total_dof(record) for record in generated_structures]
         return kstest(test_dof, generated_dof)
+    
+    def get_sg_chi2(self, generated_structures: Iterable[Dict], sample_size: Optional[int|str] = None) -> float:
+        """
+        Computes the chi-squared statistic between the space group numbers in the
+        generated structures and the test dataset.
+        Args:
+            generated_structures: Iterable of dictionaries with the generated structures in
+                pyxtal.from_random arguments format.
+            sample_size: If int, the number of samples to use from the generated dataset.
+                if "test", use the same number as in the test dataset. NOTE: it takes first
+                N samples without shuffling in the interest of reproducibility.
+        """
+        if sample_size is None:
+            sample = generated_structures
+        elif isinstance(sample_size, int):
+            sample = generated_structures[:sample_size]
+        elif sample_size == "test":
+            sample = generated_structures[:len(self.test_dataset)]
+        else:
+            raise ValueError(f"Unknown sample_size {sample_size}")
+        generated_sg = [record['group'] for record in sample]
+        generated_sg_counts = pd.Series(generated_sg).value_counts()
+        if not generated_sg_counts.index.isin(self.test_sg_counts.index).all():
+            logger.warning("Generated dataset has extra space groups compared to test")
+        generated_sg_counts = generated_sg_counts.reindex_like(self.test_sg_counts).fillna(0)
+        return chi2_contingency(np.vstack([self.test_sg_counts, generated_sg_counts]))
+
+    def count_novel(self, generated_structures: Iterable[Dict]) -> float:
+        generated_fp = list(map(self.generated_to_fingerprint, generated_structures))
+        return sum((fp not in self.train_fingerprints for fp in generated_fp)) / len(generated_fp)
+
+    
+    def get_novel(self, generated_structures: Iterable[Dict]) -> List[Dict]:
+        generated_fp = list(map(self.generated_to_fingerprint, generated_structures))
+        return [record for record, fp in zip(generated_structures, generated_fp) if fp not in self.train_fingerprints]
+
+    def get_novel_dataframe(self, structures: pd.DataFrame) -> pd.DataFrame:
+        generated_fp = structures.apply(record_to_augmented_fingerprints, axis=1)
+        return structures[~generated_fp.isin(self.train_fingerprints)]
 
 
 def smac_validity_from_counter(counter: Dict[Element, float], apply_gcd=True) -> bool:
