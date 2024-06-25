@@ -4,6 +4,7 @@
         "dataframe",
         "pvalue",
         "pyxtal",
+        "SMAC",
         "smact",
         "spacegroup",
         "tokenisers",

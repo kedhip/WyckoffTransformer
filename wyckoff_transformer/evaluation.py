@@ -165,6 +165,32 @@ def generated_to_fingerprint(wy_dict, letter_to_ss, letter_to_enum):
     )
 
 
+def wycryst_to_pyxtal_dict(record):
+    species = []
+    all_sites = []
+    numIons = []
+    for reported_count, (element, sites) in zip(record["reconstructed_ratio1"], record["reconstructed_wyckoff"].items()):
+        counted_ions = 0
+        this_sites = []
+        for site in sites:
+            this_sites.append(site)
+            counted_ions += int(site[:-1])
+        if counted_ions != reported_count:
+            logging.warning("Reported count %f does not match sum of site counts %i for"
+                " record %i element %s. Elements: %s",
+                reported_count, counted_ions, record.name, element, record['reconstructed_wyckoff'].keys())
+            return None
+        species.append(element)
+        all_sites.append(this_sites)
+        numIons.append(counted_ions)
+    return {
+        "species": species,
+        "sites": all_sites,
+        "numIons": numIons,
+        "group": record.reconstructed_sg
+    }
+
+
 class StatisticalEvaluator():
     def __init__(self,
                  test_dataset: pd.DataFrame,
@@ -269,6 +295,7 @@ class StatisticalEvaluator():
     def get_novel(self, generated_structures: Iterable[Dict]) -> List[Dict]:
         generated_fp = list(map(self.generated_to_fingerprint, generated_structures))
         return [record for record, fp in zip(generated_structures, generated_fp) if fp not in self.train_fingerprints]
+
 
     def get_novel_dataframe(self, structures: pd.DataFrame) -> pd.DataFrame:
         generated_fp = structures.apply(record_to_augmented_fingerprints, axis=1)
