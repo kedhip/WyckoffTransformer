@@ -7,3 +7,4 @@ cache
 pytorch
 runs
 log
+catboost_info

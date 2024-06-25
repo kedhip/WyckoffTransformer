@@ -66,7 +66,11 @@ def get_perceptron(input_dim: int, output_dim:int, num_layers:int) -> torch.nn.M
     return torch.compile(nn.Sequential(*this_sequence), fullgraph=True)
 
 
-def get_pyramid_perceptron(input_dim: int, output_dim:int, num_layers:int) -> torch.nn.Module:
+def get_pyramid_perceptron(
+    input_dim: int,
+    output_dim:int,
+    num_layers:int,
+    dropout: Optional[float] = None) -> torch.nn.Module:
     """
     Returns a perceptron with num_layers layers, with ReLU activation.
     If num_layers is 1, returns a single linear layer.
@@ -79,6 +83,8 @@ def get_pyramid_perceptron(input_dim: int, output_dim:int, num_layers:int) -> to
         layer_sizes = np.linspace(input_dim, output_dim, num_layers + 1, dtype=int)
         for input_layer_size, output_layer_size in zip(layer_sizes[:-1], layer_sizes[1:]):
             this_sequence.append(nn.Linear(input_layer_size, output_layer_size))
+            if dropout is not None:
+                this_sequence.append(nn.Dropout(dropout))
             if len(this_sequence) < num_layers * 2 - 1:
                 this_sequence.append(nn.ReLU())
     return torch.compile(nn.Sequential(*this_sequence), fullgraph=True)
