@@ -1,6 +1,6 @@
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Tuple
 from itertools import chain, product
-from collections import defaultdict
+from collections import defaultdict, Counter
 from functools import partial
 from math import gcd
 import numpy as np
@@ -261,7 +261,10 @@ class StatisticalEvaluator():
         generated_dof = [self.dof_counter.get_total_dof(record) for record in generated_structures]
         return kstest(test_dof, generated_dof)
     
-    def get_sg_chi2(self, generated_structures: Iterable[Dict], sample_size: Optional[int|str] = None) -> float:
+    def get_sg_chi2(self,
+        generated_structures: Iterable[Dict],
+        sample_size: Optional[int|str] = None,
+        return_counts: bool = False) -> float|Tuple[float, np.ndarray]:
         """
         Computes the chi-squared statistic between the space group numbers in the
         generated structures and the test dataset.
@@ -285,7 +288,52 @@ class StatisticalEvaluator():
         if not generated_sg_counts.index.isin(self.test_sg_counts.index).all():
             logger.warning("Generated dataset has extra space groups compared to test")
         generated_sg_counts = generated_sg_counts.reindex_like(self.test_sg_counts).fillna(0)
-        return chi2_contingency(np.vstack([self.test_sg_counts, generated_sg_counts]))
+        chi2 = chi2_contingency(np.vstack([self.test_sg_counts, generated_sg_counts]))
+        if return_counts:
+            return chi2, generated_sg_counts
+        else:
+            return chi2
+
+
+    def get_elements_chi2(self,
+        generated_structures: Iterable[Dict],
+        sample_size: Optional[int|str] = None,
+        return_counts: bool = False) -> float|Tuple[float, np.ndarray]:
+        """
+        Computes the chi-squared statistic between the element counts in the
+        generated structures and the test dataset.
+        Args:
+            generated_structures: Iterable of dictionaries with the generated structures in
+                pyxtal.from_random arguments format.
+            sample_size: If int, the number of samples to use from the generated dataset.
+                if "test", use the same number as in the test dataset. NOTE: it takes first
+                N samples without shuffling in the interest of reproducibility.
+        """
+        if sample_size is None:
+            sample = generated_structures
+        elif isinstance(sample_size, int):
+            sample = generated_structures[:sample_size]
+        elif sample_size == "test":
+            sample = generated_structures[:len(self.test_dataset)]
+        else:
+            raise ValueError(f"Unknown sample_size {sample_size}")
+        generated_element_counts = Counter()
+        for record in sample:
+            for element, multiplicity in zip(record['species'], record['numIons']):
+                generated_element_counts[Element(element)] += multiplicity
+        test_element_counts = self.test_dataset['composition'].apply(Counter).sum()
+        test_element_counts = pd.Series(test_element_counts)
+        generated_counts = pd.Series(generated_element_counts)
+        if not generated_counts.index.isin(test_element_counts.index).all():
+            logger.warning("Generated dataset has extra elements compared to test")
+        generated_counts = generated_counts.reindex_like(test_element_counts).fillna(0)
+        
+        chi2 = chi2_contingency(np.vstack([test_element_counts, generated_counts]))
+        if return_counts:
+            return chi2, generated_counts, test_element_counts
+        else:
+            return chi2
+        
 
     def count_novel(self, generated_structures: Iterable[Dict]) -> float:
         generated_fp = list(map(self.generated_to_fingerprint, generated_structures))
