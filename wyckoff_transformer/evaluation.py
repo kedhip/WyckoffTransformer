@@ -131,6 +131,10 @@ def smact_validity_from_record(record: Dict, apply_gcd: bool=True) -> bool:
 
 @timeout(15)
 def timed_smact_validity_from_record(record: Dict, apply_gcd: bool=True) -> bool:
+    """
+    Computes the SMACT validity of a record in pyxtal.from_random arguments format. If the computation
+    takes longer than 15 seconds, returns False.
+    """
     try:
         return smact_validity_optimised(record['species'], record['numIons'], apply_gcd=apply_gcd)
     except TimeoutError:
