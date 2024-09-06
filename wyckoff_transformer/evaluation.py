@@ -344,9 +344,13 @@ class StatisticalEvaluator():
         return sum((fp not in self.train_fingerprints for fp in generated_fp)) / len(generated_fp)
 
     
-    def get_novel(self, generated_structures: Iterable[Dict]) -> List[Dict]:
+    def get_novel(self, generated_structures: Iterable[Dict], return_index=False) -> List[Dict]:
         generated_fp = list(map(self.generated_to_fingerprint, generated_structures))
-        return [record for record, fp in zip(generated_structures, generated_fp) if fp not in self.train_fingerprints]
+        if return_index:
+            res = [(record, i) for i, (record, fp) in enumerate(zip(generated_structures, generated_fp)) if fp not in self.train_fingerprints]
+            return list(zip(*res))
+        else:
+            return [record for record, fp in zip(generated_structures, generated_fp) if fp not in self.train_fingerprints]
 
 
     def get_novel_dataframe(self, structures: pd.DataFrame) -> pd.DataFrame:
