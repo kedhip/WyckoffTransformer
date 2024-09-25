@@ -55,14 +55,15 @@ def get_crystals_list(
 
 
 class StructureToSites():
-    def __init__(self):
+    def __init__(self, tol=0.1):
         with open(Path(__file__).parent.joinpath("cache", "wychoffs_enumerated_by_ss.pkl.gz"), "rb") as f:
             self.wychoffs_enumerated_by_ss = pickle.load(f)[0]
+        self.tol = tol
     
     def structure_to_sites(self, structure):
         try:
             return record_to_pyxtal(structure_to_sites(
-                structure, wychoffs_enumerated_by_ss=self.wychoffs_enumerated_by_ss))
+                structure, wychoffs_enumerated_by_ss=self.wychoffs_enumerated_by_ss, tol=self.tol))
         except Exception as e:
             logger.error("Error processing %s", e)
             logger.debug(structure)
