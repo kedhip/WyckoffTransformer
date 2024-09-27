@@ -12,20 +12,17 @@ echo "WANDB_ENTITY=symmetry-advantage" > .env
 python preprocess_wychoffs.py
 # Read CIF structures and find the Wychoff positions
 # A CPU-intensive operations
-python cache_a_dataset.py mp_20_biternary
+python cache_a_dataset.py mp_20
 # Tokenise a dataset
-python tokenise_a_dataset.py mp_20_biternary yamls/tokenisers/mp_20_naive.yaml
+python tokenise_a_dataset.py mp_20 yamls/tokenisers/mp_20_CSP.yaml
 ```
 # Training
 To test training on CPU and GPU:
 ```bash
-python train.py yamls/models/wyckoff_transformer_pilot.yaml mp_20_biternary cpu
-python train.py yamls/models/wyckoff_transformer_pilot.yaml mp_20_biternary cuda:0
+# If running on CRP, add --torch-num-thread ${ROLOS_AVAILABLE_CPU%.*}
+python train.py yamls/models/NextToken/v6/pilot.yaml mp_20 cpu
+python train.py yamls/models/NextToken/v6/pilot.yaml mp_20 cuda:0
 ```
-# Generation
-[Generate.ipynb](Generate.ipynb)
-# Evaluation
-[statistical_evaluation.ipynb](statistical_evaluation.ipynb)
 # Developing
 [Taskboard](https://www.notion.so/kna/36e263a83cc441a38483c084a5457a59?v=ecbd33a6130246bf940876abbf1d984c)
 Please don't `main` branch
