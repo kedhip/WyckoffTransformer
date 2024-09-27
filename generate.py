@@ -87,7 +87,7 @@ def main():
     else:
         generation_size = args.initial_n_samples
     if generation_size > len(all_starts):
-        raise NotImplementedError("Naive sampling doesn't support the larger generation sizes.")
+        all_starts = all_starts.repeat((generation_size // all_starts.size(0)) + 1, 1)
     permutation = torch.randperm(all_starts.size(0))
     start = all_starts[permutation[:generation_size]].to(dtype=start_dtype, device=device)
     generated_tensors = torch.stack(generator.generate_tensors(start), dim=-1)
