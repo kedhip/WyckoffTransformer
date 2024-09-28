@@ -1,5 +1,9 @@
 from enum import Enum
+from typing import Optional
 import warnings
+import gzip
+from multiprocessing import Pool
+import pickle
 from pymatgen.core import Composition
 from pathlib import Path
 from ast import literal_eval
@@ -7,10 +11,11 @@ import monty.json
 import pandas as pd
 import sys
 sys.path.append("..")
-from data import read_cif
+from data import read_cif, compute_symmetry_sites, read_MP
 
 
-from .DiffCSP_to_sites import load_diffcsp_dataset
+from .DiffCSP_to_sites import load_diffcsp_dataset, record_to_pyxtal
+from .cdvae.refined_metrics import Crystal
 
 Transformation = Enum("Transformation", [
     "WyckoffTransformer",
@@ -21,12 +26,17 @@ Transformation = Enum("Transformation", [
     "CHGNet_fix_symmetry",
     "CHGNet_relax_symmetry"])
 
-StorageType = Enum("StructureStorage", [
+StructureStorage = Enum("StructureStorage", [
     "DiffCSP_pt",
     "CrystalFormer",
     "NongWei",
-    "Raymond"
+    "Raymond",
+    "CDVAE_csv_cif"
     ])
+
+WyckoffStorage = Enum("WyckoffStorage", [
+    "pyxtal_json",
+    "WTCache"])
 
 class GenerationPipeline():
     """
@@ -140,6 +150,7 @@ def load_Raymond(path: Path):
                 data.at[int(this_cif_path.parent.stem), "structure"] = read_cif(f.read())
     return data
 
+
 class GeneratedDataset():
     WyckoffSource = Enum("WyckoffSource", ["pyxtal", "external"])
 
@@ -148,7 +159,7 @@ class GeneratedDataset():
         self.data = pd.DataFrame()
         self.wyckoffs_source = None
 
-    def load_structures(self, path: Path|str, storage_type: StorageType):
+    def load_structures(self, path: Path|str, storage_type: StructureStorage):
         # If structures are defined, wyckoffs must be obtained with pyxtal.from_seed(structures)
         # If structures are not defined, wyckoffs can be read externally
         if "wyckoffs" in self.data.columns:
@@ -156,14 +167,16 @@ class GeneratedDataset():
         if isinstance(path, str):
             path = Path(path)
 
-        if storage_type == StorageType.DiffCSP_pt:
+        if storage_type == StructureStorage.DiffCSP_pt:
             self.data["structure"] = load_diffcsp_dataset(path)
-        elif storage_type == StorageType.CrystalFormer:
+        elif storage_type == StructureStorage.CrystalFormer:
             self.data["structure"] = load_crystalformer(path)
-        elif storage_type == StorageType.NongWei:
+        elif storage_type == StructureStorage.NongWei:
             self.data = load_NongWei(path)
-        elif storage_type == StorageType.Raymond:
+        elif storage_type == StructureStorage.Raymond:
             self.data = load_Raymond(path)
+        elif storage_type == StructureStorage.CDVAE_csv_cif:
+            self.data = read_MP(path)
         else:
             raise ValueError("Unknown storage type")
         if self.data.index.duplicated().any():
@@ -182,11 +195,36 @@ class GeneratedDataset():
             if isinstance(e_hull_formula, float):
                 continue
             if Composition(e_hull_formula).reduced_composition != structure.composition.reduced_composition:
-                raise ValueError("Formula mismatch %s vs %s" % (e_hull_formula, structure.composition))
+                raise ValueError(f"Formula mismatch between {e_hull_formula} and {structure.composition}")
         self.data["corrected_chgnet_ehull"] = e_hull_data["corrected_chgnet_ehull"]
 
-    def load_wyckoffs(self, path: Path|str):
-        if "structure" in self.data.columns:
-            raise ValueError("Structures are already defined")
-        
+    def load_wyckoffs(self, path: Path|str, storage_type: WyckoffStorage, cache_key: Optional[str] = None):
+        if storage_type == WyckoffStorage.pyxtal_json:
+            wcykoffs = pd.read_json(path)
+        elif storage_type == WyckoffStorage.WTCache:
+            with gzip.open(path, "rb") as f:
+                wcykoffs = pickle.load(f)[cache_key]
+        else:
+            raise ValueError("Unknown storage type")
+        if len(self.data) == 0:
+            self.data = wcykoffs
+        else:
+            self.data.loc[:, wcykoffs.columns] = wcykoffs
         self.wyckoffs_source = GeneratedDataset.WyckoffSource.external
+
+    def compute_wyckoffs(self, n_jobs: Optional[int] = None):
+        if self.wyckoffs_source == GeneratedDataset.WyckoffSource.external:
+            raise ValueError("Wyckoffs are already defined externally")
+        if "structure" not in self.data.columns:
+            raise ValueError("Structures are not defined")
+        wyckoffs = compute_symmetry_sites({"_": self.data}, n_jobs=n_jobs)["_"]
+        self.data.loc[:, wyckoffs.columns] = wyckoffs
+        self.wyckoffs_source = GeneratedDataset.WyckoffSource.pyxtal
+
+    def convert_wyckoffs_to_pyxtal(self):
+        in_pyxtal_format = pd.DataFrame.from_records(self.data.apply(record_to_pyxtal, axis=1))
+        self.data.loc[:, in_pyxtal_format.columns] = in_pyxtal_format
+
+    def compute_cdvae_crystals(self, n_jobs: Optional[int] = None):
+        with Pool(n_jobs) as pool:
+            self.data["cdvae_crystal"] = pool.map(Crystal.from_pymatgen, self.data["structure"])

@@ -145,7 +145,7 @@ def get_composition(structure: Structure) -> dict[Element, float]:
 
 def compute_symmetry_sites(
     datasets_pd: dict[str, pd.DataFrame],
-    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "wychoffs_enumerated_by_ss.pkl.gz",
+    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz",
     n_jobs: Optional[int] = None) -> tuple[dict[str, pd.DataFrame], int]:
 
     with open(wychoffs_enumerated_by_ss_file, "rb") as f:
