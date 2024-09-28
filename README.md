@@ -1,13 +1,14 @@
 # Installation
 1. Clone the repository
 2. `poetry install`. If it doesn't work due to PyTorch, it's up to you to fix. If you are able to find a general solution, a PR is most welcome. We don't really need this specific git tag, anything `2.3` and `2.4` should work.
-3. Log into WanDB, and configure your entity. For the team memebers, I suggest `symmetry-advantage`. It can be configured in poetry:
+3. Log into WanDB, and configure your entity. For the team members, I suggest `symmetry-advantage`. It can be configured in poetry:
 ```bash
 poetry self add poetry-dotenv-plugin
 echo "WANDB_ENTITY=symmetry-advantage" > .env
 ```
 # Data preprocessing
 ```bash
+mkdir cache
 # Preprocess the data on Wychoff positions
 python preprocess_wychoffs.py
 # Read CIF structures and find the Wychoff positions
