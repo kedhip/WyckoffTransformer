@@ -1,16 +1,21 @@
 {
     "cSpell.words": [
         "biternary",
+        "chgnet",
+        "crystalformer",
         "dataframe",
+        "ehull",
         "pvalue",
         "pyxtal",
         "SMAC",
         "smact",
         "spacegroup",
+        "strc",
         "tokenisers",
         "wandb",
         "wychoffs",
         "Wyckoff",
+        "wyckoffs",
         "wycryst",
         "yamls"
     ]

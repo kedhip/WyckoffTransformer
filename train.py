@@ -1,10 +1,9 @@
 from pathlib import Path
 import argparse
+import logging
 from omegaconf import OmegaConf
 import torch
 import wandb
-import logging
-
 from wyckoff_transformer.trainer import train_from_config
 
 
