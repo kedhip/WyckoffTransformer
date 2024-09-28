@@ -1,21 +1,16 @@
+import itertools
 import numpy as np
 import pandas as pd
-import networkx as nx
 import torch
 import copy
-import itertools
+
 
 from pymatgen.core.structure import Structure
 from pymatgen.core.lattice import Lattice
-import pymatgen.analysis.graphs
-#from pymatgen.analysis.graphs import StructureGraph
+from pymatgen.analysis.graphs import StructureGraph
 from pymatgen.analysis import local_env
 
-from networkx.algorithms.components import is_connected
-
 from sklearn.metrics import accuracy_score, recall_score, precision_score
-
-#from torch_scatter import scatter
 
 from p_tqdm import p_umap
 
@@ -111,7 +106,7 @@ def build_crystal_graph(crystal, graph_method='crystalnn'):
     """
 
     if graph_method == 'crystalnn':
-        crystal_graph = pymatgen.analysis.graphs.from_local_env_strategy(
+        crystal_graph = StructureGraph.from_local_env_strategy(
             crystal, CrystalNN)
         #crystal_graph = StructureGraph.with_local_env_strategy(
         #    crystal, CrystalNN)

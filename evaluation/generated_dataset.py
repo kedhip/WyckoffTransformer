@@ -15,7 +15,7 @@ from data import read_cif, compute_symmetry_sites, read_MP
 
 
 from .DiffCSP_to_sites import load_diffcsp_dataset, record_to_pyxtal
-from .cdvae.refined_metrics import Crystal
+from .cdvae_metrics import Crystal
 
 Transformation = Enum("Transformation", [
     "WyckoffTransformer",
@@ -152,8 +152,6 @@ def load_Raymond(path: Path):
 
 
 class GeneratedDataset():
-    WyckoffSource = Enum("WyckoffSource", ["pyxtal", "external"])
-
     # TODO: handle various missing data
     def __init__(self):
         self.data = pd.DataFrame()
@@ -210,21 +208,21 @@ class GeneratedDataset():
             self.data = wcykoffs
         else:
             self.data.loc[:, wcykoffs.columns] = wcykoffs
-        self.wyckoffs_source = GeneratedDataset.WyckoffSource.external
 
     def compute_wyckoffs(self, n_jobs: Optional[int] = None):
-        if self.wyckoffs_source == GeneratedDataset.WyckoffSource.external:
-            raise ValueError("Wyckoffs are already defined externally")
-        if "structure" not in self.data.columns:
-            raise ValueError("Structures are not defined")
         wyckoffs = compute_symmetry_sites({"_": self.data}, n_jobs=n_jobs)["_"]
         self.data.loc[:, wyckoffs.columns] = wyckoffs
-        self.wyckoffs_source = GeneratedDataset.WyckoffSource.pyxtal
 
     def convert_wyckoffs_to_pyxtal(self):
         in_pyxtal_format = pd.DataFrame.from_records(self.data.apply(record_to_pyxtal, axis=1))
         self.data.loc[:, in_pyxtal_format.columns] = in_pyxtal_format
 
     def compute_cdvae_crystals(self, n_jobs: Optional[int] = None):
-        with Pool(n_jobs) as pool:
-            self.data["cdvae_crystal"] = pool.map(Crystal.from_pymatgen, self.data["structure"])
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                category=UserWarning,
+                module="pymatgen.analysis.local_env.py"
+            )
+            with Pool(n_jobs) as pool:
+                self.data["cdvae_crystal"] = pool.map(Crystal.from_pymatgen, self.data["structure"])

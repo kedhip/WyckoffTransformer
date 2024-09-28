@@ -9,15 +9,33 @@ https://github.com/jiaor17/DiffCSP/
 from itertools import product
 from collections import Counter
 from math import gcd
+from pathlib import Path
 from typing import Dict, Optional
 import logging
+import os
 import numpy as np
+from scipy.spatial.distance import cdist
+from scipy.stats import wasserstein_distance
 from wrapt_timeout_decorator import timeout
 import smact.screening
 from pandas import Series
+from hydra import initialize_config_dir, compose
+import hydra
+import torch
+from torch_geometric.loader import DataLoader
 from pymatgen.core import Composition, Structure
 from matminer.featurizers.site.fingerprint import CrystalNNFingerprint
 from matminer.featurizers.composition.composite import ElementProperty
+
+from cdvae.common.data_utils import StandardScaler
+from cdvae.common.constants import CompScalerMeans, CompScalerStds
+from cdvae.pl_data.dataset import TensorCrystDataset
+from cdvae.pl_data.datamodule import worker_init_fn
+
+CompScaler = StandardScaler(
+    means=np.array(CompScalerMeans),
+    stds=np.array(CompScalerStds),
+    replace_nan_token=0.)
 
 logger = logging.getLogger(__name__)
 
@@ -186,6 +204,97 @@ def filter_fps(struc_fps, comp_fps):
             filtered_comp_fps.append(comp_fp)
     return filtered_struc_fps, filtered_comp_fps
 
+def get_model_path(eval_model_name):
+    model_path = (
+        Path(__file__).parent.parent / 'cdvae' / 'prop_models' / eval_model_name)
+    return model_path
+
+def load_config(model_path):
+    with initialize_config_dir(str(model_path), version_base="1.1"):
+        cfg = compose(config_name='hparams')
+    return cfg
+
+def load_model(model_path, load_data=False, testing=True):
+    os.environ["PROJECT_ROOT"] = str(Path(__file__).parent.parent.parent / 'cdvae')
+    with initialize_config_dir(str(model_path), version_base="1.1"):
+        cfg = compose(config_name='hparams')
+        template_model = hydra.utils.instantiate(
+            cfg.model,
+            optim=cfg.optim,
+            data=cfg.data,
+            logging=cfg.logging,
+            _recursive_=False,
+        )
+        ckpts = list(model_path.glob('*.ckpt'))
+        if len(ckpts) > 0:
+            ckpt = None
+            for ck in ckpts:
+                if 'last' in ck.parts[-1]:
+                    ckpt = str(ck)
+            if ckpt is None:
+                ckpt_epochs = np.array(
+                    [int(ckpt.parts[-1].split('-')[0].split('=')[1]) for ckpt in ckpts if 'last' not in ckpt.parts[-1]])
+                ckpt = str(ckpts[ckpt_epochs.argsort()[-1]])
+        #hparams = os.path.join(model_path, "model.yaml")
+        #print("Loading model from checkpoint:", ckpt)
+        model = template_model.__class__.load_from_checkpoint(ckpt, strict=False)
+        #try:
+        model.lattice_scaler = torch.load(model_path / 'lattice_scaler.pt')
+        model.scaler = torch.load(model_path / 'prop_scaler.pt')
+        #except:
+        #    pass
+
+        if load_data:
+            datamodule = hydra.utils.instantiate(
+                cfg.data.datamodule, _recursive_=False, scaler_path=model_path
+            )
+            if testing:
+                datamodule.setup('test')
+                test_loader = datamodule.test_dataloader()[0]
+            else:
+                datamodule.setup()
+                train_loader = datamodule.train_dataloader(shuffle=False)
+                val_loader = datamodule.val_dataloader()[0]
+                test_loader = (train_loader, val_loader)
+        else:
+            test_loader = None
+
+    return model, test_loader, cfg
+
+def prop_model_eval(eval_model_name, crystal_array_list):
+
+    model_path = get_model_path(eval_model_name)
+
+    model, _, _ = load_model(model_path)
+    cfg = load_config(model_path)
+
+    dataset = TensorCrystDataset(
+        crystal_array_list, cfg.data.niggli, cfg.data.primitive,
+        cfg.data.graph_method, cfg.data.preprocess_workers,
+        cfg.data.lattice_scale_method)
+
+    dataset.scaler = model.scaler.copy()
+
+    loader = DataLoader(
+        dataset,
+        shuffle=False,
+        batch_size=256,
+        num_workers=0,
+        worker_init_fn=worker_init_fn)
+
+    model.eval()
+
+    all_preds = []
+
+    for batch in loader:
+        preds = model(batch)
+        model.scaler.match_device(preds)
+        scaled_preds = model.scaler.inverse_transform(preds)
+        all_preds.append(scaled_preds.detach().cpu().numpy())
+
+    all_preds = np.concatenate(all_preds, axis=0).squeeze(1)
+    return all_preds.tolist()
+
 class GenEval(object):
 
     def __init__(self, pred_crys, gt_crys, n_samples=1000, eval_model_name=None):
@@ -200,8 +309,8 @@ class GenEval(object):
                 len(valid_crys), n_samples, replace=False)
             self.valid_samples = [valid_crys[i] for i in sampled_indices]
         else:
-            raise Exception(
-                f'not enough valid crystals in the predicted set: {len(valid_crys)}/{n_samples}')
+            raise ValueError(
+                f'Not enough valid crystals in the predicted set: {len(valid_crys)}/{n_samples}')
 
     def get_validity(self):
         comp_valid = np.array([c.comp_valid for c in self.crys]).mean()
@@ -228,14 +337,23 @@ class GenEval(object):
 
     def get_prop_wdist(self):
         if self.eval_model_name is not None:
-            pred_props = prop_model_eval(self.eval_model_name, [
-                                         c.dict for c in self.valid_samples])
-            gt_props = prop_model_eval(self.eval_model_name, [
-                                       c.dict for c in self.gt_crys])
-            wdist_prop = wasserstein_distance(pred_props, gt_props)
-            return {'wdist_prop': wdist_prop}
+            with torch.no_grad():
+                pred_props = prop_model_eval(self.eval_model_name, [
+                                            c.dict for c in self.valid_samples])
+                gt_props = prop_model_eval(self.eval_model_name, [
+                                        c.dict for c in self.gt_crys])
+                wdist_prop = wasserstein_distance(pred_props, gt_props)
+                return {'wdist_prop': wdist_prop}
         else:
             return {'wdist_prop': None}
+
+    def get_coverage(self):
+        cutoff_dict = COV_Cutoffs[self.eval_model_name]
+        (cov_metrics_dict, combined_dist_dict) = compute_cov(
+            self.crys, self.gt_crys,
+            struc_cutoff=cutoff_dict['struc'],
+            comp_cutoff=cutoff_dict['comp'])
+        return cov_metrics_dict
 
 
 def compute_cov(crys, gt_crys,
