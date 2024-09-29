@@ -6,12 +6,14 @@ from omegaconf import OmegaConf
 from evaluation.generated_dataset import GeneratedDataset, DATA_KEYS
 
 def compute_fields_and_cache(data: GeneratedDataset) -> None:
-    if "structure" in data.data.columns:
-        if "site_symmetries" not in data.data.columns:
-            data.compute_wyckoffs()
+    if "site_symmetries" not in data.data.columns:
+        data.compute_wyckoffs()
+    data.compute_wyckoff_fingerprints()
+    if "numIons" not in data.data.columns:
         data.convert_wyckoffs_to_pyxtal()
-        data.compute_wyckoff_fingerprints()
+    if "structure" in data.data.columns:
         data.compute_cdvae_crystals()
+        data.compute_naive_validity()
     data.dump_to_cache()
 
 def dive_and_cache(

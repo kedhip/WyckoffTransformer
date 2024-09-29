@@ -19,7 +19,7 @@ from data import read_cif, compute_symmetry_sites, read_MP, pyxtal_notation_to_s
 from preprocess_wychoffs import get_augmentation_dict
 
 from .DiffCSP_to_sites import load_diffcsp_dataset, record_to_pyxtal
-from .cdvae_metrics import Crystal
+from .cdvae_metrics import Crystal, structure_validity, timed_smact_validity_from_record
 
 StructureStorage = Enum("StructureStorage", [
     "DiffCSP_pt",
@@ -111,10 +111,20 @@ def load_all_from_config(
         traverse_config(dataset_config, [])
     
     available_dataset_signatures = list(map(tuple, available_dataset_signatures))
-    datasets = dict(
-        (signature, GeneratedDataset.from_cache(signature))
-        for signature in available_dataset_signatures
-    )
+
+    with Pool(10) as pool:
+        datasest_list = pool.map(GeneratedDataset.from_cache, available_dataset_signatures)
+    datasets = dict(zip(available_dataset_signatures, datasest_list))
+    
+    datasets[('WyckoffTransformer', 'CHGNet_fix_release')].data["corrected_chgnet_ehull"] = \
+    datasets[('WyckoffTransformer', 'CHGNet_fix')].data["corrected_chgnet_ehull"] - \
+        datasets[('WyckoffTransformer', 'CHGNet_fix')].data["energy_per_atom"] + \
+        datasets[('WyckoffTransformer', 'CHGNet_fix_release')].data["energy_per_atom"]
+
+    datasets[('WyckoffTransformer', 'CHGNet_free')].data["corrected_chgnet_ehull"] = \
+    datasets[('WyckoffTransformer', 'CHGNet_fix')].data["corrected_chgnet_ehull"] - \
+        datasets[('WyckoffTransformer', 'CHGNet_fix')].data["energy_per_atom"] + \
+        datasets[('WyckoffTransformer', 'CHGNet_free')].data["energy_per_atom"]
     return datasets
 
 
@@ -221,8 +231,8 @@ class GeneratedDataset():
             result.load_wyckoffs(
                 root_path / data_config.wyckoffs.path,
                 data_config.wyckoffs.storage_type, data_config.wyckoffs.get("cache_key", None))
-        if "corrected_chgnet_ehull" in data_config:
-            result.load_corrected_chgnet_ehull(root_path / data_config.corrected_chgnet_ehull)
+        if "e_hull" in data_config:
+            result.load_corrected_chgnet_ehull(root_path / data_config.e_hull)
 
         return result
 
@@ -329,7 +339,6 @@ class GeneratedDataset():
 
     def compute_wyckoff_fingerprints(self):
         self.data["fingerprint"] = self.data.apply(record_to_augmented_fingerprint, axis=1)
-        self.fingerprint_set = frozenset(self.data["fingerprint"])
 
     def dump_to_cache(self, path: Optional[Path] = None):
         if path is None:
@@ -337,3 +346,8 @@ class GeneratedDataset():
         path.parent.mkdir(parents=True, exist_ok=True)
         with gzip.open(path, "wb") as f:
             pickle.dump(self, f)
+
+    def compute_naive_validity(self):
+        self.data["structural_validity"] = self.data["structure"].apply(structure_validity)
+        self.data["smact_validity"] = self.data.apply(timed_smact_validity_from_record, axis=1)
+        self.data["naive_validity"] = self.data["structural_validity"] & self.data["smact_validity"]
