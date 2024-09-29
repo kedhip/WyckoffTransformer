@@ -7,6 +7,7 @@ from collections import Counter
 from pathlib import Path
 import pickle
 import warnings
+import logging
 from multiprocessing import Pool
 import pandas as pd
 from pymatgen.io.cif import CifParser
@@ -15,6 +16,7 @@ from pyxtal import pyxtal
 
 from preprocess_wychoffs import get_augmentation_dict
 
+logger = logging.getLogger(__name__)
 
 def read_cif(cif: str) -> Structure:
     """
@@ -85,7 +87,7 @@ def structure_to_sites(
               letter in sites_dict["wyckoff_letters"]]
                 for augmentator in wychoffs_augmentation[pyxtal_structure.group.number]
         ]
-        sites_dict["sites_enumeration_augmented"] = augmented_enumeration
+        sites_dict["sites_enumeration_augmented"] = frozenset(map(tuple, augmented_enumeration))
     return sites_dict
 
 
