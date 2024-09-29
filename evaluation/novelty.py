@@ -10,16 +10,18 @@ def record_to_augmented_fingerprint(row: Dict|Series) -> tuple:
         - site_symmetries
         - sites_enumeration_augmented
     Returns:
-        A tuple of the spacegroup number and a frozenset of tuples of the elements,
-        site symmetries and the Wyckoff position enumeration.
+        frozenset of all possible Wyckoff representations of the structure.
     """
-    transposed_augmentations = zip(*row["sites_enumeration_augmented"])
     return (
         row["spacegroup_number"],
-        frozenset(
-            map(
-                tuple,
-                zip(row["elements"], row["site_symmetries"], *transposed_augmentations)
+        frozenset(            
+            map(lambda enumertaion:
+                frozenset(
+                    map(
+                        tuple,
+                        zip(row["elements"], row["site_symmetries"], enumertaion)
+                    )
+                ), row["sites_enumeration_augmented"]
             )
         )
     )

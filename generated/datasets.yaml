@@ -20,6 +20,8 @@ mp_20:
       structures:
         path: WyckoffTransformer_mp_20_DiffCSP++_tol=0.1.json.gz
         storage_type: PymatgenJson
+      # Actually, CHGNet_fix_release
+      e_hull: WyckoffTransformer_mp_20_DiffCSP++_tol=0.1.ehull.csv.gz
       CHGNet_free:
         structures:
           path: WyckoffTransformer_mp_20_DiffCSPPP_tol0.1_nosymconstrain
@@ -32,17 +34,33 @@ mp_20:
       structures:
         path: crystalformer_mp20_CHGNet_fix_release
         storage_type: Raymond
+      # Included in Raymond's data
+      # CrystalFormer_mp_20.ehull.csv.gz
   DiffCSP:
     structures:
       path: DiffCSP_mp_20.pt
       storage_type: DiffCSP_pt
-    # CHGNet-relaxed Ehull
-    e_hull: DiffCSP_mp_20.ehull.csv.gz
+    CHGNet_fix:
+      structures:
+        path: DiffCSP_mp_20_fixed_symmetry
+        storage_type: Raymond
+      # Included in Raymond's data
+      # e_hull: DiffCSP_mp_20.ehull.csv.gz
+    CHGNet_no_relax:
+      structures:
+        path: DiffCSP_mp_20.pt
+        storage_type: DiffCSP_pt
+      e_hull: DiffCSP_mp_20_NO_RELAX.ehull.csv.gz
   DiffCSP++:
+    structures:
+      path: DiffCSP++_mp_20.pt
+      storage_type: DiffCSP_pt
     CHGNet_fix_release:
       structures:
         path: DiffCSP++_mp20_two_step_symmetry
         storage_type: Raymond
+      # Included in Raymond's data
+      # DiffCSP++_mp20_two_step_symmetry.ehull.csv.gz
   split:
     train:
       structures:
@@ -60,6 +78,12 @@ mp_20:
         path: ../cache/mp_20/data.pkl.gz
         storage_type: WTCache
         cache_key: test
+      CHGNet_fix:
+        structures:
+          path: mp20_test_CHGNnet_fixed_symmetry
+          storage_type: Raymond   
+        # Included in Raymond's data
+        # e_hull: mp20_test_1ksamle.csv.gz
     val:
       structures:
         path: ../cdvae/data/mp_20/val.csv

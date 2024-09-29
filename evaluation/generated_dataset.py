@@ -4,6 +4,7 @@ import warnings
 import gzip
 from multiprocessing import Pool
 import pickle
+from functools import partial
 from pathlib import Path
 from ast import literal_eval
 from pymatgen.core import Composition
@@ -14,8 +15,8 @@ import pandas as pd
 from .novelty import record_to_augmented_fingerprint
 import sys
 sys.path.append("..")
-from data import read_cif, compute_symmetry_sites, read_MP
-
+from data import read_cif, compute_symmetry_sites, read_MP, pyxtal_notation_to_sites
+from preprocess_wychoffs import get_augmentation_dict
 
 from .DiffCSP_to_sites import load_diffcsp_dataset, record_to_pyxtal
 from .cdvae_metrics import Crystal
@@ -289,6 +290,23 @@ class GeneratedDataset():
             self.data = wcykoffs
         else:
             self.data.loc[:, wcykoffs.columns] = wcykoffs
+        if "site_symmetries" not in self.data.columns:
+            # We have read the pyXtal format
+            wyckoffs_db_file = Path(__file__).parent.parent / "cache" / "wychoffs_enumerated_by_ss.pkl.gz"
+            with open(wyckoffs_db_file, "rb") as f:
+                wychoffs_enumerated_by_ss, _, ss_from_letter = pickle.load(f)
+            augmentation_dict = get_augmentation_dict()
+            wyckoff_converted = partial(
+                pyxtal_notation_to_sites,
+                wychoffs_enumerated_by_ss=wychoffs_enumerated_by_ss,
+                ss_from_letter=ss_from_letter,
+                wychoffs_augmentation=augmentation_dict
+            )
+            proper_wyckoffs_series = self.data.apply(wyckoff_converted, axis=1)
+            proper_wyckoffs = pd.DataFrame.from_records(
+                proper_wyckoffs_series.tolist(), index=proper_wyckoffs_series.index)
+            self.data.loc[:, proper_wyckoffs.columns] = proper_wyckoffs
+
 
     def compute_wyckoffs(self, n_jobs: Optional[int] = None):
         wyckoffs = compute_symmetry_sites({"_": self.data}, n_jobs=n_jobs)["_"]
