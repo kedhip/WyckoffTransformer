@@ -7,6 +7,7 @@ from collections import Counter
 from pathlib import Path
 import pickle
 import warnings
+import logging
 from multiprocessing import Pool
 import pandas as pd
 from pymatgen.io.cif import CifParser
@@ -15,6 +16,7 @@ from pyxtal import pyxtal
 
 from preprocess_wychoffs import get_augmentation_dict
 
+logger = logging.getLogger(__name__)
 
 def read_cif(cif: str) -> Structure:
     """
@@ -27,6 +29,45 @@ def read_cif(cif: str) -> Structure:
         Structure: The structure.
     """
     return CifParser.from_str(cif).parse_structures(primitive=False)[0]
+
+def pyxtal_notation_to_sites(
+    pyxtal_record: dict,
+    wychoffs_enumerated_by_ss: dict,
+    ss_from_letter: dict,
+    wychoffs_augmentation: dict = None) -> dict:
+
+    site_symmetries = []
+    elements = []
+    sites_enumeration = []
+    multiplicity = []
+    wyckoff_letters = []
+    for this_element, sites in zip(pyxtal_record["species"], pyxtal_record["sites"]):
+        true_element = Element(this_element)
+        for this_site in sites:
+            elements.append(true_element)
+            letter = this_site[-1]
+            wyckoff_letters.append(letter)
+            multiplicity.append(int(this_site[:-1]))
+            sites_enumeration.append(wychoffs_enumerated_by_ss[pyxtal_record['group']][letter])
+            ss = ss_from_letter[pyxtal_record['group']][letter]
+            site_symmetries.append(ss)
+
+    sites_dict = {
+        "site_symmetries": site_symmetries,
+        "elements": elements,
+        "multiplicity": multiplicity,
+        "wyckoff_letters": wyckoff_letters,
+        "sites_enumeration": sites_enumeration,
+        "spacegroup_number": pyxtal_record['group']
+    }
+    if wychoffs_augmentation is not None:
+        augmented_enumeration = [
+            [wychoffs_enumerated_by_ss[pyxtal_record['group']][augmentator[letter]] for
+              letter in sites_dict["wyckoff_letters"]]
+                for augmentator in wychoffs_augmentation[pyxtal_record['group']]
+        ]
+        sites_dict["sites_enumeration_augmented"] = frozenset(map(tuple, augmented_enumeration))
+    return sites_dict
 
 
 def structure_to_sites(
@@ -85,7 +126,7 @@ def structure_to_sites(
               letter in sites_dict["wyckoff_letters"]]
                 for augmentator in wychoffs_augmentation[pyxtal_structure.group.number]
         ]
-        sites_dict["sites_enumeration_augmented"] = augmented_enumeration
+        sites_dict["sites_enumeration_augmented"] = frozenset(map(tuple, augmented_enumeration))
     return sites_dict
 
 
