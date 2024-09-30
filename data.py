@@ -74,7 +74,8 @@ def structure_to_sites(
     structure: Structure,
     wychoffs_enumerated_by_ss: dict,
     wychoffs_augmentation: dict = None,
-    tol: float = 0.1) -> dict:
+    tol: float = 0.1,
+    return_none_on_exception: bool = False) -> dict:
     """
     Converts a pymatgen structure to a dictionary of symmetry sites.
 
@@ -89,7 +90,12 @@ def structure_to_sites(
         dict
     """
     pyxtal_structure = pyxtal()
-    pyxtal_structure.from_seed(structure, tol=tol)
+    try:
+        pyxtal_structure.from_seed(structure, tol=tol)
+    except Exception:
+        if return_none_on_exception:
+            return None
+        raise
 
     elements = [Element(site.specie) for site in pyxtal_structure.atom_sites]
     # electronegativity = [element.X for element in elements]
@@ -195,14 +201,14 @@ def compute_symmetry_sites(
     structure_to_sites_with_args = partial(
                 structure_to_sites,
                 wychoffs_enumerated_by_ss=wychoffs_enumerated_by_ss,
-                wychoffs_augmentation=get_augmentation_dict()
-        )
-
+                wychoffs_augmentation=get_augmentation_dict(),
+                return_none_on_exception=False
+    )
     result = {}
     for dataset_name, dataset in datasets_pd.items():
         with Pool(processes=n_jobs) as p:
-            symmetry_dataset = pd.DataFrame.from_records(
-                p.map(structure_to_sites_with_args, dataset['structure'])).set_index(dataset.index)
+            symmetry_list = p.map(structure_to_sites_with_args, dataset['structure'])
+            symmetry_dataset = pd.DataFrame.from_records(symmetry_list).set_index(dataset.index)
         symmetry_dataset["composition"] = symmetry_dataset.apply(get_composition_from_symmetry_sites, axis=1)
         result[dataset_name] = symmetry_dataset
     return result

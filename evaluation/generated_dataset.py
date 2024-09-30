@@ -7,10 +7,12 @@ import pickle
 from functools import partial
 from pathlib import Path
 from ast import literal_eval
-from pymatgen.core import Composition
+import json
+from operator import attrgetter
+from pymatgen.core import Composition, DummySpecies
 from omegaconf import OmegaConf
 import monty.json
-import json
+import torch
 import pandas as pd
 from .novelty import record_to_augmented_fingerprint
 import sys
@@ -19,7 +21,8 @@ from data import read_cif, compute_symmetry_sites, read_MP, pyxtal_notation_to_s
 from preprocess_wychoffs import get_augmentation_dict
 
 from .DiffCSP_to_sites import load_diffcsp_dataset, record_to_pyxtal
-from .cdvae_metrics import Crystal, structure_validity, timed_smact_validity_from_record
+from .cdvae_metrics import (
+    Crystal, structure_validity, timed_smact_validity_from_record, prop_model_eval)
 
 StructureStorage = Enum("StructureStorage", [
     "DiffCSP_pt",
@@ -27,7 +30,8 @@ StructureStorage = Enum("StructureStorage", [
     "NongWei",
     "Raymond",
     "CDVAE_csv_cif",
-    "PymatgenJson"
+    "PymatgenJson",
+    "FlowMM"
     ])
 
 WyckoffStorage = Enum("WyckoffStorage", [
@@ -116,15 +120,15 @@ def load_all_from_config(
         datasest_list = pool.map(GeneratedDataset.from_cache, available_dataset_signatures)
     datasets = dict(zip(available_dataset_signatures, datasest_list))
     
-    datasets[('WyckoffTransformer', 'CHGNet_fix_release')].data["corrected_chgnet_ehull"] = \
-    datasets[('WyckoffTransformer', 'CHGNet_fix')].data["corrected_chgnet_ehull"] - \
-        datasets[('WyckoffTransformer', 'CHGNet_fix')].data["energy_per_atom"] + \
-        datasets[('WyckoffTransformer', 'CHGNet_fix_release')].data["energy_per_atom"]
+    datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix_release')].data["corrected_chgnet_ehull"] = \
+    datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["corrected_chgnet_ehull"] - \
+        datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["energy_per_atom"] + \
+        datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix_release')].data["energy_per_atom"]
 
-    datasets[('WyckoffTransformer', 'CHGNet_free')].data["corrected_chgnet_ehull"] = \
-    datasets[('WyckoffTransformer', 'CHGNet_fix')].data["corrected_chgnet_ehull"] - \
-        datasets[('WyckoffTransformer', 'CHGNet_fix')].data["energy_per_atom"] + \
-        datasets[('WyckoffTransformer', 'CHGNet_free')].data["energy_per_atom"]
+    datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_free')].data["corrected_chgnet_ehull"] = \
+    datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["corrected_chgnet_ehull"] - \
+        datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["energy_per_atom"] + \
+        datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_free')].data["energy_per_atom"]
     return datasets
 
 
@@ -138,8 +142,24 @@ def load_crystalformer(path: Path):
     dataset = pd.read_csv(path)
     decoder = monty.json.MontyDecoder()
     structures = dataset.cif.map(lambda s: decoder.process_decoded(literal_eval(s)))
-    structures.name = "structures"
+    structures.name = "structure"
     return structures
+
+    
+def load_flowmm(path:Path|str):
+    if isinstance(path, str):
+        path = Path(path)
+    index = []
+    structures = []
+    decoder = monty.json.MontyDecoder()
+    for file_path in path.rglob("*.json"):
+        with open(file_path, "rt", encoding="ascii") as f:
+            this_structure = decoder.decode(f.read())
+            if any(isinstance(e, DummySpecies) for e in this_structure.composition.elements):
+                continue
+            index.append(int(file_path.stem))
+            structures.append(this_structure)
+    return pd.Series(data=structures, index=index, name="structure")
 
 
 def load_NongWei(path: Path):
@@ -219,8 +239,7 @@ class GeneratedDataset():
         root_path: Path = Path(__file__).parent.parent / "generated",
         cache_path: Path = Path(__file__).parent.parent / "cache"):
 
-        result = cls()
-        result.cache_location = cache_path.joinpath(dataset, "analysis_datasets", *transformations).with_suffix(".pkl.gz")
+        result = cls(dataset, cache_path.joinpath(dataset, "analysis_datasets", *transformations).with_suffix(".pkl.gz"))
         data_config = OmegaConf.load(config_path)[dataset]
 
         for level in transformations:
@@ -236,10 +255,13 @@ class GeneratedDataset():
 
         return result
 
-    # TODO: handle various missing data
-    def __init__(self):
+    def __init__(self,
+            dataset_name: str,
+            cache_location: Path):
+        
+        self.dataset_name = dataset_name
+        self.cache_location = cache_location
         self.data = pd.DataFrame()
-        self.fingerprint_set = None
 
     def load_structures(self, path: Path|str, storage_type: StructureStorage|str):
         # If structures are defined, wyckoffs must be obtained with pyxtal.from_seed(structures)
@@ -256,6 +278,8 @@ class GeneratedDataset():
             self.data["structure"] = load_crystalformer(path)
         elif storage_type == StructureStorage.PymatgenJson:
             self.data["structure"] = load_pymatgen_json(path)
+        elif storage_type == StructureStorage.FlowMM:
+            self.data["structure"] = load_flowmm(path)
         elif storage_type == StructureStorage.NongWei:
             self.data = load_NongWei(path)
         elif storage_type == StructureStorage.Raymond:
@@ -267,6 +291,7 @@ class GeneratedDataset():
         if self.data.index.duplicated().any():
             raise ValueError("Duplicate indices in the dataset")
         self.data.sort_index(inplace=True)
+        self.data["density"] = self.data["structure"].map(attrgetter("density"))
 
     def load_corrected_chgnet_ehull(self, path: Path|str):
         e_hull_data = pd.read_csv(path)
@@ -351,3 +376,14 @@ class GeneratedDataset():
         self.data["structural_validity"] = self.data["structure"].apply(structure_validity)
         self.data["smact_validity"] = self.data.apply(timed_smact_validity_from_record, axis=1)
         self.data["naive_validity"] = self.data["structural_validity"] & self.data["smact_validity"]
+
+    def compute_cdvae_e(self,
+        sample_size: Optional[int] = None,
+        device: torch.device = torch.device("cpu"),
+        eval_model_name: str = "mp20"):
+
+        sample_rows = self.data.index[:sample_size]
+        sample = self.data.loc[sample_rows, "cdvae_crystal"].map(attrgetter("dict"))
+        energies = prop_model_eval(eval_model_name, sample, device=device)
+        self.data["cdvae_e"] = pd.Series()
+        self.data.loc[sample_rows, "cdvae_e"] = energies

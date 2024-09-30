@@ -3,25 +3,29 @@ mp_20:
     wyckoffs:
       path: WyckoffTransformer_mp_20.json.gz
       storage_type: pyxtal_json
-    CHGNet_fix:
-      structures:
-        path: WyckoffTransformer_mp_20_CHGNet_relax_fix-symmetry_vs_removal/fix_symmetry
-        storage_type: NongWei
-      e_hull: WyckoffTransformer_mp_20.ehull.csv.gz
-    CHGNet_free:
-      structures:
-        path: WyckoffTransformer_mp_20_CHGNet_relax_no_symmetry/no_symmetry
-        storage_type: NongWei
-    CHGNet_fix_release:
-      structures:
-        path: WyckoffTransformer_mp_20_CHGNet_relax_fix-symmetry_vs_removal/remove_symmetry
-        storage_type: NongWei
+    CrySPR:
+      CHGNet_fix:
+        structures:
+          path: WyckoffTransformer_mp_20_CHGNet_relax_fix-symmetry_vs_removal/fix_symmetry
+          storage_type: NongWei
+        e_hull: WyckoffTransformer_mp_20.ehull.csv.gz
+      CHGNet_free:
+        structures:
+          path: WyckoffTransformer_mp_20_CHGNet_relax_no_symmetry/no_symmetry
+          storage_type: NongWei
+      CHGNet_fix_release:
+        structures:
+          path: WyckoffTransformer_mp_20_CHGNet_relax_fix-symmetry_vs_removal/remove_symmetry
+          storage_type: NongWei
     DiffCSP++:
       structures:
         path: WyckoffTransformer_mp_20_DiffCSP++_tol=0.1.json.gz
         storage_type: PymatgenJson
-      # Actually, CHGNet_fix_release
-      e_hull: WyckoffTransformer_mp_20_DiffCSP++_tol=0.1.ehull.csv.gz
+      CHGNet_fix:
+        structures:
+          path: WyckoffTransformer_mp_20_DiffCSPPP_tol0.1_CHGNet_fixed
+          storage_type: Raymond
+        #e_hull: WyckoffTransformer_mp_20_DiffCSP++_tol=0.1.ehull.csv.gz
       CHGNet_free:
         structures:
           path: WyckoffTransformer_mp_20_DiffCSPPP_tol0.1_nosymconstrain
@@ -61,6 +65,14 @@ mp_20:
         storage_type: Raymond
       # Included in Raymond's data
       # DiffCSP++_mp20_two_step_symmetry.ehull.csv.gz
+  FlowMM:
+    structures:
+      path: FlowMM
+      storage_type: FlowMM
+  FlowMM-relaxed:
+    structures:
+      path: FlowMM-relaxed
+      storage_type: FlowMM
   split:
     train:
       structures:

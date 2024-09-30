@@ -261,11 +261,12 @@ def load_model(model_path, load_data=False, testing=True):
 
     return model, test_loader, cfg
 
-def prop_model_eval(eval_model_name, crystal_array_list):
+def prop_model_eval(eval_model_name, crystal_array_list, device="cpu"):
 
     model_path = get_model_path(eval_model_name)
 
     model, _, _ = load_model(model_path)
+    model = model.to(device)
     cfg = load_config(model_path)
 
     dataset = TensorCrystDataset(
@@ -280,6 +281,7 @@ def prop_model_eval(eval_model_name, crystal_array_list):
         shuffle=False,
         batch_size=256,
         num_workers=0,
+        pin_memory=True,
         worker_init_fn=worker_init_fn)
 
     model.eval()
@@ -287,7 +289,7 @@ def prop_model_eval(eval_model_name, crystal_array_list):
     all_preds = []
 
     for batch in loader:
-        preds = model(batch)
+        preds = model(batch.to(device))
         model.scaler.match_device(preds)
         scaled_preds = model.scaler.inverse_transform(preds)
         all_preds.append(scaled_preds.detach().cpu().numpy())
@@ -349,7 +351,7 @@ class GenEval(object):
 
     def get_coverage(self):
         cutoff_dict = COV_Cutoffs[self.eval_model_name]
-        (cov_metrics_dict, combined_dist_dict) = compute_cov(
+        cov_metrics_dict = compute_cov(
             self.crys, self.gt_crys,
             struc_cutoff=cutoff_dict['struc'],
             comp_cutoff=cutoff_dict['comp'])
@@ -398,17 +400,6 @@ def compute_cov(crys, gt_crys,
     metrics_dict = {
         'cov_recall': cov_recall,
         'cov_precision': cov_precision,
-        'amsd_recall': np.mean(struc_recall_dist),
-        'amsd_precision': np.mean(struc_precision_dist),
-        'amcd_recall': np.mean(comp_recall_dist),
-        'amcd_precision': np.mean(comp_precision_dist),
     }
 
-    combined_dist_dict = {
-        'struc_recall_dist': struc_recall_dist.tolist(),
-        'struc_precision_dist': struc_precision_dist.tolist(),
-        'comp_recall_dist': comp_recall_dist.tolist(),
-        'comp_precision_dist': comp_precision_dist.tolist(),
-    }
-
-    return metrics_dict, combined_dist_dict
+    return metrics_dict
