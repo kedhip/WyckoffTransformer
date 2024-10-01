@@ -1,5 +1,5 @@
 from typing import Dict
-from collections import defaultdict
+from collections import defaultdict, Counter
 from pandas import Series
 import pandas as pd
 from pymatgen.analysis.structure_matcher import StructureMatcher
@@ -21,29 +21,56 @@ def record_to_augmented_fingerprint(row: Dict|Series) -> tuple:
         row["spacegroup_number"],
         frozenset(            
             map(lambda enumertaion:
-                frozenset(
+                frozenset(Counter(
                     map(
                         tuple,
                         zip(row["elements"], row["site_symmetries"], enumertaion)
                     )
-                ), row["sites_enumeration_augmented"]
+                ).items()), row["sites_enumeration_augmented"]
             )
         )
     )
 
+
+def record_to_anonymous_fingerprint(row: Dict|Series) -> tuple:
+    """
+    Computes a fingerprint taking into account equivalent Wyckoff position enumeration.
+    Args:
+        row contains the Wyckoff information:
+        - spacegroup_number
+        - site_symmetries
+        - sites_enumeration_augmented
+    Returns:
+        frozenset of all possible Wyckoff representations of the structure, without taking elements into account.
+    """
+    return (
+        row["spacegroup_number"],
+        frozenset(            
+            map(lambda enumertaion:
+                frozenset(Counter(
+                    map(
+                        tuple,
+                        zip(row["site_symmetries"], enumertaion)
+                    )
+                ).items()), row["sites_enumeration_augmented"]
+            )
+        )
+    )
 
 def filter_by_unique_structure(data: pd.DataFrame) -> pd.DataFrame:
     """
     Filters a dataset for unique structures. First compares fingerprints,
     then uses StructureMatcher for fine comparison.
     """
+    if 'structure' not in data:
+        return data.drop_duplicates('fingerprint')
     present = defaultdict(list)
     unique_indices = []
     for index, row in data.iterrows():
         if row.fingerprint not in present:
             present[row.fingerprint].append(row.structure)
             unique_indices.append(index)
-        elif 'structure' in row:
+        else:
             for present_structure in present[row.fingerprint]:
                 if StructureMatcher().fit(row.structure, present_structure):
                     break

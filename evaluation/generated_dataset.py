@@ -1,5 +1,6 @@
 from enum import Enum
-from typing import Optional, List
+from typing import Optional, List, Tuple
+from itertools import repeat
 import warnings
 import gzip
 from multiprocessing import Pool
@@ -19,10 +20,12 @@ import sys
 sys.path.append("..")
 from data import read_cif, compute_symmetry_sites, read_MP, pyxtal_notation_to_sites
 from preprocess_wychoffs import get_augmentation_dict
+from wyckoff_transformer.evaluation import wycryst_to_pyxtal_dict
 
 from .DiffCSP_to_sites import load_diffcsp_dataset, record_to_pyxtal
 from .cdvae_metrics import (
     Crystal, structure_validity, timed_smact_validity_from_record, prop_model_eval)
+
 
 StructureStorage = Enum("StructureStorage", [
     "DiffCSP_pt",
@@ -31,11 +34,13 @@ StructureStorage = Enum("StructureStorage", [
     "Raymond",
     "CDVAE_csv_cif",
     "PymatgenJson",
-    "FlowMM"
+    "FlowMM",
+    "RaymondPickle"
     ])
 
 WyckoffStorage = Enum("WyckoffStorage", [
     "pyxtal_json",
+    "WyCryst_csv",
     "WTCache"])
 
 class GenerationPipeline():
@@ -96,39 +101,41 @@ def __init__(self):
 DATA_KEYS = frozenset(("structures", "wyckoffs", "e_hull"))
 
 def load_all_from_config(
-    config_path: Path = Path(__file__).parent.parent / "generated" / "datasets.yaml"):
+    config_path: Path = Path(__file__).parent.parent / "generated" / "datasets.yaml",
+    datasets: Optional[List[Tuple[str]]] = None,
+    dataset_name: str = "mp_20"):
 
     config = OmegaConf.load(config_path)
-    available_dataset_signatures = []
-    def traverse_config(
-        this_config: OmegaConf,
-        transformations: List[str]) -> None:
-        if DATA_KEYS.intersection(this_config.keys()):
-            available_dataset_signatures.append(transformations)
-        for new_transformation, new_config in this_config.items():
-            if new_transformation in DATA_KEYS:
-                continue
-            traverse_config(new_config, transformations + [new_transformation])
-    for dataset_name, dataset_config in config.items():
-        if dataset_name != "mp_20":
-            raise NotImplementedError("Only MP_20 is supported")
-        traverse_config(dataset_config, [])
-    
+    if datasets is None:
+        available_dataset_signatures = []
+        def traverse_config(
+            this_config: OmegaConf,
+            transformations: List[str]) -> None:
+            if DATA_KEYS.intersection(this_config.keys()):
+                available_dataset_signatures.append(transformations)
+            for new_transformation, new_config in this_config.items():
+                if new_transformation in DATA_KEYS:
+                    continue
+                traverse_config(new_config, transformations + [new_transformation])
+        traverse_config(config[dataset_name], [])
+    else:
+        available_dataset_signatures = datasets
     available_dataset_signatures = list(map(tuple, available_dataset_signatures))
-
+    load_from_this_dataset = partial(GeneratedDataset.from_cache, dataset=dataset_name)
     with Pool(10) as pool:
-        datasest_list = pool.map(GeneratedDataset.from_cache, available_dataset_signatures)
+        datasest_list = pool.map(load_from_this_dataset, available_dataset_signatures)
     datasets = dict(zip(available_dataset_signatures, datasest_list))
     
-    datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix_release')].data["corrected_chgnet_ehull"] = \
-    datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["corrected_chgnet_ehull"] - \
-        datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["energy_per_atom"] + \
-        datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix_release')].data["energy_per_atom"]
+    if dataset_name == "mp_20":
+        datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix_release')].data["corrected_chgnet_ehull"] = \
+        datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["corrected_chgnet_ehull"] - \
+            datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["energy_per_atom"] + \
+            datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix_release')].data["energy_per_atom"]
 
-    datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_free')].data["corrected_chgnet_ehull"] = \
-    datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["corrected_chgnet_ehull"] - \
-        datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["energy_per_atom"] + \
-        datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_free')].data["energy_per_atom"]
+        datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_free')].data["corrected_chgnet_ehull"] = \
+        datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["corrected_chgnet_ehull"] - \
+            datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["energy_per_atom"] + \
+            datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_free')].data["energy_per_atom"]
     return datasets
 
 
@@ -166,9 +173,12 @@ def load_NongWei(path: Path):
     # There are two possible directory structures:
     # 0-499 & 500-999 / 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ...
     # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ...
-    # We handle them all by using rglob 
-    data = pd.read_csv(path/"id_with_energy_per_atom.csv", index_col="id",
-            usecols=["id", "energy_per_atom"])
+    # We handle them all by using rglob
+    try: 
+        data = pd.read_csv(path/"id_with_energy_per_atom.csv", index_col="id",
+                usecols=["id", "energy_per_atom"])
+    except FileNotFoundError:
+        data = pd.read_csv(path/"WyCryst_mp20_result.csv", index_col=0)
     data['structure'] = pd.Series(dtype=object, index=data.index)
     with warnings.catch_warnings():
         warnings.filterwarnings(
@@ -181,9 +191,15 @@ def load_NongWei(path: Path):
         )
         print("Suppressed CIF rounding warnings.")
         cif_file_paths = path.rglob("**/min_e_strc.cif")
+        structures_index = []
+        structures = []
         for this_cif_path in cif_file_paths:
             with open(this_cif_path, "rt", encoding="ascii") as f:
-                data.at[int(this_cif_path.parent.stem), "structure"] = read_cif(f.read())
+                structures_index.append(int(this_cif_path.parent.stem))
+                structures.append(read_cif(f.read()))
+    structures_pd = pd.Series(data=structures, index=structures_index)
+    data["structure"] = structures_pd
+    data.dropna(axis=0, subset=["structure"], inplace=True)
     return data
 
 
@@ -216,6 +232,14 @@ def load_Raymond(path: Path):
     data.dropna(axis=0, subset=["structure"], inplace=True)
     return data
 
+def load_WyCryst_csv(path: Path) -> pd.Series:
+    wycryst_data_raw = pd.read_csv(path, index_col=0, converters=dict(zip(
+                                    ("reconstructed_ratio1", "reconstructed_wyckoff",
+                                     "str_wyckoff", "ter_sys"),
+                                    repeat(literal_eval, 4)
+                            )))
+    wycryst_data = wycryst_data_raw.apply(wycryst_to_pyxtal_dict, axis=1).dropna()
+    return pd.DataFrame.from_records(wycryst_data.tolist(), index=wycryst_data.index)
 
 class GeneratedDataset():
     @classmethod
@@ -301,11 +325,12 @@ class GeneratedDataset():
             e_hull_data.set_index(e_hull_data.columns[0], inplace=True)
         # Verify that the data matches
         e_hull_data = e_hull_data.reindex(self.data.index, copy=False)
-        for e_hull_formula, structure in zip(e_hull_data["formula"], self.data["structure"]):
-            if isinstance(e_hull_formula, float):
-                continue
-            if Composition(e_hull_formula).reduced_composition != structure.composition.reduced_composition:
-                raise ValueError(f"Formula mismatch between {e_hull_formula} and {structure.composition}")
+        if "structure" in self.data.columns:
+            for e_hull_formula, structure in zip(e_hull_data["formula"], self.data["structure"]):
+                if isinstance(e_hull_formula, float):
+                    continue
+                if Composition(e_hull_formula).reduced_composition != structure.composition.reduced_composition:
+                    raise ValueError(f"Formula mismatch between {e_hull_formula} and {structure.composition}")
         self.data["corrected_chgnet_ehull"] = e_hull_data["corrected_chgnet_ehull"]
 
     def load_wyckoffs(self, path: Path|str,
@@ -319,6 +344,8 @@ class GeneratedDataset():
         elif storage_type == WyckoffStorage.WTCache:
             with gzip.open(path, "rb") as f:
                 wcykoffs = pickle.load(f)[cache_key]
+        elif storage_type == WyckoffStorage.WyCryst_csv:
+            wcykoffs = load_WyCryst_csv(path)
         else:
             raise ValueError("Unknown storage type")
         if len(self.data) == 0:

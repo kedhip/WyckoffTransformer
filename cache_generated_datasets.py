@@ -21,13 +21,10 @@ def dive_and_cache(
     this_config: OmegaConf,
     transformations: List[str],
     dataset_name: str,
-    config_file: Path,
-    skip_cached: bool):
+    config_file: Path):
 
-    if skip_cached:
-        raise NotImplementedError("skip_cached is not implemented")
     if DATA_KEYS.intersection(this_config.keys()):
-        print("Loading: ", transformations)
+        print(f"From {dataset_name} loading ({', '.join(transformations)})")
         data = GeneratedDataset.from_transformations(
             transformations, dataset=dataset_name)
         compute_fields_and_cache(data)
@@ -35,21 +32,24 @@ def dive_and_cache(
     for new_transformation, new_config in this_config.items():
         if new_transformation in DATA_KEYS:
             continue
-        dive_and_cache(new_config, transformations + [new_transformation], dataset_name, config_file, skip_cached)
+        dive_and_cache(new_config, transformations + [new_transformation], dataset_name, config_file)
 
 def main():
     parser = ArgumentParser()
     parser.add_argument("--config-file", type=Path, default=Path(__file__).parent / "generated" / "datasets.yaml")
-    parser.add_argument("--skip-cached", action="store_true")
-    parser.add_argument("--dataset", type=str, nargs="+")
+    parser.add_argument("--dataset", type=str)
+    parser.add_argument("--transformations", type=str, nargs="+")
     args = parser.parse_args()
-    if args.dataset:
-        data = GeneratedDataset.from_transformations(args.dataset, config_path=args.config_file)
+    if args.transformations:
+        data = GeneratedDataset.from_transformations(
+            args.transformations, config_path=args.config_file, dataset=args.dataset)
         compute_fields_and_cache(data)
     else:
         config = OmegaConf.load(args.config_file)
         for dataset_name, dataset_config in config.items():
-            dive_and_cache(dataset_config, [], dataset_name, args.config_file, args.skip_cached)
+            if args.dataset and args.dataset != dataset_name:
+                continue
+            dive_and_cache(dataset_config, [], dataset_name, args.config_file)
            
 
 if __name__ == "__main__":
