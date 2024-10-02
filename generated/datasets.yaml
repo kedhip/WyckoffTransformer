@@ -69,6 +69,10 @@ mp_20:
     structures:
       path: FlowMM
       storage_type: FlowMM
+    CHGNet_fix:
+      structures:
+        path: flowmm_mp20_all_result_filtered_withcif.csv
+        storage_type: EhullCSVCIF
   FlowMM-relaxed:
     structures:
       path: FlowMM-relaxed

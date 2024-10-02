@@ -5,12 +5,13 @@ import warnings
 import gzip
 from multiprocessing import Pool
 import pickle
+import numpy as np
 from functools import partial
 from pathlib import Path
 from ast import literal_eval
 import json
 from operator import attrgetter
-from pymatgen.core import Composition, DummySpecies
+from pymatgen.core import Composition, DummySpecies, Element
 from omegaconf import OmegaConf
 import monty.json
 import torch
@@ -34,6 +35,7 @@ StructureStorage = Enum("StructureStorage", [
     "Raymond",
     "CDVAE_csv_cif",
     "PymatgenJson",
+    "EhullCSVCIF",
     "FlowMM",
     "RaymondPickle"
     ])
@@ -126,7 +128,7 @@ def load_all_from_config(
         datasest_list = pool.map(load_from_this_dataset, available_dataset_signatures)
     datasets = dict(zip(available_dataset_signatures, datasest_list))
     
-    if dataset_name == "mp_20":
+    if False and dataset_name == "mp_20":
         datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix_release')].data["corrected_chgnet_ehull"] = \
         datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["corrected_chgnet_ehull"] - \
             datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["energy_per_atom"] + \
@@ -241,6 +243,11 @@ def load_WyCryst_csv(path: Path) -> pd.Series:
     wycryst_data = wycryst_data_raw.apply(wycryst_to_pyxtal_dict, axis=1).dropna()
     return pd.DataFrame.from_records(wycryst_data.tolist(), index=wycryst_data.index)
 
+def load_ehull_csv_cif(path: Path):
+    data = pd.read_csv(path, index_col=0)
+    data["structure"] = data.relxed_structure.apply(read_cif)
+    return data
+
 class GeneratedDataset():
     @classmethod
     def from_cache(
@@ -304,6 +311,8 @@ class GeneratedDataset():
             self.data["structure"] = load_pymatgen_json(path)
         elif storage_type == StructureStorage.FlowMM:
             self.data["structure"] = load_flowmm(path)
+        elif storage_type == StructureStorage.EhullCSVCIF:
+            self.data = load_ehull_csv_cif(path)
         elif storage_type == StructureStorage.NongWei:
             self.data = load_NongWei(path)
         elif storage_type == StructureStorage.Raymond:
@@ -317,12 +326,19 @@ class GeneratedDataset():
         self.data.sort_index(inplace=True)
         self.data["density"] = self.data["structure"].map(attrgetter("density"))
 
-    def load_corrected_chgnet_ehull(self, path: Path|str):
-        e_hull_data = pd.read_csv(path)
-        if "folder_ind" in e_hull_data.columns:
-            e_hull_data.set_index("folder_ind", inplace=True)
+    def load_corrected_chgnet_ehull(self, path: Path|str, index_json: Optional[Path] = None):
+        e_hull_data = pd.read_csv(path, index_col=False)
+        print(e_hull_data.head())
+        if index_json is not None:
+            with open(index_json, "rt", encoding="ascii") as f:
+                index = json.load(f)
+            e_hull_data.index = np.array(index)[e_hull_data.index]
+            print(e_hull_data.head())
         else:
-            e_hull_data.set_index(e_hull_data.columns[0], inplace=True)
+            if "folder_ind" in e_hull_data.columns:
+                e_hull_data.set_index("folder_ind", inplace=True)
+            else:
+                e_hull_data.set_index(e_hull_data.columns[0], inplace=True)
         # Verify that the data matches
         e_hull_data = e_hull_data.reindex(self.data.index, copy=False)
         if "structure" in self.data.columns:
@@ -330,7 +346,7 @@ class GeneratedDataset():
                 if isinstance(e_hull_formula, float):
                     continue
                 if Composition(e_hull_formula).reduced_composition != structure.composition.reduced_composition:
-                    raise ValueError(f"Formula mismatch between {e_hull_formula} and {structure.composition}")
+                   raise ValueError(f"Formula mismatch between {e_hull_formula} and {structure.composition}")
         self.data["corrected_chgnet_ehull"] = e_hull_data["corrected_chgnet_ehull"]
 
     def load_wyckoffs(self, path: Path|str,
