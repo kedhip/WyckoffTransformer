@@ -1,16 +1,25 @@
 {
     "cSpell.words": [
         "biternary",
+        "CDVAE",
+        "chgnet",
+        "crys",
+        "crystalformer",
         "dataframe",
+        "ehull",
+        "elems",
+        "optimised",
         "pvalue",
         "pyxtal",
         "SMAC",
         "smact",
         "spacegroup",
+        "strc",
         "tokenisers",
         "wandb",
         "wychoffs",
         "Wyckoff",
+        "wyckoffs",
         "wycryst",
         "yamls"
     ]

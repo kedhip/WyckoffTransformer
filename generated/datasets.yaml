@@ -1,0 +1,151 @@
+mp_20:
+  WyckoffTransformer:
+    wyckoffs:
+      path: WyckoffTransformer_mp_20.json.gz
+      storage_type: pyxtal_json
+    CrySPR:
+      CHGNet_fix:
+        structures:
+          path: WyckoffTransformer_mp_20_CHGNet_relax_fix-symmetry_vs_removal/fix_symmetry
+          storage_type: NongWei
+        e_hull: WyckoffTransformer_mp_20.ehull.csv.gz
+      CHGNet_free:
+        structures:
+          path: WyckoffTransformer_mp_20_CHGNet_relax_no_symmetry/no_symmetry
+          storage_type: NongWei
+      CHGNet_fix_release:
+        structures:
+          path: WyckoffTransformer_mp_20_CHGNet_relax_fix-symmetry_vs_removal/remove_symmetry
+          storage_type: NongWei
+    DiffCSP++:
+      structures:
+        path: WyckoffTransformer_mp_20_DiffCSP++_tol=0.1.json.gz
+        storage_type: PymatgenJson
+      CHGNet_fix:
+        structures:
+          path: WyckoffTransformer_mp_20_DiffCSPPP_tol0.1_CHGNet_fixed
+          storage_type: Raymond
+        #e_hull: WyckoffTransformer_mp_20_DiffCSP++_tol=0.1.ehull.csv.gz
+      CHGNet_free:
+        structures:
+          path: WyckoffTransformer_mp_20_DiffCSPPP_tol0.1_nosymconstrain
+          storage_type: Raymond
+  CrystalFormer:
+    structures:
+      path: CrystalFormer_mp_20.csv.gz
+      storage_type: CrystalFormer
+    CHGNet_fix_release:
+      structures:
+        path: crystalformer_mp20_CHGNet_fix_release
+        storage_type: Raymond
+      # Included in Raymond's data
+      # CrystalFormer_mp_20.ehull.csv.gz
+  DiffCSP:
+    structures:
+      path: DiffCSP_mp_20.pt
+      storage_type: DiffCSP_pt
+    CHGNet_fix:
+      structures:
+        path: DiffCSP_mp_20_fixed_symmetry
+        storage_type: Raymond
+      # Included in Raymond's data
+      # e_hull: DiffCSP_mp_20.ehull.csv.gz
+    CHGNet_no_relax:
+      structures:
+        path: DiffCSP_mp_20.pt
+        storage_type: DiffCSP_pt
+      e_hull: DiffCSP_mp_20_NO_RELAX.ehull.csv.gz
+  DiffCSP++:
+    structures:
+      path: DiffCSP++_mp_20.pt
+      storage_type: DiffCSP_pt
+    CHGNet_fix_release:
+      structures:
+        path: DiffCSP++_mp20_two_step_symmetry
+        storage_type: Raymond
+      # Included in Raymond's data
+      # DiffCSP++_mp20_two_step_symmetry.ehull.csv.gz
+  FlowMM:
+    structures:
+      path: FlowMM
+      storage_type: FlowMM
+    CHGNet_fix:
+      structures:
+        path: flowmm_mp20_all_result_filtered_withcif.csv
+        storage_type: EhullCSVCIF
+  FlowMM-relaxed:
+    structures:
+      path: FlowMM-relaxed
+      storage_type: FlowMM
+  split:
+    train:
+      structures:
+        path: ../cdvae/data/mp_20/train.csv
+        storage_type: CDVAE_csv_cif
+      wyckoffs:
+        path: ../cache/mp_20/data.pkl.gz
+        storage_type: WTCache
+        cache_key: train
+    test:
+      structures:
+        path: ../cdvae/data/mp_20/test.csv
+        storage_type: CDVAE_csv_cif
+      wyckoffs:
+        path: ../cache/mp_20/data.pkl.gz
+        storage_type: WTCache
+        cache_key: test
+      CHGNet_fix:
+        structures:
+          path: mp20_test_CHGNnet_fixed_symmetry
+          storage_type: Raymond   
+        # Included in Raymond's data
+        # e_hull: mp20_test_1ksamle.csv.gz
+    val:
+      structures:
+        path: ../cdvae/data/mp_20/val.csv
+        storage_type: CDVAE_csv_cif
+      wyckoffs:
+        path: ../cache/mp_20/data.pkl.gz
+        storage_type: WTCache
+        cache_key: val
+mp_20_biternary:
+  WyckoffTransformer:
+    wyckoffs:
+      path: WyckoffTransformer_mp_20_biternary.json.gz
+      storage_type: pyxtal_json
+    # CHGNet_?fix?
+    e_hull: WyCryst_mp_20_biternary.ehull.csv.gz
+  WyCryst:
+    wyckoffs:
+      path: WyCryst_mp_20_biternary.csv
+      storage_type: WyCryst_csv
+    CHGNet_fix:
+      structures:
+        path: WyCryst_mp20
+        storage_type: NongWei
+      # e_hull: WyCryst_mp_20_biternary.ehull.csv.gz
+  split:
+    train:
+      structures:
+        path: ../data/mp_20_biternary/train.csv.gz
+        storage_type: CDVAE_csv_cif
+      wyckoffs:
+        path: ../cache/mp_20_biternary/data.pkl.gz
+        storage_type: WTCache
+        cache_key: train
+    test:
+      structures:
+        path: ../data/mp_20_biternary/test.csv.gz
+        storage_type: CDVAE_csv_cif
+      wyckoffs:
+        path: ../cache/mp_20_biternary/data.pkl.gz
+        storage_type: WTCache
+        cache_key: test
+    val:
+      structures:
+        path: ../data/mp_20_biternary/val.csv.gz
+        storage_type: CDVAE_csv_cif
+      wyckoffs:
+        path: ../cache/mp_20_biternary/data.pkl.gz
+        storage_type: WTCache
+        cache_key: val

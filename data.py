@@ -7,6 +7,7 @@ from collections import Counter
 from pathlib import Path
 import pickle
 import warnings
+import logging
 from multiprocessing import Pool
 import pandas as pd
 from pymatgen.io.cif import CifParser
@@ -15,6 +16,7 @@ from pyxtal import pyxtal
 
 from preprocess_wychoffs import get_augmentation_dict
 
+logger = logging.getLogger(__name__)
 
 def read_cif(cif: str) -> Structure:
     """
@@ -28,12 +30,52 @@ def read_cif(cif: str) -> Structure:
     """
     return CifParser.from_str(cif).parse_structures(primitive=False)[0]
 
+def pyxtal_notation_to_sites(
+    pyxtal_record: dict,
+    wychoffs_enumerated_by_ss: dict,
+    ss_from_letter: dict,
+    wychoffs_augmentation: dict = None) -> dict:
+
+    site_symmetries = []
+    elements = []
+    sites_enumeration = []
+    multiplicity = []
+    wyckoff_letters = []
+    for this_element, sites in zip(pyxtal_record["species"], pyxtal_record["sites"]):
+        true_element = Element(this_element)
+        for this_site in sites:
+            elements.append(true_element)
+            letter = this_site[-1]
+            wyckoff_letters.append(letter)
+            multiplicity.append(int(this_site[:-1]))
+            sites_enumeration.append(wychoffs_enumerated_by_ss[pyxtal_record['group']][letter])
+            ss = ss_from_letter[pyxtal_record['group']][letter]
+            site_symmetries.append(ss)
+
+    sites_dict = {
+        "site_symmetries": site_symmetries,
+        "elements": elements,
+        "multiplicity": multiplicity,
+        "wyckoff_letters": wyckoff_letters,
+        "sites_enumeration": sites_enumeration,
+        "spacegroup_number": pyxtal_record['group']
+    }
+    if wychoffs_augmentation is not None:
+        augmented_enumeration = [
+            [wychoffs_enumerated_by_ss[pyxtal_record['group']][augmentator[letter]] for
+              letter in sites_dict["wyckoff_letters"]]
+                for augmentator in wychoffs_augmentation[pyxtal_record['group']]
+        ]
+        sites_dict["sites_enumeration_augmented"] = frozenset(map(tuple, augmented_enumeration))
+    return sites_dict
+
 
 def structure_to_sites(
     structure: Structure,
     wychoffs_enumerated_by_ss: dict,
     wychoffs_augmentation: dict = None,
-    tol: float = 0.1) -> dict:
+    tol: float = 0.1,
+    return_none_on_exception: bool = False) -> dict:
     """
     Converts a pymatgen structure to a dictionary of symmetry sites.
 
@@ -48,7 +90,12 @@ def structure_to_sites(
         dict
     """
     pyxtal_structure = pyxtal()
-    pyxtal_structure.from_seed(structure, tol=tol)
+    try:
+        pyxtal_structure.from_seed(structure, tol=tol)
+    except Exception:
+        if return_none_on_exception:
+            return None
+        raise
 
     elements = [Element(site.specie) for site in pyxtal_structure.atom_sites]
     # electronegativity = [element.X for element in elements]
@@ -85,7 +132,7 @@ def structure_to_sites(
               letter in sites_dict["wyckoff_letters"]]
                 for augmentator in wychoffs_augmentation[pyxtal_structure.group.number]
         ]
-        sites_dict["sites_enumeration_augmented"] = augmented_enumeration
+        sites_dict["sites_enumeration_augmented"] = frozenset(map(tuple, augmented_enumeration))
     return sites_dict
 
 
@@ -145,7 +192,7 @@ def get_composition(structure: Structure) -> dict[Element, float]:
 
 def compute_symmetry_sites(
     datasets_pd: dict[str, pd.DataFrame],
-    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "wychoffs_enumerated_by_ss.pkl.gz",
+    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz",
     n_jobs: Optional[int] = None) -> tuple[dict[str, pd.DataFrame], int]:
 
     with open(wychoffs_enumerated_by_ss_file, "rb") as f:
@@ -154,14 +201,14 @@ def compute_symmetry_sites(
     structure_to_sites_with_args = partial(
                 structure_to_sites,
                 wychoffs_enumerated_by_ss=wychoffs_enumerated_by_ss,
-                wychoffs_augmentation=get_augmentation_dict()
-        )
-
+                wychoffs_augmentation=get_augmentation_dict(),
+                return_none_on_exception=False
+    )
     result = {}
     for dataset_name, dataset in datasets_pd.items():
         with Pool(processes=n_jobs) as p:
-            symmetry_dataset = pd.DataFrame.from_records(
-                p.map(structure_to_sites_with_args, dataset['structure'])).set_index(dataset.index)
+            symmetry_list = p.map(structure_to_sites_with_args, dataset['structure'])
+            symmetry_dataset = pd.DataFrame.from_records(symmetry_list).set_index(dataset.index)
         symmetry_dataset["composition"] = symmetry_dataset.apply(get_composition_from_symmetry_sites, axis=1)
         symmetry_dataset['formation_energy_per_atom'] = dataset['formation_energy_per_atom']
         symmetry_dataset['band_gap'] = dataset['band_gap']

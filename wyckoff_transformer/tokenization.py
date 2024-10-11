@@ -365,7 +365,8 @@ def get_letter_from_ss_enum_idx(
         for ss, enum_dict in ss_enum_dict.items():
             letter_from_ss_enum_idx[space_group][ss] = dict()
             for enum, letter in enum_dict.items():
-                letter_from_ss_enum_idx[space_group][ss][enum_tokeniser[enum]] = letter
+                if enum in enum_tokeniser:
+                    letter_from_ss_enum_idx[space_group][ss][enum_tokeniser[enum]] = letter
     return letter_from_ss_enum_idx  
 
 

@@ -4,7 +4,7 @@ if __name__ == "__main__":
     import os
     os.environ["OMP_NUM_THREADS"] = "1"
     os.environ["OMP_THREAD_LIMIT"] = "1"
-from typing import Dict
+from typing import Dict, List
 from collections import defaultdict, Counter
 import argparse
 from functools import partial
@@ -96,18 +96,25 @@ def record_to_pyxtal(record: Dict) -> Dict:
     }
 
 
+def load_diffcsp_dataset(dataset: Path) -> List[Structure]:
+    data = torch.load(dataset, map_location='cpu')
+    crystals_list = get_crystals_list(
+        data['frac_coords'], data['atom_types'], data['lengths'], data['angles'], data['num_atoms'])
+    print(crystals_list[0])
+    with Pool() as pool:
+        structures = pool.map(get_structure, crystals_list)
+    return structures
+
+
 def main():
     parser = argparse.ArgumentParser("Converts DiffCSP custom format to CIF and sites")
     parser.add_argument("dataset", type=Path, help="The dataset to process")
     parser.add_argument("--log-level", type=str, default=logging.WARNING)
     args = parser.parse_args()
     logging.basicConfig(level=args.log_level)
-    data = torch.load(args.dataset, map_location='cpu')
-    crystals_list = get_crystals_list(
-        data['frac_coords'], data['atom_types'], data['lengths'], data['angles'], data['num_atoms'])
-    with Pool() as pool:
-        structures = pool.map(get_structure, crystals_list)
-
+    structures = load_diffcsp_dataset(args.dataset)
+    print(structures[0])
+    return
     converter = StructureToSites()
     with Pool() as pool:
         sites = pool.map(converter.structure_to_sites, structures)
