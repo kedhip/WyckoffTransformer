@@ -27,7 +27,7 @@ def cache_dataset(dataset:str, n_jobs:Optional[int] = None):
     """
     Loads a dataset, tokenizes and caches it.
     """
-    if dataset in ('mp_20', 'perov_5', 'carbon_24'):
+    if dataset in ('mp_20', 'perov_5', 'carbon_24', 'wbm'):
         datasets_pd = read_all_MP_csv(
             mp_path=Path(__file__).parent.resolve() / "cdvae" / "data" / dataset,
             n_jobs=n_jobs) 

@@ -13,6 +13,7 @@ from torch import nn
 from torch import Tensor
 from omegaconf import OmegaConf
 import wandb
+from tqdm import trange
 
 
 from cascade_transformer.dataset import AugmentedCascadeDataset, TargetClass
@@ -26,23 +27,26 @@ from wyckoff_transformer.evaluation import (
 
 
 class WyckoffTrainer():
-    def __init__(self,
-                 model: nn.Module,
-                 torch_datasets: dict,
-                 tokenisers: dict,
-                 token_engineers: dict,
-                 cascade_order: Tuple[str],
-                 cascade_is_target: Dict[str, bool],
-                 augmented_field: str|None,
-                 start_name: str,
-                 start_dtype: torch.dtype,
-                 target: TargetClass|str,
-                 evaluation_samples: int,
-                 multiclass_next_token_with_order_permutation: bool,
-                 optimisation_config: dict,
-                 device: torch.DeviceObjType,
-                 batch_size: Optional[int] = None,
-                 run_path: Optional[Path] = Path("runs")):
+    def __init__(
+        self,
+        model: nn.Module,
+        torch_datasets: dict,
+        tokenisers: dict,
+        token_engineers: dict,
+        cascade_order: Tuple[str],
+        cascade_is_target: Dict[str, bool],
+        augmented_field: str|None,
+        start_name: str,
+        start_dtype: torch.dtype,
+        target: TargetClass|str,
+        evaluation_samples: int,
+        multiclass_next_token_with_order_permutation: bool,
+        optimisation_config: dict,
+        device: torch.DeviceObjType,
+        batch_size: Optional[int] = None,
+        run_path: Optional[Path] = Path("runs"),
+        target_name = None
+    ):
         """
         Args:
             multiclass_next_token_with_order_permutation: Train a permutation-invariant model by permuting the sequences,
@@ -73,6 +77,9 @@ class WyckoffTrainer():
             if not multiclass_next_token_with_order_permutation:
                 raise NotImplementedError("NumUniqueTokens is not implemented without permutations")
             self.criterion = nn.MSELoss(reduction="none")
+        elif target == TargetClass.Scalar:
+            self.criterion = nn.MSELoss(reduction='mean')
+            self.testing_criterion = nn.L1Loss(reduction='mean')  
         else:
             raise ValueError(f"Unknown target: {target}")
         
@@ -98,7 +105,9 @@ class WyckoffTrainer():
             batch_size=batch_size,
             dtype=self.dtype,
             start_dtype=start_dtype,
-            device=self.device)
+            device=self.device,
+            target_name=target_name
+            )
         
         if "lr_per_sqrt_n_samples" in optimisation_config.optimiser:
             if "config" in optimisation_config.optimiser and "lr" in optimisation_config.optimiser.config:
@@ -116,7 +125,7 @@ class WyckoffTrainer():
             self.optimizer, 'min', **optimisation_config.scheduler.config)
 
         self.val_dataset = AugmentedCascadeDataset(
-            data=torch_datasets["val"],
+            data=torch_datasets["test" if optimisation_config.epochs == 0 else "val"],
             cascade_order=cascade_order,
             masks=masks_dict,
             pads=pad_dict,
@@ -126,7 +135,9 @@ class WyckoffTrainer():
             augmented_field=augmented_field,
             dtype=self.dtype,
             start_dtype=start_dtype,
-            device=device)
+            device=device,
+            target_name=target_name
+            )
 
         assert self.train_dataset.max_sequence_length == self.val_dataset.max_sequence_length
     
@@ -134,6 +145,9 @@ class WyckoffTrainer():
         self.cascade_len = len(cascade_order)
         self.cascade_order = cascade_order
         self.epochs = optimisation_config.epochs
+        if self.epochs == 0:
+            self.model.load_state_dict(torch.load('rolos_workflow_data/v6 mp20/current/data/3s2vcgde/best_model_params.pt'))
+
         self.validation_period = optimisation_config.validation_period
         self.early_stopping_patience_epochs = optimisation_config.early_stopping_patience_epochs    
         self.target = target
@@ -150,10 +164,13 @@ class WyckoffTrainer():
         dataset: AugmentedCascadeDataset,
         known_seq_len: int,
         known_cascade_len: int,
-        no_batch: bool) -> Tensor:
+        no_batch: bool,
+        testing: bool = False) -> Tensor:
         logging.debug("Known sequence length: %i", known_seq_len)
         logging.debug("Known cascade lenght: %i", known_cascade_len)
         if self.multiclass_next_token_with_order_permutation:
+            if self.target == TargetClass.Scalar:
+                raise NotImplementedError
             if self.target == TargetClass.NextToken:
                 # Once we have sampled the first cascade field, the prediction target is no longer mutliclass
                 # However, we still need to permute the sequence so that the autoregression is
@@ -168,13 +185,20 @@ class WyckoffTrainer():
                 # Counts are integers, as they should be, but MSE needs a float
                 target = target.float()
         else:
-            start_tokens, masked_data, target = dataset.get_masked_cascade_data(known_seq_len, known_cascade_len)
+            if self.target == TargetClass.Scalar:
+                start_tokens, masked_data, target, mask = dataset.get_masked_cascade_data(known_seq_len, known_cascade_len)
+            else:
+                start_tokens, masked_data, target = dataset.get_masked_cascade_data(known_seq_len, known_cascade_len)
         if self.target == TargetClass.NextToken:    
             # No padding, as we have already discarded the padding
             prediction = self.model(start_tokens, masked_data, None, known_cascade_len)
         elif self.target == TargetClass.NumUniqueTokens:
             # No padding, as we have already discarded the padding
             prediction = self.model(start_tokens, masked_data, None, None)
+        elif self.target == TargetClass.Scalar:
+            prediction = self.model(start_tokens, masked_data, mask, None).squeeze()
+        if testing:
+            return self.testing_criterion(prediction, target)
         return self.criterion(prediction, target)
 
 
@@ -187,6 +211,9 @@ class WyckoffTrainer():
                 known_cascade_len = randint(0, self.cascade_target_count - 1)
             elif self.target == TargetClass.NumUniqueTokens:
                 known_cascade_len = 0
+            elif self.target == TargetClass.Scalar:
+                known_cascade_len = self.cascade_target_count - 1
+                known_seq_len = self.train_dataset.max_sequence_length - 1
             loss = self.get_loss(self.train_dataset, known_seq_len, known_cascade_len, False)
             if self.target == TargetClass.NumUniqueTokens:
                 # Predictions are [batch_size, cascade_size]
@@ -211,6 +238,18 @@ class WyckoffTrainer():
         """
         self.model.eval()
         with torch.no_grad():
+            if self.target == TargetClass.Scalar:
+                known_cascade_len = self.cascade_target_count - 1
+                known_train_seq_len = self.train_dataset.max_sequence_length - 1
+                known_test_seq_len = self.val_dataset.max_sequence_length - 1
+                train_loss = self.get_loss(
+                    self.train_dataset, known_train_seq_len, known_cascade_len, False, True
+                )
+                val_loss = self.get_loss(
+                    self.val_dataset, known_test_seq_len, known_cascade_len, False, True
+                )
+                return val_loss, train_loss
+
             val_loss = torch.zeros(self.cascade_len, device=self.device)
             train_loss = torch.zeros(self.cascade_len, device=self.device)
             # Since we are sampling permutations and augmentations, and we rely on the
@@ -245,18 +284,30 @@ class WyckoffTrainer():
         wandb.define_metric("lr", step_metric="epoch")
         wandb.define_metric("known_seq_len", hidden=True)
         wandb.define_metric("known_cascade_len", hidden=True)
-        for epoch in range(self.epochs):
+        if self.epochs == 0:
+            val_loss_epoch, train_loss_epoch = self.evaluate()
+            print(val_loss_epoch, train_loss_epoch)
+            return
+
+        for epoch in trange(self.epochs):
             self.train_epoch()
             if epoch % self.validation_period == 0 or epoch == self.epochs - 1:
-                val_loss_epoch, train_loss_epoch = self.evaluate()
-                val_loss_dict = {name: val_loss_epoch[i] for i, name in enumerate(self.cascade_order)}
-                total_val_loss = val_loss_epoch.sum()
-                val_loss_dict["total"] = total_val_loss.item()
-                train_loss_dict = {name: train_loss_epoch[i] for i, name in enumerate(self.cascade_order)}
-                train_loss_dict["total"] = train_loss_epoch.sum().item()
-                wandb.log({"loss.epoch": {"val": val_loss_dict, "train": train_loss_dict},
-                            "lr": self.optimizer.param_groups[0]['lr'],
-                            "epoch": epoch}, commit=False)
+                if self.target == TargetClass.Scalar:
+                    val_loss_epoch, train_loss_epoch = self.evaluate()
+                    total_val_loss = val_loss_epoch
+                    wandb.log({"train_mae": train_loss_epoch.item(),
+                           "val_mae": val_loss_epoch.item(),
+                           "lr": self.optimizer.param_groups[0]['lr'],
+                           "epoch": epoch}, commit=False)
+                else:
+                    val_loss_dict = {name: val_loss_epoch[i] for i, name in enumerate(self.cascade_order)}
+                    total_val_loss = val_loss_epoch.sum()
+                    val_loss_dict["total"] = total_val_loss.item()
+                    train_loss_dict = {name: train_loss_epoch[i] for i, name in enumerate(self.cascade_order)}
+                    train_loss_dict["total"] = train_loss_epoch.sum().item()
+                    wandb.log({"loss.epoch": {"val": val_loss_dict, "train": train_loss_dict},
+                                "lr": self.optimizer.param_groups[0]['lr'],
+                                "epoch": epoch}, commit=False)
                 if total_val_loss < best_val_loss:
                     best_val_loss = total_val_loss
                     best_val_epoch = epoch

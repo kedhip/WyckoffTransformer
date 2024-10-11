@@ -15,6 +15,7 @@ def main():
     parser.add_argument("dataset", type=str, help="The name of the dataset to retokenise")
     parser.add_argument("config_file", type=Path, help="The tokeniser configuration file")
     parser.add_argument("--debug", action="store_true", help="Set the logging level to debug")
+    parser.add_argument("--use_existing_tokenizers", action="store_true")
     args = parser.parse_args()
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
@@ -26,7 +27,7 @@ def main():
     print("Loaded the dataset. It has the following sizes:")
     for name, dataset in datasets_pd.items():
         print(f"{name}: {len(dataset)}")
-    tensors, tokenisers, token_engineers = tokenise_dataset(datasets_pd, config)
+    tensors, tokenisers, token_engineers = tokenise_dataset(datasets_pd, config, args.use_existing_tokenizers)
     if args.debug and "multiplicity" in token_engineers:
         index = 0
         multiplicities_from_tokens = token_engineers["multiplicity"].get_feature_from_token_batch(

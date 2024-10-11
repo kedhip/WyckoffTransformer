@@ -212,7 +212,8 @@ def tokenise_engineer(
 
 
 def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
-                     config: omegaconf.OmegaConf) -> \
+                     config: omegaconf.OmegaConf,
+                     use_existing_tokenizers: bool = False) -> \
                         Tuple[Dict[str, Dict[str, torch.Tensor|List[List[torch.Tensor]]]], Dict[str, EnumeratingTokeniser]]:
     tokenisers = {}
     dtype = getattr(torch, config.dtype)
@@ -231,6 +232,10 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
         for sequence_field in config.sequence_fields.space_group:
             all_space_groups = frozenset(chain.from_iterable(map(itemgetter(sequence_field), datasets_pd.values())))
             tokenisers[sequence_field] = SpaceGroupEncoder.from_sg_set(all_space_groups)
+
+    if use_existing_tokenizers:
+        with gzip.open(Path('cache/mp_20') / 'tokenisers' / f'mp_20_sg_multiplicity.pkl.gz', "rb") as f:
+            tokenisers = pickle.load(f)
 
     raw_engineers = {}
     token_engineers = dict()
@@ -262,6 +267,8 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
     
     tensors = defaultdict(dict)
     for dataset_name, dataset in datasets_pd.items():
+        dataset = dataset[dataset['spacegroup_number'].isin(tokenisers['spacegroup_number'])]
+
         for field in config.token_fields.pure_categorical:
             tensors[dataset_name][field] = torch.stack(
                 dataset[field].map(partial(
@@ -288,6 +295,10 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
         if "space_group" in config.sequence_fields:
             for field in config.sequence_fields.space_group:
                 tensors[dataset_name][field] = tokenisers[field].encode_spacegroups(dataset[field], dtype=dtype)
+
+        if "no_processing" in config.sequence_fields:
+            for field in config.sequence_fields.no_processing:
+                tensors[dataset_name][field] = torch.Tensor(dataset[field].array)
 
         # Counter fields are processed into two tensors: tokenised values, and the counts
         # WARNING Cell variable tokeniser_filed defined in loopPylintW0640:cell-var-from-loop
