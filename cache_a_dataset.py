@@ -31,9 +31,9 @@ def cache_dataset(dataset:str, n_jobs:Optional[int] = None):
         datasets_pd = read_all_MP_csv(
             mp_path=Path(__file__).parent.resolve() / "cdvae" / "data" / dataset,
             n_jobs=n_jobs) 
-    elif dataset == "mp_20_biternary":
+    elif dataset in ("mp_20_biternary", "wbm"):
         datasets_pd = read_all_MP_csv(
-            Path(__file__).parent.resolve() / "data" / "mp_20_biternary",
+            Path(__file__).parent.resolve() / "data" / dataset,
             file_format="csv.gz", n_jobs=n_jobs)
     else:
         raise ValueError(f"Unknown dataset {dataset}")

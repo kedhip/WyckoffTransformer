@@ -210,6 +210,8 @@ def compute_symmetry_sites(
             symmetry_list = p.map(structure_to_sites_with_args, dataset['structure'])
             symmetry_dataset = pd.DataFrame.from_records(symmetry_list).set_index(dataset.index)
         symmetry_dataset["composition"] = symmetry_dataset.apply(get_composition_from_symmetry_sites, axis=1)
+        symmetry_dataset['formation_energy_per_atom'] = dataset['formation_energy_per_atom']
+        symmetry_dataset['band_gap'] = dataset['band_gap']
         result[dataset_name] = symmetry_dataset
     return result
 

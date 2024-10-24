@@ -20,3 +20,8 @@ augmented_token_fields:
 sequence_fields:
   pure_categorical:
     - spacegroup_number
+  # converts a Counter into tokens, uses the specified field name embedding
+  # Basically, aimed at e. g.
+  # {Element Nd: 1.0, Element Al: 8.0, Element Cu: 4.0}
+  counters:
+    composition: elements

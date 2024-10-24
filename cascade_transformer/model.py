@@ -113,6 +113,10 @@ class CascadeTransformer(nn.Module):
         else:
             raise ValueError(f"Unknown start_type {config.start_type}")
 
+        # perhaps it can be needed
+        # full_cascade = {'elements': (92, 16, 89, True), 'site_symmetries': (78, 16, 75, True), 'sites_enumeration': (11, 8, 8, True)}
+        # n_start = 109
+
         return cls(
             n_start=n_start,
             cascade=full_cascade.values(),
@@ -242,7 +246,9 @@ class CascadeTransformer(nn.Module):
                 cascade_embedding += positional_encoding.unsqueeze(0)
 
         data = torch.cat([self.start_embedding(start).unsqueeze(1), cascade_embedding], dim=1)
+
         transformer_output = self.transformer_encoder(data, src_key_padding_mask=padding_mask)
+
         logging.debug("Transforer output size: %s", transformer_output.size())
         if self.aggregate_after_encoder:
             aggregation_input = transformer_output
@@ -259,6 +265,10 @@ class CascadeTransformer(nn.Module):
                 aggregation = torch.zeros_like(aggregation_input[:, 0])
             else:
                 aggregation = aggregation_input[:, aggregation_start_idx:-1].max(dim=1).values
+        elif self.token_aggregation == "mean":
+            aggregation = (
+                aggregation_input[:, aggregation_start_idx:] * (1 -padding_mask.float())[..., None]
+            ).sum(dim=1) / (1 - padding_mask.float() + 1e-6).sum(dim=1)[..., None]
 
     
         if self.aggregation_inclsion == "concat":
@@ -267,6 +277,8 @@ class CascadeTransformer(nn.Module):
             prediction_inputs = [transformer_output[:, -1] + aggregation]
         elif self.aggregation_inclsion is None:
             prediction_inputs = [transformer_output[:, -1]]
+        elif self.aggregation_inclsion == "aggr":
+            prediction_inputs = [aggregation]
         else:
             raise ValueError(f"Unknown aggregation_inclsion {self.aggregation_inclsion}")
 
