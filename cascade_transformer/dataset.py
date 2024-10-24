@@ -161,6 +161,11 @@ class AugmentedCascadeDataset():
         self.start_tokens = data[start_field].type(start_dtype).to(device)
         self.pure_sequences_lengths = data["pure_sequence_length"].type(dtype).to(device)
         self.target = None if target_name is None else data[target_name]
+        # padding length is the same for all cascade elements
+        # prepending 0 to account for the start token
+        self.padding_mask = torch.cat(
+            (torch.zeros(self.data[cascade_order[0]].shape[0], 1, device=self.device, dtype=bool),
+            (self.data[cascade_order[0]] == self.pads[cascade_order[0]])), dim=1)
 
 
     def __len__(self):
@@ -180,8 +185,8 @@ class AugmentedCascadeDataset():
     def get_masked_cascade_data(
         self,
         known_seq_len: int,
-        known_cascade_len: int
-    ):
+        known_cascade_len: int):
+    
         if self.batch_size is not None:
             raise NotImplementedError("Batch size is not supported for get_masked_cascade_data")
         # assert known_seq_len < data.shape[1]
@@ -193,20 +198,35 @@ class AugmentedCascadeDataset():
             target = augmented_data[:, known_seq_len]
         else:
             target = self.data[self.cascade_order[known_cascade_len]][:, known_seq_len]
-        # target_is_viable = (target != self.pads[self.cascade_order[known_cascade_len]])
+        target_is_viable = (target != self.pads[self.cascade_order[known_cascade_len]])
         
         # We are predicting the first cascade element also through the mask
         # It would be slightly more efficient to predict it using only the previous data
         res = []
         for cascade_index, name in enumerate(self.cascade_order):
             if name == self.augmented_field:
-                cascade_vector = augmented_data #[target_is_viable]
+                cascade_vector = augmented_data[target_is_viable]
             else:
-                cascade_vector = self.data[name] #[target_is_viable]
-            res.append(cascade_vector[:, :known_seq_len + 1])
-        mask = torch.cat((torch.zeros(res[-1].shape[0], 1).to(self.device), (res[-1] == self.pads[name])), dim=1).bool()
-        return self.start_tokens, res, self.target.to(self.device), mask
+                cascade_vector = self.data[name][target_is_viable]
+            if cascade_index < known_cascade_len:
+                res.append(cascade_vector[:, :known_seq_len + 1])
+            else:
+                res.append(torch.cat([
+                    cascade_vector[:, :known_seq_len],
+                    self.masks[name].expand(cascade_vector.size(0), 1)], dim=1))
+        return self.start_tokens[target_is_viable], res, target[target_is_viable]
 
+    def get_augmented_data(self):
+        if self.batch_size is not None:
+            raise NotImplementedError("Batch size is not supported for get_augmented_data")
+        res = []
+        for cascade_index, name in enumerate(self.cascade_order):
+            if name == self.augmented_field:
+                cascade_vector = self.get_augmentation()
+            else:
+                cascade_vector = self.data[name]
+            res.append(cascade_vector)
+        return self.start_tokens, res, self.target, self.padding_mask
 
     def get_masked_multiclass_cascade_data(
         self,
