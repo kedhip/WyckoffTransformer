@@ -15,7 +15,7 @@ python preprocess_wychoffs.py
 # A CPU-intensive operations
 python cache_a_dataset.py mp_20
 # Tokenise a dataset
-python tokenise_a_dataset.py mp_20 yamls/tokenisers/mp_20_CSP.yaml
+python tokenise_a_dataset.py mp_20 yamls/tokenisers/mp_20_CSP.yaml --new-tokenizer
 ```
 # Training
 To test training on CPU and GPU:

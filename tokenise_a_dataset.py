@@ -15,7 +15,10 @@ def main():
     parser.add_argument("dataset", type=str, help="The name of the dataset to retokenise")
     parser.add_argument("config_file", type=Path, help="The tokeniser configuration file")
     parser.add_argument("--debug", action="store_true", help="Set the logging level to debug")
-    parser.add_argument("--use_existing_tokenizers", action="store_true")
+    tokenizer_source = parser.add_mutually_exclusive_group(required=True)
+    tokenizer_source.add_argument("--tokenizer-path", type=Path, help="Load a pickled tokenizer")
+    tokenizer_source.add_argument("--new-tokenizer", action="store_true",
+        help="Generate a new tokenizer, potentially overwriting files")
     args = parser.parse_args()
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)

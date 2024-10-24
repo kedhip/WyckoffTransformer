@@ -213,28 +213,28 @@ def tokenise_engineer(
 
 def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                      config: omegaconf.OmegaConf,
-                     use_existing_tokenizers: bool = False) -> \
+                     tokenizer_path: Optional[Path|str] = None) -> \
                         Tuple[Dict[str, Dict[str, torch.Tensor|List[List[torch.Tensor]]]], Dict[str, EnumeratingTokeniser]]:
-    tokenisers = {}
-    dtype = getattr(torch, config.dtype)
-    max_tokens = torch.iinfo(dtype).max
-    for token_field in config.token_fields.pure_categorical:
-        all_tokens = frozenset(chain.from_iterable(chain.from_iterable(map(itemgetter(token_field), datasets_pd.values()))))
-        tokenisers[token_field] = EnumeratingTokeniser.from_token_set(all_tokens, max_tokens)
+    if tokenizer_path is None:
+        tokenisers = {}
+        dtype = getattr(torch, config.dtype)
+        max_tokens = torch.iinfo(dtype).max
+        for token_field in config.token_fields.pure_categorical:
+            all_tokens = frozenset(chain.from_iterable(chain.from_iterable(map(itemgetter(token_field), datasets_pd.values()))))
+            tokenisers[token_field] = EnumeratingTokeniser.from_token_set(all_tokens, max_tokens)
 
-    if "pure_categorical" in config.sequence_fields:
-        # Cell variable sequence_field defined in loopPylintW0640:cell-var-from-loop
-        for sequence_field in config.sequence_fields.pure_categorical:
-            all_tokens = frozenset(chain.from_iterable(map(lambda df: frozenset(df[sequence_field].tolist()), datasets_pd.values())))
-            tokenisers[sequence_field] = EnumeratingTokeniser.from_token_set(all_tokens, max_tokens)
-    
-    if "space_group" in config.sequence_fields:
-        for sequence_field in config.sequence_fields.space_group:
-            all_space_groups = frozenset(chain.from_iterable(map(itemgetter(sequence_field), datasets_pd.values())))
-            tokenisers[sequence_field] = SpaceGroupEncoder.from_sg_set(all_space_groups)
-
-    if use_existing_tokenizers:
-        with gzip.open(Path('cache/mp_20') / 'tokenisers' / f'mp_20_sg_multiplicity.pkl.gz', "rb") as f:
+        if "pure_categorical" in config.sequence_fields:
+            # Cell variable sequence_field defined in loopPylintW0640:cell-var-from-loop
+            for sequence_field in config.sequence_fields.pure_categorical:
+                all_tokens = frozenset(chain.from_iterable(map(lambda df: frozenset(df[sequence_field].tolist()), datasets_pd.values())))
+                tokenisers[sequence_field] = EnumeratingTokeniser.from_token_set(all_tokens, max_tokens)
+        
+        if "space_group" in config.sequence_fields:
+            for sequence_field in config.sequence_fields.space_group:
+                all_space_groups = frozenset(chain.from_iterable(map(itemgetter(sequence_field), datasets_pd.values())))
+                tokenisers[sequence_field] = SpaceGroupEncoder.from_sg_set(all_space_groups)
+    else:
+        with gzip.open(tokenizer_path, "rb") as f:
             tokenisers = pickle.load(f)
 
     raw_engineers = {}
