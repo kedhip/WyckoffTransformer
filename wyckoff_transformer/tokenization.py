@@ -215,9 +215,9 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                      config: omegaconf.OmegaConf,
                      tokenizer_path: Optional[Path|str] = None) -> \
                         Tuple[Dict[str, Dict[str, torch.Tensor|List[List[torch.Tensor]]]], Dict[str, EnumeratingTokeniser]]:
+    dtype = getattr(torch, config.dtype)
     if tokenizer_path is None:
         tokenisers = {}
-        dtype = getattr(torch, config.dtype)
         max_tokens = torch.iinfo(dtype).max
         for token_field in config.token_fields.pure_categorical:
             all_tokens = frozenset(chain.from_iterable(chain.from_iterable(map(itemgetter(token_field), datasets_pd.values()))))

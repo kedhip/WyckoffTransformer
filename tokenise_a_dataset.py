@@ -30,7 +30,7 @@ def main():
     print("Loaded the dataset. It has the following sizes:")
     for name, dataset in datasets_pd.items():
         print(f"{name}: {len(dataset)}")
-    tensors, tokenisers, token_engineers = tokenise_dataset(datasets_pd, config, args.use_existing_tokenizers)
+    tensors, tokenisers, token_engineers = tokenise_dataset(datasets_pd, config, args.tokenizer_path)
     if args.debug and "multiplicity" in token_engineers:
         index = 0
         multiplicities_from_tokens = token_engineers["multiplicity"].get_feature_from_token_batch(

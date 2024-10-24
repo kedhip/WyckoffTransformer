@@ -4,6 +4,7 @@ version = "0.2.0"
 description = ""
 authors = ["Nikita Kazeev <kazeevn@gmail.com>"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
@@ -16,11 +17,7 @@ wandb = ">=0.16.0"
 py3dmol = ">=2.0.4"
 scikit-learn = "^1.5.0"
 filelock = "^3.14.0"
-torch = {path = "/mnt/hdd/torch_wheels/torch-2.4.0a0+gitda7bf1d-cp310-cp310-linux_x86_64.whl"}
-pytorch-triton = {path = "/mnt/hdd/torch_wheels/pytorch_triton-3.0.0+45fff310c8-cp310-cp310-linux_x86_64.whl"}
 omegaconf = "^2.3.0"
-# intel-extension-for-pytorch = {path = "/mnt/hdd/torch_wheels/intel_extension_for_pytorch-2.4.0+gitb44a1f1-cp310-cp310-linux_x86_64.whl"}
-# transformers = "^4.41.2"
 smact = "^2.5.5"
 wrapt-timeout-decorator = "^1.5.1"
 catboost = "^1.2.5"
@@ -35,7 +32,8 @@ python-dotenv = "^1.0.1"
 lightning = "^2.4.0"
 cython = "<3.0.0"
 pytorch-lightning = "^2.4.0"
-pyxtal = {git = "git@github.com:kazeevn/PyXtal.git"}
+pyxtal = "^1.0.4"
+torch = {path = "/mnt/hdd/torch_wheels/torch-2.6.0a0+git20af56d-cp312-cp312-linux_x86_64.whl"}
 
 [build-system]
 requires = ["poetry-core"]
