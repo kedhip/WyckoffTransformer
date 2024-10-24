@@ -21,3 +21,4 @@ generated/WyCryst_mp20
 generated/mp20_test_CHGNnet_fixed_symmetry
 DiffCSP++_mp20_two_step_symmetry
 data/2023-02-07-mp-computed-structure-entries.json.gz
+poetry.lock
