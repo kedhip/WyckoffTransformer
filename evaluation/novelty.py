@@ -57,6 +57,7 @@ def record_to_anonymous_fingerprint(row: Dict|Series) -> tuple:
         )
     )
 
+
 def filter_by_unique_structure(data: pd.DataFrame) -> pd.DataFrame:
     """
     Filters a dataset for unique structures. First compares fingerprints,
@@ -81,6 +82,9 @@ def filter_by_unique_structure(data: pd.DataFrame) -> pd.DataFrame:
 
 
 class NoveltyFilter():
+    """
+    Uses fingerprints and StructureMatcher to filter for novel structures.
+    """
     def __init__(self, reference_dataset: pd.DataFrame):
         """
         Args:
@@ -94,14 +98,15 @@ class NoveltyFilter():
             reference_dict[record.fingerprint].append(record)
         self.reference_dict = dict(zip(reference_dict.keys(), map(tuple, reference_dict.values())))
         self.matcher = StructureMatcher()
-    
+ 
     def is_novel(self, record: pd.Series) -> bool:
         """
         Args:
             record: The record to check for novelty
-            must have columns:
+            columns:
                 'fingerprint' with a hashable fingerprint
-                'structure' with a Structure for fine comparison
+                'structure' with a Structure for fine comparison.
+                   if not present, only fingerprints will be compared
         """
         if record.fingerprint in self.reference_dict:
             if 'structure' not in record:
@@ -111,13 +116,13 @@ class NoveltyFilter():
                     return False
         return True
 
-        
+       
     def get_novel(self, dataset: pd.DataFrame) -> pd.DataFrame:
         """
         Args:
             dataset: The dataset to filter for novelty
             must have column 'fingerprint'.
             If 'structure' is present, it will be used for fine comparison,
-            if not structures with same fingerprints will be same
+            if not, structures with same fingerprints will be considered same
         """
         return dataset.loc[dataset.apply(self.is_novel, axis=1)]

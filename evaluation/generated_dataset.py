@@ -11,7 +11,7 @@ from pathlib import Path
 from ast import literal_eval
 import json
 from operator import attrgetter
-from pymatgen.core import Composition, DummySpecies, Element
+from pymatgen.core import Composition, DummySpecies
 from omegaconf import OmegaConf
 import monty.json
 import torch
@@ -36,8 +36,7 @@ StructureStorage = Enum("StructureStorage", [
     "CDVAE_csv_cif",
     "PymatgenJson",
     "EhullCSVCIF",
-    "FlowMM",
-    "RaymondPickle"
+    "FlowMM"
     ])
 
 WyckoffStorage = Enum("WyckoffStorage", [
@@ -128,16 +127,17 @@ def load_all_from_config(
         datasest_list = pool.map(load_from_this_dataset, available_dataset_signatures)
     datasets = dict(zip(available_dataset_signatures, datasest_list))
     
-    if False and dataset_name == "mp_20":
-        datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix_release')].data["corrected_chgnet_ehull"] = \
-        datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["corrected_chgnet_ehull"] - \
-            datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["energy_per_atom"] + \
-            datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix_release')].data["energy_per_atom"]
-
-        datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_free')].data["corrected_chgnet_ehull"] = \
-        datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["corrected_chgnet_ehull"] - \
-            datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["energy_per_atom"] + \
-            datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_free')].data["energy_per_atom"]
+    if dataset_name == "mp_20":
+        if ("WyckoffTransformer", "CrySPR", "CHGNet_fix_release") in datasets:
+            datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix_release')].data["corrected_chgnet_ehull"] = \
+            datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["corrected_chgnet_ehull"] - \
+                datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["energy_per_atom"] + \
+                datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix_release')].data["energy_per_atom"]
+        if ("WyckoffTransformer", "CrySPR", "CHGNet_free") in datasets:
+            datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_free')].data["corrected_chgnet_ehull"] = \
+            datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["corrected_chgnet_ehull"] - \
+                datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix')].data["energy_per_atom"] + \
+                datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_free')].data["energy_per_atom"]
     return datasets
 
 

@@ -26,7 +26,36 @@ python train.py yamls/models/NextToken/v6/pilot.yaml mp_20 cuda:0
 ```
 # Developing
 [Taskboard](https://www.notion.so/kna/36e263a83cc441a38483c084a5457a59?v=ecbd33a6130246bf940876abbf1d984c)
-Please don't `main` branch
+Please don't crash `main` branch
 # Data sources
 1. `mp_20` is [MP 20](https://github.com/txie-93/cdvae/tree/main/data/mp_20). To download, checkout the `cdvae` submodule.
 2. `mp_20_biternary` is a selection of binary and ternary compounds from `mp_20`, produced with with `select_from_mp_20.py`.
+
+# ICLR 2025 submission reproduction
+## Get the cached preprocessed data and model weights
+TODO
+## Energy and band gap prediction
+```bash
+python train.py yamls/models/base_sg_energy.yaml mp_20 cuda:0 --pilot
+```
+
+# ICLR 2025 model training
+## Next token
+```bash
+python train.py 
+```
+## Energy and band gap prediction
+```bash
+python train.py yamls/models/base_sg_energy.yaml mp_20 cuda:0 
+python train.py yamls/models/base_sg_band_gap.yaml mp_20 cuda:0 
+```
+
+# ICLR 2025 data preprocessing
+If you just want to reproduce the ML parts, you should
+download the cached data from the cloud. Redoing tokenization
+is not deterministic.
+```bash
+python cache_a_dataset.py mp_20
+python cache_a_dataset.py wbm
+python tokenise_a_dataset.py mp_20 yamls/tokenisers/mp_20_sg_multiplicity_scalars.yaml --new-tokenizer
+```

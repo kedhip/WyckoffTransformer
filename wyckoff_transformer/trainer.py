@@ -12,8 +12,8 @@ import torch
 from torch import nn
 from torch import Tensor
 from omegaconf import OmegaConf
-import wandb
 from tqdm import trange
+import wandb
 
 
 from cascade_transformer.dataset import AugmentedCascadeDataset, TargetClass
@@ -172,8 +172,8 @@ class WyckoffTrainer():
         logging.debug("Known cascade lenght: %i", known_cascade_len)
         if self.multiclass_next_token_with_order_permutation:
             if self.target == TargetClass.Scalar:
-                ValueError("Scalar prediction is computed for the whole sequence, "
-                    "it doesn't make sense with multiclass_next_token_with_order_permutation")
+                raise ValueError("Scalar prediction is computed for the whole sequence, "
+                                 "it doesn't make sense with multiclass_next_token_with_order_permutation")
             if self.target == TargetClass.NextToken:
                 # Once we have sampled the first cascade field, the prediction target is no longer mutliclass
                 # However, we still need to permute the sequence so that the autoregression is
@@ -282,9 +282,9 @@ class WyckoffTrainer():
         best_val_epoch = 0
         self.run_path.mkdir(exist_ok=False)
         best_model_params_path = self.run_path / "best_model_params.pt"
-        wandb.define_metric("loss.epoch.val.total", step_metric="epoch", goal="minimize")
-        wandb.define_metric("loss.epoch.train.total", step_metric="epoch", goal="minimize")
-        wandb.define_metric("loss.epoch.val_best", step_metric="epoch", goal="minimize")
+        wandb.define_metric("loss.epoch.val.total", step_metric="epoch", summary="min")
+        wandb.define_metric("loss.epoch.train.total", step_metric="epoch", summary="min")
+        wandb.define_metric("loss.epoch.val_best", step_metric="epoch", summary="min")
         wandb.define_metric("lr", step_metric="epoch")
         wandb.define_metric("known_seq_len", hidden=True)
         wandb.define_metric("known_cascade_len", hidden=True)

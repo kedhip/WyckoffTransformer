@@ -3682,6 +3682,28 @@ strategies = ["deepspeed (>=0.8.2,<=0.9.3)"]
 test = ["cloudpickle (>=1.3)", "coverage (==7.3.1)", "fastapi", "numpy (>=1.17.2)", "onnx (>=1.12.0)", "onnxruntime (>=1.12.0)", "pandas (>1.0)", "psutil (<5.9.6)", "pytest (==7.4.0)", "pytest-cov (==4.1.0)", "pytest-random-order (==1.1.0)", "pytest-rerunfailures (==12.0)", "pytest-timeout (==2.1.0)", "scikit-learn (>0.22.1)", "tensorboard (>=2.9.1)", "uvicorn"]
 
 [[package]]
+name = "pytorch-triton"
+version = "3.1.0+cf34004b8a"
+description = "A language and compiler for custom Deep Learning operations"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pytorch_triton-3.1.0+cf34004b8a-cp312-cp312-linux_x86_64.whl", hash = "sha256:ab8ad8c46e86b7751c64625f94d5456944dd6af695b0bb0bc05cbc218775e8a4"},
+]
+
+[package.dependencies]
+filelock = "*"
+
+[package.extras]
+build = ["cmake (>=3.20)", "lit"]
+tests = ["autopep8", "flake8", "isort", "llnl-hatchet", "numpy", "pytest", "scipy (>=1.7.1)"]
+tutorials = ["matplotlib", "pandas", "tabulate"]
+
+[package.source]
+type = "file"
+url = "../../../mnt/hdd/torch_wheels/pytorch_triton-3.1.0+cf34004b8a-cp312-cp312-linux_x86_64.whl"
+
+[[package]]
 name = "pytz"
 version = "2024.2"
 description = "World timezone definitions, modern and historical"
@@ -5276,4 +5298,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "d46ca34c9d0bb171f353e6b5276e9f80567ff41585695af410029d8558cb369a"
+content-hash = "1b0b99aa033ee2291f7dd7fabb98b0c2c4489f61ad2180cb579b281c9362fdbd"

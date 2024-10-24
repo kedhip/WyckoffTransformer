@@ -27,9 +27,6 @@ augmented_token_fields:
 sequence_fields:
   space_group:
     - spacegroup_number
-  no_processing:
-    - formation_energy_per_atom
-    - band_gap
   # converts a Counter into tokens, uses the specified field name embedding
   # Basically, aimed at e. g.
   # {Element Nd: 1.0, Element Al: 8.0, Element Cu: 4.0}

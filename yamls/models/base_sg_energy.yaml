@@ -58,6 +58,6 @@ optimisation:
   clip_grad_norm: 2.
   epochs: 150000
 tokeniser:
-  name: mp_20_sg_multiplicity
+  name: mp_20_sg_multiplicity_scalars
 evaluation:
   n_structures_to_generate: 10000

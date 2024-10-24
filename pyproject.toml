@@ -34,6 +34,7 @@ cython = "<3.0.0"
 pytorch-lightning = "^2.4.0"
 pyxtal = "^1.0.4"
 torch = {path = "/mnt/hdd/torch_wheels/torch-2.6.0a0+git20af56d-cp312-cp312-linux_x86_64.whl"}
+pytorch-triton = {path = "/mnt/hdd/torch_wheels/pytorch_triton-3.1.0+cf34004b8a-cp312-cp312-linux_x86_64.whl"}
 
 [build-system]
 requires = ["poetry-core"]

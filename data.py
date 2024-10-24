@@ -235,11 +235,12 @@ def read_all_MP_csv(
             - test: DataFrame with testing data
             - val: DataFrame with validation data
     """
-    datasets_pd = {
-        "train": read_MP(mp_path / f"train.{file_format}"),
-        "test": read_MP(mp_path / f"test.{file_format}"),
-        "val": read_MP(mp_path / f"val.{file_format}")
-    }
+    datasets_pd = {}
+    for dataset_name in ("train", "test", "val"):
+        try:
+            datasets_pd[dataset_name] = read_MP(mp_path / f"{dataset_name}.{file_format}")
+        except FileNotFoundError:
+            logger.warning(f"Dataset {dataset_name} not found.")
     symmetry_datasets = compute_symmetry_sites(datasets_pd, wychoffs_enumerated_by_ss_file, n_jobs=n_jobs)
     return symmetry_datasets
 

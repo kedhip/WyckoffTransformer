@@ -46,7 +46,7 @@ COV_Cutoffs = {
 }
 
 CrystalNNFP = CrystalNNFingerprint.from_preset("ops")
-CompFP = ElementProperty.from_preset('magpie')
+CompFP = ElementProperty.from_preset('magpie', impute_nan=False)
 
 class Crystal(object):
     @classmethod
