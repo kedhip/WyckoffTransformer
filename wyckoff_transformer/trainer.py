@@ -189,7 +189,7 @@ class WyckoffTrainer():
                 target = target.float()
         else:
             if self.target == TargetClass.Scalar:
-                start_tokens, masked_data, target, mask = dataset.get_masked_cascade_data(known_seq_len, known_cascade_len)
+                start_tokens, masked_data, target, mask = dataset.get_augmented_data()
             else:
                 start_tokens, masked_data, target = dataset.get_masked_cascade_data(known_seq_len, known_cascade_len)
         if self.target == TargetClass.NextToken:    
