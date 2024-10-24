@@ -30,7 +30,8 @@ class WyckoffTrainer():
     def __init__(
         self,
         model: nn.Module,
-        torch_datasets: dict,
+        train_dataset: Dict[str, torch.tensor],
+        val_dataset: Dict[str, torch.tensor],
         tokenisers: dict,
         token_engineers: dict,
         cascade_order: Tuple[str],
@@ -45,7 +46,8 @@ class WyckoffTrainer():
         device: torch.DeviceObjType,
         batch_size: Optional[int] = None,
         run_path: Optional[Path] = Path("runs"),
-        target_name = None
+        target_name = None,
+        weights_path: Optional[Path] = None
     ):
         """
         Args:
@@ -94,7 +96,7 @@ class WyckoffTrainer():
         num_classes_dict = {field: len(tokenisers[field]) for field in cascade_order}
 
         self.train_dataset = AugmentedCascadeDataset(
-            data=torch_datasets["train"],
+            data=train_dataset,
             cascade_order=cascade_order,
             masks=masks_dict,
             pads=pad_dict,
@@ -125,7 +127,7 @@ class WyckoffTrainer():
             self.optimizer, 'min', **optimisation_config.scheduler.config)
 
         self.val_dataset = AugmentedCascadeDataset(
-            data=torch_datasets["test" if optimisation_config.epochs == 0 else "val"],
+            data=val_dataset,
             cascade_order=cascade_order,
             masks=masks_dict,
             pads=pad_dict,
@@ -145,8 +147,8 @@ class WyckoffTrainer():
         self.cascade_len = len(cascade_order)
         self.cascade_order = cascade_order
         self.epochs = optimisation_config.epochs
-        if self.epochs == 0:
-            self.model.load_state_dict(torch.load('rolos_workflow_data/v6 mp20/current/data/3s2vcgde/best_model_params.pt'))
+        if weights_path is not None:
+            self.model.load_state_dict(torch.load(weights_path))
 
         self.validation_period = optimisation_config.validation_period
         self.early_stopping_patience_epochs = optimisation_config.early_stopping_patience_epochs    
@@ -170,7 +172,8 @@ class WyckoffTrainer():
         logging.debug("Known cascade lenght: %i", known_cascade_len)
         if self.multiclass_next_token_with_order_permutation:
             if self.target == TargetClass.Scalar:
-                raise NotImplementedError
+                ValueError("Scalar prediction is computed for the whole sequence, "
+                    "it doesn't make sense with multiclass_next_token_with_order_permutation")
             if self.target == TargetClass.NextToken:
                 # Once we have sampled the first cascade field, the prediction target is no longer mutliclass
                 # However, we still need to permute the sequence so that the autoregression is
@@ -394,7 +397,7 @@ def train_from_config(config_dict: dict, device: torch.device, run_path: Optiona
     else:
         raise ValueError(f"Unknown start type: {config.model.CascadeTransformer_args.start_type}")
     trainer = WyckoffTrainer(
-        model, tensors, tokenisers, token_engineers, config.model.cascade.order,
+        model, tensors["train"], tensors["val"], tokenisers, token_engineers, config.model.cascade.order,
         config.model.cascade.is_target,
         augmented_field,
         config.model.start_token,
