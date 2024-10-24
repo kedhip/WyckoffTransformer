@@ -165,7 +165,7 @@ class WyckoffTrainer():
     def get_loss(self,
         dataset: AugmentedCascadeDataset,
         known_seq_len: int,
-        known_cascade_len: int,
+        known_cascade_len: int|None,
         no_batch: bool,
         testing: bool = False) -> Tensor:
         logging.debug("Known sequence length: %i", known_seq_len)
@@ -215,7 +215,8 @@ class WyckoffTrainer():
             elif self.target == TargetClass.NumUniqueTokens:
                 known_cascade_len = 0
             elif self.target == TargetClass.Scalar:
-                known_cascade_len = self.cascade_target_count - 1
+                # Use full sequences
+                known_cascade_len = None
                 known_seq_len = self.train_dataset.max_sequence_length - 1
             loss = self.get_loss(self.train_dataset, known_seq_len, known_cascade_len, False)
             if self.target == TargetClass.NumUniqueTokens:
@@ -287,16 +288,12 @@ class WyckoffTrainer():
         wandb.define_metric("lr", step_metric="epoch")
         wandb.define_metric("known_seq_len", hidden=True)
         wandb.define_metric("known_cascade_len", hidden=True)
-        if self.epochs == 0:
-            val_loss_epoch, train_loss_epoch = self.evaluate()
-            print(val_loss_epoch, train_loss_epoch)
-            return
 
         for epoch in trange(self.epochs):
             self.train_epoch()
             if epoch % self.validation_period == 0 or epoch == self.epochs - 1:
+                val_loss_epoch, train_loss_epoch = self.evaluate()
                 if self.target == TargetClass.Scalar:
-                    val_loss_epoch, train_loss_epoch = self.evaluate()
                     total_val_loss = val_loss_epoch
                     wandb.log({"train_mae": train_loss_epoch.item(),
                            "val_mae": val_loss_epoch.item(),

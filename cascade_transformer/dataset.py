@@ -160,7 +160,7 @@ class AugmentedCascadeDataset():
                 dim=0).type(dtype).to(device).unsqueeze(0).expand(self.augmentation_variants.size(0), -1)
         self.start_tokens = data[start_field].type(start_dtype).to(device)
         self.pure_sequences_lengths = data["pure_sequence_length"].type(dtype).to(device)
-        self.target = None if target_name is None else data[target_name]
+        self.target = None if target_name is None else data[target_name].to(self.device)
         # padding length is the same for all cascade elements
         # prepending 0 to account for the start token
         self.padding_mask = torch.cat(
