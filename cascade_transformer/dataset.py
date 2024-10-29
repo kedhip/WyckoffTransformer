@@ -243,6 +243,7 @@ class AugmentedCascadeDataset():
         no_batch: bool = False,
         augmented_data: Optional[Tensor] = None,
         full_permutation: Optional[Tensor] = None,
+        apply_permutation: bool = True,
         return_chosen_indices: bool = False):
 
         if target_type == TargetClass.NumUniqueTokens:
@@ -281,10 +282,11 @@ class AugmentedCascadeDataset():
 
         chosen_pure_sequences_lengths = self.pure_sequences_lengths[batch_target_is_viable]
         # STOP is still not included in the pure length
-        if full_permutation is None:
-            permutation = jagged_batch_randperm(chosen_pure_sequences_lengths, self.max_sequence_length)
-        else:
-            permutation = full_permutation[batch_target_is_viable]
+        if apply_permutation:
+            if full_permutation is None:
+                permutation = jagged_batch_randperm(chosen_pure_sequences_lengths, self.max_sequence_length)
+            else:
+                permutation = full_permutation[batch_target_is_viable]
         logger.debug("Max sequence length %i", self.max_sequence_length)
         # logger.debug("Max queried permutation length %i", chosen_pure_sequences_lengths.max())
         # logger.debug("Min queried permutation length %i", chosen_pure_sequences_lengths.min())
@@ -306,7 +308,10 @@ class AugmentedCascadeDataset():
                 cascade_vector = augmented_data[batch_target_is_viable]
             else:
                 cascade_vector = self.data[name][batch_target_is_viable]
-            permuted_cascade_vector = cascade_vector.gather(1, permutation)
+            if apply_permutation:
+                permuted_cascade_vector = cascade_vector.gather(1, permutation)
+            else:
+                permuted_cascade_vector = cascade_vector
             # logger.debug("Permuted cascade size (%i, %i)", *permuted_cascade_vector.size())
             if cascade_index < known_cascade_len:
                 cascade_result.append(permuted_cascade_vector[:, :known_seq_len + 1])

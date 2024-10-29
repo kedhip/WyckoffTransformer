@@ -157,15 +157,20 @@ class WyckoffGenerator():
             else:
                 augmentations = [None]
             for permutation_idx in range(n_permutations):
-                full_permutation = jagged_batch_randperm(
+                if n_permutations > 1:
+                    full_permutation = jagged_batch_randperm(
                         dataset.pure_sequences_lengths, dataset.max_sequence_length)
+                    applied_permutation = True
+                else:
+                    full_permutation = None
+                    applied_permutation = False
                 for augmentation_idx, augmented_data in enumerate(augmentations):
                     for known_seq_len in range(self.max_sequence_len):
                         for known_cascade_len in range(len(self.cascade_order)):
                             start, this_data, target, batch_target_is_viable = dataset.get_masked_multiclass_cascade_data(
                                 known_seq_len, known_cascade_len, TargetClass.NextToken, multiclass_target=False,
                                 augmented_data=augmented_data, full_permutation=full_permutation,
-                                return_chosen_indices=True)
+                                apply_permutation=applied_permutation, return_chosen_indices=True)
                             logits = self.model(start, this_data, None, known_cascade_len)
                             log_probas = torch.nn.functional.log_softmax(logits, dim=1)
                             log_likelihoods[permutation_idx, augmentation_idx, batch_target_is_viable] += torch.gather(
