@@ -73,7 +73,8 @@ def jagged_batch_randperm(permutation_lengths: Tensor, max_sequence_length: int)
         batch_size, max_sequence_length, device=permutation_lengths.device, dtype=torch.float32,
         requires_grad=False)
     # Assign 3. to PAD
-    padding_mask = torch.arange(max_sequence_length, device=permutation_lengths.device).unsqueeze(0) > permutation_lengths.unsqueeze(1)
+    padding_mask = torch.arange(
+        max_sequence_length, device=permutation_lengths.device).unsqueeze(0) > permutation_lengths.unsqueeze(1)
     logger.debug("Padding mask size: %s", str(padding_mask.size()))
     logger.debug("Padding mask #0: %s", str(padding_mask[0]))
     random_tensor[padding_mask] = 3.
@@ -159,7 +160,11 @@ class AugmentedCascadeDataset():
             self.augmentation_data_store = torch.cat([torch.cat(x, dim=0) for x in data[f"{augmented_field}_augmented"]],
                 dim=0).type(dtype).to(device).unsqueeze(0).expand(self.augmentation_variants.size(0), -1)
         self.start_tokens = data[start_field].type(start_dtype).to(device)
-        self.pure_sequences_lengths = data["pure_sequence_length"].type(dtype).to(device)
+        if "pure_sequence_length" in data:
+            self.pure_sequences_lengths = data["pure_sequence_length"].type(dtype).to(device)
+        else:
+            # -1 for STOP
+            self.pure_sequences_lengths = (self.data[cascade_order[0]] != self.pads[cascade_order[0]]).sum(1) - 1
         self.target = None if target_name is None else data[target_name].to(self.device)
         # padding length is the same for all cascade elements
         # prepending 0 to account for the start token

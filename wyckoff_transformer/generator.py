@@ -152,11 +152,14 @@ class WyckoffGenerator():
             log_likelihoods = torch.zeros(
                 n_permutations, n_augmentations, dataset.start_tokens.size()[0],
                 device=dataset.device, dtype=torch.float32)
+            if n_augmentations > 1:
+                augmentations = [dataset.get_augmentation() for _ in range(n_augmentations)]
+            else:
+                augmentations = [None]
             for permutation_idx in range(n_permutations):
-                for augmentation_idx in range(n_augmentations):
-                    full_permutation = jagged_batch_randperm(
+                full_permutation = jagged_batch_randperm(
                         dataset.pure_sequences_lengths, dataset.max_sequence_length)
-                    augmented_data = dataset.get_augmentation()
+                for augmentation_idx, augmented_data in enumerate(augmentations):
                     for known_seq_len in range(self.max_sequence_len):
                         for known_cascade_len in range(len(self.cascade_order)):
                             start, this_data, target, batch_target_is_viable = dataset.get_masked_multiclass_cascade_data(
@@ -169,12 +172,16 @@ class WyckoffGenerator():
                                 log_probas, 1, target.unsqueeze(1)).squeeze()
             return log_likelihoods
 
-    def generate_tensors(self, start: Tensor) -> List[Tensor]:
+    def generate_tensors(
+        self,
+        start: Tensor,
+        temperature: float = 1) -> List[Tensor]:
         """
         Generates a sequence of tokens.
 
         Arguments:
             start: The start token. It should be a tensor of shape [batch_size].
+            temperature: The temperature to use for the generation
 
         Returns:
             The generated sequence of tokens. It has shape [batch_size, max_len, len(cascade_order)].
@@ -204,6 +211,7 @@ class WyckoffGenerator():
                                 logits = self.calibrators[known_cascade_len][known_seq_len](logits)
                             else:
                                 logits = self.tail_calibrators[known_cascade_len](logits)
+                        logits = logits / temperature
                         # binary/ternary hack
                         # if known_cascade_len == 0 and known_seq_len > 2:
                         #    logits *= 3.
