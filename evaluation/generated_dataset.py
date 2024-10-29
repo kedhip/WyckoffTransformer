@@ -44,61 +44,6 @@ WyckoffStorage = Enum("WyckoffStorage", [
     "WyCryst_csv",
     "WTCache"])
 
-class GenerationPipeline():
-    """
-    Our structure generation and evaluation pipeline has a lot of variants.
-    1. Obtain Wyckoff positions 
-    1.a Generate [WyckoffTransformer, WyCryst]
-    1.b Get from a template [DiffSCP++]
-    2. Generate structures that are considered "model outputs"
-    2.1 WyckoffTransformer, WyCryst + pyXtal + CHGNet
-        Sample with pyxtal.from_random
-        Relax with symmetry-constrained CHGNet
-        Relax with CHGNet without symmetry constraints
-    2.2 WyckoffTransformer, WyCryst + DiffSCP++
-        Used as a template for DiffSCP++
-    2.3 WyckoffTransformer, WyCryst + DiffSCP++ + CHGNet
-        Used as a template for DiffSCP++
-        Relax with symmetry-constrained CHGNet
-        Relax with CHGNet without symmetry constraints
-    2.4 WyckoffTransformer, WyCryst + DiffSCP++ + CHGNet (no symmetry)
-        Used as a template for DiffSCP++
-        Relax with CHGNet without symmetry constraints
-    2.3 CrystalFormer: generate together with the Wyckoff positions
-    2.4 DiffCSP++: diffuse from the template
-    2.5 DiffCSP and alike: de novo diffusion
-    3. Compute E_hull: relax with CHGNet without symmetry constraints
-
-    The class is designed around the following assumptions:
-    a. Every generated dataset has the one and only one primary source:
-        a list of either Wyckoff representations or structures.
-    b. Transformations form a tree structure
-    c. We want to compute with SpaceGroupAnalyzer and cache and wyckoff positions for structures
-
-    Evaluations are of three types:
-    1. (main) Finished structures vs finished structures
-     - We should be generous with competing methods - evaluate both raw and CHGNet structures, choose the best
-    2. Consistency along the transformation graph
-    3. Intermediary structures vs intermediary structures
-
-    Novelty/uniqueness is computed in two variants:
-    1. Wyckoff positions
-    2. StructureMatcher
-
-    Structures must be indexed in the same way across all datasets, this allows for easy novelty/uniqueness masking.
-
-    Evaluations to be performed:
-    1. CDVAE metrics, to get them out of the way: finished structures, "validity" filtering, no novelty/uniqueness filtering
-    2. S. U. N and S N (among U).
-    3. Property distributions and stability, UN structures only
-    4. SG preservation after relaxation, UN structures only
-
-    Data are stored as a dictionary.
-    {"transformation": Transformation, "data": GeneratedDataset, "children": Dict[Transformation, Dict]}
-    """
-def __init__(self):
-    self.data_root = None
-
 DATA_KEYS = frozenset(("structures", "wyckoffs", "e_hull"))
 
 def load_all_from_config(
@@ -126,7 +71,7 @@ def load_all_from_config(
     with Pool(10) as pool:
         datasest_list = pool.map(load_from_this_dataset, available_dataset_signatures)
     datasets = dict(zip(available_dataset_signatures, datasest_list))
-    
+
     if dataset_name == "mp_20":
         if ("WyckoffTransformer", "CrySPR", "CHGNet_fix_release") in datasets:
             datasets[('WyckoffTransformer', 'CrySPR', 'CHGNet_fix_release')].data["corrected_chgnet_ehull"] = \
@@ -154,7 +99,7 @@ def load_crystalformer(path: Path):
     structures.name = "structure"
     return structures
 
-    
+
 def load_flowmm(path:Path|str):
     if isinstance(path, str):
         path = Path(path)
@@ -176,7 +121,7 @@ def load_NongWei(path: Path):
     # 0-499 & 500-999 / 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ...
     # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ...
     # We handle them all by using rglob
-    try: 
+    try:
         data = pd.read_csv(path/"id_with_energy_per_atom.csv", index_col="id",
                 usecols=["id", "energy_per_atom"])
     except FileNotFoundError:
