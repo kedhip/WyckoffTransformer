@@ -1,11 +1,11 @@
 from typing import Tuple, List, Dict
-import numpy as np
+from pathlib import Path
 import logging
 import torch
 from torch import nn, Tensor
-from sklearn.isotonic import IsotonicRegression
 
-from cascade_transformer.dataset import AugmentedCascadeDataset, TargetClass
+from cascade_transformer.dataset import AugmentedCascadeDataset, TargetClass, jagged_batch_randperm
+from wyckoff_transformer.tokenization import load_tensors_and_tokenisers
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,42 @@ class TemperatureScaling(nn.Module):
 
 
 class WyckoffGenerator():
+    @classmethod
+    def from_wandb_run(
+        cls,
+        wandb_run_id,
+        update_wandb: bool = False,
+        device: torch.device = torch.device("cpu")):
+        import wandb
+        from omegaconf import OmegaConf
+        from cascade_transformer.model import CascadeTransformer
+
+        if update_wandb:
+            wandb_run = wandb.init(project="WyckoffTransformer", id=wandb_run_id, resume=True)
+        else:
+            wandb_run = wandb.Api().run(f"WyckoffTransformer/{wandb_run_id}")
+
+        config = OmegaConf.create(dict(wandb_run.config))
+
+        # The start tokens will be sampled from the train+validation datasets,
+        # to preserve the sanctity of the test dataset and ex nihilo generation.
+        tensors, tokenisers, engineers = load_tensors_and_tokenisers(config.dataset, config.tokeniser.name)
+
+        model = CascadeTransformer.from_config_and_tokenisers(config, tokenisers, device)
+        model.load_state_dict(torch.load(Path("runs", wandb_run_id, "best_model_params.pt"), map_location=device))
+        # We need to grab any tensor from the train dataset
+        max_sequence_len = tensors["train"][config.model.cascade.order[0]].size(1)
+
+        masks_dict = {field: tokenisers[field].mask_token for field in config.model.cascade.order}
+
+        generator = WyckoffGenerator(model,
+            config.model.cascade.order,
+            config.model.cascade.is_target,
+            engineers,
+            masks_dict, max_sequence_len)
+        return generator, wandb_run, tensors, tokenisers, engineers
+
+
     def __init__(self,
                  model: nn.Module,
                  cascade_order: Tuple,
@@ -102,7 +138,36 @@ class WyckoffGenerator():
                 if tail_predictions.size(0) < calibration_element_count_threshold:
                     logger.warning("Tail too small, %i when requested %i", tail_predictions.size(0), calibration_element_count_threshold)
                 self.tail_calibrators.append(TemperatureScaling().to(tail_targets.device).fit(tail_predictions, tail_targets))
-        
+
+
+    def compute_likelihoods(self,
+        dataset: AugmentedCascadeDataset,
+        n_permutations: int = 1,
+        n_augmentations: int = 1) -> Tensor:
+        """
+        Computes the likelihood of the dataset.
+        """
+        with torch.no_grad():
+            self.model.eval()
+            log_likelihoods = torch.zeros(
+                n_permutations, n_augmentations, dataset.start_tokens.size()[0],
+                device=dataset.device, dtype=torch.float32)
+            for permutation_idx in range(n_permutations):
+                for augmentation_idx in range(n_augmentations):
+                    full_permutation = jagged_batch_randperm(
+                        dataset.pure_sequences_lengths, dataset.max_sequence_length)
+                    augmented_data = dataset.get_augmentation()
+                    for known_seq_len in range(self.max_sequence_len):
+                        for known_cascade_len in range(len(self.cascade_order)):
+                            start, this_data, target, batch_target_is_viable = dataset.get_masked_multiclass_cascade_data(
+                                known_seq_len, known_cascade_len, TargetClass.NextToken, multiclass_target=False,
+                                augmented_data=augmented_data, full_permutation=full_permutation,
+                                return_chosen_indices=True)
+                            logits = self.model(start, this_data, None, known_cascade_len)
+                            log_probas = torch.nn.functional.log_softmax(logits, dim=1)
+                            log_likelihoods[permutation_idx, augmentation_idx, batch_target_is_viable] += torch.gather(
+                                log_probas, 1, target.unsqueeze(1)).squeeze()
+            return log_likelihoods
 
     def generate_tensors(self, start: Tensor) -> List[Tensor]:
         """

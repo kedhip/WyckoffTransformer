@@ -228,7 +228,7 @@ class CascadeTransformer(nn.Module):
     def forward(self,
                 start: Tensor,
                 cascade: List[Tensor],
-                padding_mask: Tensor,
+                padding_mask: Tensor|None,
                 prediction_head: int|None) -> Tensor:
         logging.debug("Cascade len: %i", len(cascade))
         cascade_embedding = self.embedding(cascade)

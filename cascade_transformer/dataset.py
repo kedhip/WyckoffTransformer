@@ -220,7 +220,7 @@ class AugmentedCascadeDataset():
         if self.batch_size is not None:
             raise NotImplementedError("Batch size is not supported for get_augmented_data")
         res = []
-        for cascade_index, name in enumerate(self.cascade_order):
+        for name in self.cascade_order:
             if name == self.augmented_field:
                 cascade_vector = self.get_augmentation()
             else:
@@ -228,13 +228,17 @@ class AugmentedCascadeDataset():
             res.append(cascade_vector)
         return self.start_tokens, res, self.target, self.padding_mask
 
+
     def get_masked_multiclass_cascade_data(
         self,
         known_seq_len: int,
         known_cascade_len: int,
         target_type: TargetClass,
         multiclass_target: bool,
-        no_batch: bool = False):
+        no_batch: bool = False,
+        augmented_data: Optional[Tensor] = None,
+        full_permutation: Optional[Tensor] = None,
+        return_chosen_indices: bool = False):
 
         if target_type == TargetClass.NumUniqueTokens:
             if multiclass_target:
@@ -245,7 +249,7 @@ class AugmentedCascadeDataset():
         
         logger.debug("Known sequence length %i", known_seq_len)
         logger.debug("Known cascade length %i", known_cascade_len)
-        if self.augmented_field_index is not None:
+        if self.augmented_field_index is not None and augmented_data is None:
             augmented_data = self.get_augmentation()
 
         if self.batch_size is not None and not no_batch:
@@ -272,7 +276,10 @@ class AugmentedCascadeDataset():
 
         chosen_pure_sequences_lengths = self.pure_sequences_lengths[batch_target_is_viable]
         # STOP is still not included in the pure length
-        permutation = jagged_batch_randperm(chosen_pure_sequences_lengths, self.max_sequence_length)
+        if full_permutation is None:
+            permutation = jagged_batch_randperm(chosen_pure_sequences_lengths, self.max_sequence_length)
+        else:
+            permutation = full_permutation[batch_target_is_viable]
         logger.debug("Max sequence length %i", self.max_sequence_length)
         # logger.debug("Max queried permutation length %i", chosen_pure_sequences_lengths.max())
         # logger.debug("Min queried permutation length %i", chosen_pure_sequences_lengths.min())
@@ -342,4 +349,7 @@ class AugmentedCascadeDataset():
         if target_type == TargetClass.NumUniqueTokens:
             target = torch.stack(cascade_targets, dim=1)
 
-        return self.start_tokens[batch_target_is_viable], cascade_result, target
+        if return_chosen_indices:
+            return self.start_tokens[batch_target_is_viable], cascade_result, target, batch_target_is_viable
+        else:
+            return self.start_tokens[batch_target_is_viable], cascade_result, target
