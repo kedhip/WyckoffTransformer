@@ -16,7 +16,7 @@ from tqdm import trange
 import wandb
 
 
-from cascade_transformer.dataset import AugmentedCascadeDataset, TargetClass
+from cascade_transformer.dataset import AugmentedCascadeDataset, TargetClass, jagged_batch_randperm
 from cascade_transformer.model import CascadeTransformer
 from wyckoff_transformer.tokenization import (
     load_tensors_and_tokenisers, tensor_to_pyxtal,
@@ -47,6 +47,7 @@ class WyckoffTrainer():
         batch_size: Optional[int] = None,
         run_path: Optional[Path] = Path("runs"),
         target_name = None,
+        kl_samples: Optional[int] = None,
         weights_path: Optional[Path] = None
     ):
         """
@@ -62,6 +63,7 @@ class WyckoffTrainer():
         is_target_in_order = [cascade_is_target[field] for field in cascade_order]
         if not all(is_target_in_order[:-1]):
             raise NotImplementedError("Only one not targret field is supported at the moment and it must be the last")
+        self.kl_samples = kl_samples
         self.cascade_target_count = sum(is_target_in_order)
         self.token_engineers = token_engineers
         self.cascade_is_target = cascade_is_target
@@ -86,22 +88,24 @@ class WyckoffTrainer():
             raise ValueError(f"Unknown target: {target}")
         
         self.model = model
+        self.compiled_model = torch.compile(self.model, fullgraph=False)
         self.tokenisers = tokenisers
         self.device = device
         self.augmented_field = augmented_field
 
-        masks_dict = {field: tokenisers[field].mask_token for field in cascade_order}
-        pad_dict = {field: tokenisers[field].pad_token for field in cascade_order}
-        stops_dict = {field: tokenisers[field].stop_token for field in cascade_order}
-        num_classes_dict = {field: len(tokenisers[field]) for field in cascade_order}
+        self.masks_dict = {field: tokenisers[field].mask_token for field in cascade_order}
+        self.pad_dict = {field: tokenisers[field].pad_token for field in cascade_order}
+        self.stops_dict = {field: tokenisers[field].stop_token for field in cascade_order}
+        self.num_classes_dict = {field: len(tokenisers[field]) for field in cascade_order}
+        self.start_name = start_name
 
         self.train_dataset = AugmentedCascadeDataset(
             data=train_dataset,
             cascade_order=cascade_order,
-            masks=masks_dict,
-            pads=pad_dict,
-            stops=stops_dict,
-            num_classes=num_classes_dict,
+            masks=self.masks_dict,
+            pads=self.pad_dict,
+            stops=self.stops_dict,
+            num_classes=self.num_classes_dict,
             start_field=start_name,
             augmented_field=augmented_field,
             batch_size=batch_size,
@@ -129,10 +133,10 @@ class WyckoffTrainer():
         self.val_dataset = AugmentedCascadeDataset(
             data=val_dataset,
             cascade_order=cascade_order,
-            masks=masks_dict,
-            pads=pad_dict,
-            stops=stops_dict,
-            num_classes=num_classes_dict,
+            masks=self.masks_dict,
+            pads=self.pad_dict,
+            stops=self.stops_dict,
+            num_classes=self.num_classes_dict,
             start_field=start_name,
             augmented_field=augmented_field,
             dtype=self.dtype,
@@ -161,8 +165,157 @@ class WyckoffTrainer():
             # Round up, as the last batch might be smaller, but is still a batch
             self.batches_per_epoch = -(-len(self.train_dataset) // batch_size)
 
+    # Compilation fails due to the use of jagged_batch_randperm
+    # @torch.compile(fullgraph=False)
+    def get_permutation_kl_compiled(
+        self,
+        num_samples: int,
+        max_seq_len: int):
 
-    def get_loss(self,
+        start_perm = torch.randperm(self.train_dataset.start_tokens.size(0))
+        start = self.train_dataset.start_tokens[start_perm[:num_samples]]
+        generated = []
+        for field in self.cascade_order:
+            generated.append(torch.empty((start.size(0), 0),
+                                        dtype=torch.int64, device=self.device, requires_grad=False))
+        pure_sequence_lengths = torch.zeros(start.size(0), device=self.device, requires_grad=False, dtype=torch.int64)
+        reference_log_proba = torch.zeros(start.size(0), device=self.device)
+        is_the_end = torch.zeros(start.size(0), device=self.device, dtype=torch.bool)
+        for known_seq_len in range(max_seq_len):
+            for known_cascade_len, cascade_name in enumerate(self.cascade_order):
+                if self.cascade_is_target[cascade_name]:
+                    this_generation_input = []
+                    for cascade_idx, cascade_name in enumerate(self.cascade_order):
+                        if cascade_idx < known_cascade_len:
+                            this_generation_input.append(generated[cascade_idx][:, :known_seq_len + 1])
+                        else:
+                            this_generation_input.append(torch.cat(
+                                (generated[cascade_idx][:, :known_seq_len],
+                                 torch.tensor(self.masks_dict[cascade_name], device=self.device).unsqueeze(0).expand(start.size(0), 1)), dim=1))
+                    # We don't require padding as the sequences containing pads won't be used
+                    logits = self.compiled_model(start, this_generation_input, None, known_cascade_len)
+                    log_probas = torch.nn.functional.log_softmax(logits, dim=1)
+                    with torch.no_grad():
+                        generated_tokens = torch.multinomial(torch.exp(log_probas), num_samples=1).squeeze()
+                        is_the_end = is_the_end | (
+                            (generated_tokens == self.stops_dict[cascade_name]) |
+                            (generated_tokens == self.masks_dict[cascade_name]) |
+                            (generated_tokens == self.pad_dict[cascade_name]))
+                        # pure doesn't include the stop token
+                        # or any other abominations that might be generated
+                        generated[known_cascade_len] = torch.cat((
+                            generated[known_cascade_len], generated_tokens.unsqueeze(1)), dim=1)
+                    reference_log_proba[~is_the_end] += torch.gather(
+                                log_probas[~is_the_end], 1, generated_tokens[~is_the_end].unsqueeze(1)).squeeze()
+                else:
+                    raise NotImplementedError("Only cascades with all fields as targets are supported")
+            pure_sequence_lengths[~is_the_end] = known_seq_len
+        generated_data = dict(zip(self.cascade_order, generated))
+        generated_data[self.start_name] = start
+        generated_dataset = AugmentedCascadeDataset(
+            data=generated_data,
+            cascade_order=self.cascade_order,
+            masks=self.masks_dict,
+            pads=self.pad_dict,
+            stops=self.stops_dict,
+            num_classes=self.num_classes_dict,
+            start_field=self.start_name,
+            augmented_field=None,
+            dtype=torch.long,
+            start_dtype=torch.float,
+            device=self.device)
+        full_permutation = jagged_batch_randperm(pure_sequence_lengths, max_seq_len)
+        permuted_log_likelihoods = torch.zeros_like(reference_log_proba)
+        for known_seq_len in range(max_seq_len):
+            for known_cascade_len, cascade_name in enumerate(self.cascade_order):
+                start, this_data, target = generated_dataset.get_masked_multiclass_cascade_data(
+                                known_seq_len, known_cascade_len, TargetClass.NextToken, multiclass_target=False,
+                                augmented_data=None, full_permutation=full_permutation,
+                                apply_permutation=False, truncate_invalid_targets=False)
+                logits = self.compiled_model(start, this_data, None, known_cascade_len)
+                log_probas = torch.nn.functional.log_softmax(logits, dim=1)
+                is_the_end = (
+                            (target == self.stops_dict[cascade_name]) |
+                            (target == self.masks_dict[cascade_name]) |
+                            (target == self.pad_dict[cascade_name]))
+                permuted_log_likelihoods[~is_the_end] += torch.gather(
+                    log_probas[~is_the_end], 1, target[~is_the_end].unsqueeze(1)).squeeze()
+        # sum so it's the same order of magnitude as the ordinary loss
+        return (reference_log_proba - permuted_log_likelihoods).sum()
+
+
+    def get_permutation_kl(
+        self,
+        num_samples: int,
+        max_seq_len: int):
+
+        start_perm = torch.randperm(self.train_dataset.start_tokens.size(0))
+        start = self.train_dataset.start_tokens[start_perm[:num_samples]]
+        generated = []
+        for field in self.cascade_order:
+            generated.append(torch.empty((start.size(0), 0),
+                                        dtype=torch.int64, device=self.device, requires_grad=False))
+        pure_sequence_lengths = torch.zeros(start.size(0), device=self.device, requires_grad=False, dtype=torch.int64)
+        reference_log_proba = torch.zeros(start.size(0), device=self.device)
+        for known_seq_len in range(max_seq_len):
+            for known_cascade_len, cascade_name in enumerate(self.cascade_order):
+                if self.cascade_is_target[cascade_name]:
+                    this_generation_input = []
+                    for cascade_idx, cascade_name in enumerate(self.cascade_order):
+                        if cascade_idx < known_cascade_len:
+                            this_generation_input.append(generated[cascade_idx][:, :known_seq_len + 1])
+                        else:
+                            this_generation_input.append(torch.cat(
+                                (generated[cascade_idx][:, :known_seq_len],
+                                 torch.tensor(self.masks_dict[cascade_name], device=self.device).unsqueeze(0).expand(start.size(0), 1)), dim=1))
+                    logits = self.model(start, this_generation_input, None, known_cascade_len)
+                    log_probas = torch.nn.functional.log_softmax(logits, dim=1)
+                    with torch.no_grad():
+                        generated_tokens = torch.multinomial(torch.exp(log_probas), num_samples=1).squeeze()
+                        is_the_end = (
+                            (generated_tokens == self.stops_dict[cascade_name]) |
+                            (generated_tokens == self.masks_dict[cascade_name]) |
+                            (generated_tokens == self.pad_dict[cascade_name]))
+                        # pure doesn't include the stop token
+                        # or any other abominations that might be generated
+                        pure_sequence_lengths[is_the_end] = known_seq_len
+                        generated[known_cascade_len] = torch.cat((
+                            generated[known_cascade_len], generated_tokens.unsqueeze(1)), dim=1)
+                    reference_log_proba += torch.gather(
+                                log_probas, 1, generated_tokens.unsqueeze(1)).squeeze()
+                else:
+                    raise NotImplementedError("Only cascades with all fields as targets are supported")
+        generated_data = dict(zip(self.cascade_order, generated))
+        generated_data[self.start_name] = start
+        generated_dataset = AugmentedCascadeDataset(
+            data=generated_data,
+            cascade_order=self.cascade_order,
+            masks=self.masks_dict,
+            pads=self.pad_dict,
+            stops=self.stops_dict,
+            num_classes=self.num_classes_dict,
+            start_field=self.start_name,
+            augmented_field=None,
+            dtype=torch.long,
+            start_dtype=torch.float,
+            device=self.device)
+        full_permutation = jagged_batch_randperm(pure_sequence_lengths, max_seq_len)
+        permuted_log_likelihoods = torch.zeros_like(reference_log_proba)
+        for known_seq_len in range(max_seq_len):
+            for known_cascade_len, cascade_name in enumerate(self.cascade_order):
+                start, this_data, target, batch_target_is_viable = generated_dataset.get_masked_multiclass_cascade_data(
+                                known_seq_len, known_cascade_len, TargetClass.NextToken, multiclass_target=False,
+                                augmented_data=None, full_permutation=full_permutation,
+                                apply_permutation=False, return_chosen_indices=True)
+                logits = self.model(start, this_data, None, known_cascade_len)
+                log_probas = torch.nn.functional.log_softmax(logits, dim=1)
+                permuted_log_likelihoods[batch_target_is_viable] += torch.gather(
+                    log_probas, 1, target.unsqueeze(1)).squeeze()
+        return (reference_log_proba - permuted_log_likelihoods).mean()
+
+
+    def get_loss(
+        self,
         dataset: AugmentedCascadeDataset,
         known_seq_len: int,
         known_cascade_len: int|None,
@@ -219,6 +372,9 @@ class WyckoffTrainer():
                 known_cascade_len = None
                 known_seq_len = self.train_dataset.max_sequence_length - 1
             loss = self.get_loss(self.train_dataset, known_seq_len, known_cascade_len, False)
+            if self.kl_samples is not None:
+                kl_loss = self.get_permutation_kl_compiled(self.kl_samples, self.train_dataset.max_sequence_length)
+                loss += kl_loss
             if self.target == TargetClass.NumUniqueTokens:
                 # Predictions are [batch_size, cascade_size]
                 # Unreduced MSE is [batch_size, cascade_size]
@@ -229,6 +385,7 @@ class WyckoffTrainer():
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
             self.optimizer.step()
             wandb.log({"loss.batch.train": loss,
+                       "loss.kl": kl_loss,
                        "known_seq_len": known_seq_len,
                        "known_cascade_len": known_cascade_len})
 

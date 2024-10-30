@@ -244,6 +244,7 @@ class AugmentedCascadeDataset():
         augmented_data: Optional[Tensor] = None,
         full_permutation: Optional[Tensor] = None,
         apply_permutation: bool = True,
+        truncate_invalid_targets: bool = True,
         return_chosen_indices: bool = False):
 
         if target_type == TargetClass.NumUniqueTokens:
@@ -259,6 +260,8 @@ class AugmentedCascadeDataset():
             augmented_data = self.get_augmentation()
 
         if self.batch_size is not None and not no_batch:
+            if not truncate_invalid_targets:
+                raise NotImplementedError("Not truncating invalid targets is not supported for batched data")
             # Duck typing...
             batch_target_is_viable = ()
             # A good research question would be optimising this by removing the invalid targets first,
@@ -277,8 +280,10 @@ class AugmentedCascadeDataset():
                     self.next_batch_index = 0
                 else:
                     self.next_batch_index += 1
-        else:
+        elif truncate_invalid_targets:
             batch_target_is_viable = self.pure_sequences_lengths >= known_seq_len
+        else:
+            batch_target_is_viable = slice(None)
 
         chosen_pure_sequences_lengths = self.pure_sequences_lengths[batch_target_is_viable]
         # STOP is still not included in the pure length
