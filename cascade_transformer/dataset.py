@@ -163,8 +163,15 @@ class AugmentedCascadeDataset():
         if "pure_sequence_length" in data:
             self.pure_sequences_lengths = data["pure_sequence_length"].type(dtype).to(device)
         else:
-            # -1 for STOP
-            self.pure_sequences_lengths = (self.data[cascade_order[0]] != self.pads[cascade_order[0]]).sum(1) - 1
+            # In principle, all the sequences should be 
+            # T T T T T STOP PAD PAD
+            # with mask not appearing in the data
+            # Generated data, however, is not guaranteed to follow this pattern
+            # especially since we don't train the model to generate PAD
+            is_service_token = (self.data[cascade_order[0]] == self.pads[cascade_order[0]]) | \
+                               (self.data[cascade_order[0]] == self.stops[cascade_order[0]]) | \
+                               (self.data[cascade_order[0]] == self.masks[cascade_order[0]])
+            self.pure_sequences_lengths = torch.max(is_service_token, dim=1).indices
         self.target = None if target_name is None else data[target_name].to(self.device)
         # padding length is the same for all cascade elements
         # prepending 0 to account for the start token

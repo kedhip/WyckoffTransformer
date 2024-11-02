@@ -1,0 +1,1000 @@
+,formula,file_dir,error_str,folder_ind,chgnet_ehull,corrected_chgnet_ehull
+0,K6 Te4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/224/min_e_strc.cif,no_error,224,0.22822098731994656,0.22822098731994656
+1,Fe2 W2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/460/min_e_strc.cif,no_error,460,0.2400725909641821,0.2400725909641821
+2,Tb3 Nd3 S6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/546/min_e_strc.cif,No valid decomposition found for PDEntry : Tb3 Nd3 S6 with energy = -79.6514! (e_h: -0.0031518936157226562),546,0.0,-0.0031518936157226562
+3,Sr4 Br8 O32,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/945/min_e_strc.cif,no_error,945,0.43970628218217467,0.43970628218217467
+4,Ac4 Sn4 Ir8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/382/min_e_strc.cif,no_error,382,0.06263303756713867,0.06263303756713867
+5,K4 Bi4 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/322/min_e_strc.cif,no_error,322,0.05133867263793945,0.05133867263793945
+6,Zr4 Zn4 N8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/623/min_e_strc.cif,No valid decomposition found for PDEntry : Zr4 Zn4 N8 with energy = -122.2011! (e_h: -0.004894256591796875),623,0.0,-0.004894256591796875
+7,Ni5 Ag1 O2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/445/min_e_strc.cif,no_error,445,0.8275244832038879,0.8275244832038879
+8,Ca1 Eu1 Br2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/828/min_e_strc.cif,no_error,828,0.11029207706451416,0.11029207706451416
+9,K3 O6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/210/min_e_strc.cif,no_error,210,0.024602413177490234,0.024602413177490234
+10,Mn4 Al16 N16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/889/min_e_strc.cif,no_error,889,0.5564103126525879,0.5564103126525879
+11,Mn2 P2 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/706/min_e_strc.cif,no_error,706,0.24926233291625977,0.24926233291625977
+12,Ce2 Ge24 Ru8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/166/min_e_strc.cif,no_error,166,0.007206000533760637,0.007206000533760637
+13,Cr2 B3 Mo6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/521/min_e_strc.cif,no_error,521,1.3429918289184588,1.3429918289184588
+14,Cs2 Te6 Ir2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/947/min_e_strc.cif,no_error,947,0.011316585540768642,0.011316585540768642
+15,Tm8 Co4 Ru4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/257/min_e_strc.cif,No valid decomposition found for PDEntry : Tm8 Co4 Ru4 with energy = -107.2457! (e_h: -0.005741119384765625),257,0.0,-0.005741119384765625
+16,Y1 Cu2 Ag3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/515/min_e_strc.cif,no_error,515,0.06699530056544756,0.06699530056544756
+17,Ho2 In6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/850/min_e_strc.cif,no_error,850,0.029331445693969727,0.029331445693969727
+18,Dy2 Ru2 Cl12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/793/min_e_strc.cif,no_error,793,0.04837489128112793,0.04837489128112793
+19,Ba8 Pr8 S16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/417/min_e_strc.cif,no_error,417,0.055464744567871094,0.055464744567871094
+20,V6 O9 F4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/678/min_e_strc.cif,no_error,678,0.06998092249820331,0.06998092249820331
+21,Li16 Zn4 S20,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/747/min_e_strc.cif,no_error,747,0.003972005844117277,0.003972005844117277
+22,K3 Th3 O6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/138/min_e_strc.cif,no_error,138,0.9688026309013367,0.9688026309013367
+23,La6 Co4 Ge10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/195/min_e_strc.cif,no_error,195,0.15307235717773615,0.15307235717773615
+24,Na4 Fe2 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/401/min_e_strc.cif,no_error,401,0.24002313613891424,0.24002313613891424
+25,Er4 Ti4 Br16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/315/min_e_strc.cif,No valid decomposition found for PDEntry : Er4 Ti4 Br16 with energy = -117.9324! (e_h: -0.38309494654337506),315,0.0,-0.38309494654337506
+26,Zn3 Pb3 S6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/613/min_e_strc.cif,no_error,613,0.271030068397522,0.271030068397522
+27,Cu3 Cl24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/122/min_e_strc.cif,no_error,122,0.03185447057088231,0.03185447057088231
+28,Ti4 W4 F16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/26/min_e_strc.cif,no_error,26,0.7236847082773767,0.7236847082773767
+29,Ag4 As4 Se4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/626/min_e_strc.cif,no_error,626,0.019716978073120117,0.019716978073120117
+30,Ce4 Zn8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/427/min_e_strc.cif,No valid decomposition found for PDEntry : Ce4 Zn8 with energy = -37.4805! (e_h: -0.007773637771606001),427,0.0,-0.007773637771606001
+31,Ce2 Ga3 Cu2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/18/min_e_strc.cif,no_error,18,0.09810761043003247,0.09810761043003247
+32,Yb8 As12 Ru12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/6/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb8 As12 Ru12 with energy = -201.1330,6,0.0,0.0
+33,Pr4 Gd4 Zn8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/813/min_e_strc.cif,no_error,813,0.011248588562011719,0.011248588562011719
+34,Cd4 Sn4 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/511/min_e_strc.cif,no_error,511,0.23006868362427024,0.23006868362427024
+35,Lu4 In2 Co2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/105/min_e_strc.cif,no_error,105,0.05585129261017041,0.05585129261017041
+36,Na6 La6 S12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/449/min_e_strc.cif,no_error,449,0.0963735580444336,0.0963735580444336
+37,Pr1 Mg1 Ni4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/28/min_e_strc.cif,no_error,28,1.0595269203186035,1.0595269203186035
+38,Ca4 Ge4 N4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/0/min_e_strc.cif,no_error,0,0.08741517861684223,0.08741517861684223
+39,Ca1 Zn9 B2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/726/min_e_strc.cif,no_error,726,0.28331407407919507,0.28331407407919507
+40,Th8 Zn4 Ir4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/995/min_e_strc.cif,no_error,995,0.06701159477233887,0.06701159477233887
+41,U6 S12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/369/min_e_strc.cif,no_error,369,0.016546249389648438,0.016546249389648438
+42,Dy1 B2 Rh3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/691/min_e_strc.cif,no_error,691,0.19619369506835938,0.19619369506835938
+43,Nd4 Ga14 Sb4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/215/min_e_strc.cif,no_error,215,0.0817391438917685,0.0817391438917685
+44,Ti1 P5 O13,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/389/min_e_strc.cif,no_error,389,0.10758017489785221,0.10758017489785221
+45,Cs1 Nb6 Se8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/396/min_e_strc.cif,No valid decomposition found for PDEntry : Cs1 Nb6 Se8 with energy = -105.9748! (e_h: -0.03471738696098203),396,0.0,-0.03471738696098203
+46,Mn16 Fe4 As12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/658/min_e_strc.cif,no_error,658,0.21388202905654907,0.21388202905654907
+47,Ti8 Cr4 Fe4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/863/min_e_strc.cif,no_error,863,0.010134458541870117,0.010134458541870117
+48,Sn2 Pb1 I2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/133/min_e_strc.cif,no_error,133,0.06298675537109322,0.06298675537109322
+49,Re2 H1 O5,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/23/min_e_strc.cif,no_error,23,0.7905496656894684,0.7905496656894684
+50,Na8 N6 O38,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/856/min_e_strc.cif,no_error,856,0.7026897577139044,0.7026897577139044
+51,Li2 Co8 F16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/851/min_e_strc.cif,no_error,851,0.04883067424480814,0.04883067424480814
+52,Sr4 U2 Al12 N4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/206/min_e_strc.cif,no_error,206,0.7807685823151544,0.7807685823151544
+53,Si8 C4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/502/min_e_strc.cif,no_error,502,0.24547576904296875,0.24547576904296875
+54,Ho8 Cd2 S14,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/259/min_e_strc.cif,no_error,259,0.09360607465109183,0.09360607465109183
+55,Tb4 In2 Ni4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/310/min_e_strc.cif,No valid decomposition found for PDEntry : Tb4 In2 Ni4 with energy = -52.3033! (e_h: -0.0020084381103515625),310,0.0,-0.0020084381103515625
+56,Eu8 In4 As4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/204/min_e_strc.cif,no_error,204,0.14934893449147424,0.14934893449147424
+57,Ca4 Mg2 Ni8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/911/min_e_strc.cif,no_error,911,0.05405712127685636,0.05405712127685636
+58,Yb4 Gd4 Au8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/132/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb4 Gd4 Au8 with energy = -102.9685,132,0.0,0.0
+59,Gd3 Pb1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/553/min_e_strc.cif,no_error,553,0.0269508361816424,0.0269508361816424
+60,Tm6 Se6 O6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/703/min_e_strc.cif,no_error,703,0.6387722492218062,0.6387722492218062
+61,La12 Bi16 Te12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/993/min_e_strc.cif,no_error,993,0.24249849319457972,0.24249849319457972
+62,Ce2 In4 Cu3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/935/min_e_strc.cif,no_error,935,0.13922990692986303,0.13922990692986303
+63,Ce4 In4 Cu20,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/888/min_e_strc.cif,no_error,888,0.07557487487792969,0.07557487487792969
+64,Ta4 Ti8 O24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/890/min_e_strc.cif,no_error,890,0.21227476331922723,0.21227476331922723
+65,Ce4 Si6 Ir2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/345/min_e_strc.cif,no_error,345,0.07967805862426758,0.07967805862426758
+66,Ag1 Ir1 O3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/56/min_e_strc.cif,no_error,56,0.2752262115478512,0.2752262115478512
+67,Mn4 Ga4 Fe8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/462/min_e_strc.cif,No valid decomposition found for PDEntry : Mn4 Ga4 Fe8 with energy = -118.0567! (e_h: -0.0003838539123535156),462,0.0,-0.0003838539123535156
+68,Mn6 Ga2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/472/min_e_strc.cif,no_error,472,0.049623966217041016,0.049623966217041016
+69,Tm8 Ni12 Sb12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/276/min_e_strc.cif,no_error,276,0.24375903606414795,0.24375903606414795
+70,Ho1 B2 Rh3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/294/min_e_strc.cif,No valid decomposition found for PDEntry : Ho1 B2 Rh3 with energy = -44.2651! (e_h: -0.006049156188964844),294,0.0,-0.006049156188964844
+71,Tl8 Si4 Ag4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/791/min_e_strc.cif,no_error,791,0.2565058469772339,0.2565058469772339
+72,Ti3 O4 F4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/196/min_e_strc.cif,no_error,196,0.08561563491821289,0.08561563491821289
+73,Rb2 Hg10 O10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/861/min_e_strc.cif,No valid decomposition found for PDEntry : Rb2 Hg10 O10 with energy = -71.3538! (e_h: -0.012217444452372384),861,0.0,-0.012217444452372384
+74,Li4 Ti8 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/140/min_e_strc.cif,no_error,140,0.045453071594231176,0.045453071594231176
+75,Ac4 Ga4 Tc8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/610/min_e_strc.cif,no_error,610,0.5796257654825849,0.5796257654825849
+76,Cr4 B4 W2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/762/min_e_strc.cif,no_error,762,0.7389146804809599,0.7389146804809599
+77,Si2 Ge2 Se8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/934/min_e_strc.cif,No valid decomposition found for PDEntry : Si2 Ge2 Se8 with energy = -56.0393! (e_h: -0.007943153381347656),934,0.0,-0.007943153381347656
+78,Ca16 P4 N24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/112/min_e_strc.cif,no_error,112,0.41522603685205617,0.41522603685205617
+79,Lu4 Ag8 Au4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/286/min_e_strc.cif,no_error,286,0.032146573066711426,0.032146573066711426
+80,Zn2 Si4 Pd4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/262/min_e_strc.cif,no_error,262,0.0586385907353586,0.0586385907353586
+81,Sm4 Lu4 In8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/606/min_e_strc.cif,No valid decomposition found for PDEntry : Sm4 Lu4 In8 with energy = -66.3364! (e_h: -0.0012164115905761719),606,0.0,-0.0012164115905761719
+82,Pr1 Nd2 Ge1 Sb2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/58/min_e_strc.cif,no_error,58,0.3329550425211636,0.3329550425211636
+83,Si4 Hg1 Te7,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/641/min_e_strc.cif,No valid decomposition found for PDEntry : Si4 Hg1 Te7 with energy = -46.6578! (e_h: -0.004115422566732363),641,0.0,-0.004115422566732363
+84,Sm8 Si4 Ge16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/293/min_e_strc.cif,no_error,293,0.02299609476206399,0.02299609476206399
+85,Li2 Fe4 F12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/880/min_e_strc.cif,no_error,880,0.038974761962890625,0.038974761962890625
+86,Hf6 Co2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/5/min_e_strc.cif,no_error,5,0.2259840965270996,0.2259840965270996
+87,Ag8 Sb16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/761/min_e_strc.cif,no_error,761,0.33542950948079486,0.33542950948079486
+88,Hf4 Fe12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/569/min_e_strc.cif,no_error,569,0.08689403533935369,0.08689403533935369
+89,Hf8 U2 N8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/457/min_e_strc.cif,no_error,457,0.2983279546101869,0.2983279546101869
+90,K6 Be18 Ga6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/767/min_e_strc.cif,no_error,767,0.10343596140543632,0.10343596140543632
+91,V16 Cr4 N10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/548/min_e_strc.cif,no_error,548,0.36911557515462334,0.36911557515462334
+92,Pm2 Sm2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/367/min_e_strc.cif,no_error,367,0.4641406536102295,0.4641406536102295
+93,La3 Sb1 C4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/727/min_e_strc.cif,no_error,727,0.7065910100936881,0.7065910100936881
+94,P1 Pt5 W1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/849/min_e_strc.cif,no_error,849,0.21731962476457944,0.21731962476457944
+95,Li4 Mg8 Ga16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/769/min_e_strc.cif,no_error,769,0.0034765856606613355,0.0034765856606613355
+96,La2 Ge2 Rh2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/539/min_e_strc.cif,No valid decomposition found for PDEntry : La2 Ge2 Rh2 with energy = -39.2564! (e_h: -0.0168502065870495),539,0.0,-0.0168502065870495
+97,Ti2 Al6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/803/min_e_strc.cif,no_error,803,0.5503735542297363,0.5503735542297363
+98,Ce4 Lu6 Pb6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/155/min_e_strc.cif,No valid decomposition found for PDEntry : Ce4 Lu6 Pb6 with energy = -79.2293! (e_h: -0.012835502624511719),155,0.0,-0.012835502624511719
+99,Na16 Mg4 N8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/344/min_e_strc.cif,no_error,344,0.2868382060338579,0.2868382060338579
+100,Ce4 Tm6 Ge6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/516/min_e_strc.cif,No valid decomposition found for PDEntry : Ce4 Tm6 Ge6 with energy = -89.8948! (e_h: -0.019872665405273438),516,0.0,-0.019872665405273438
+101,Tm1 In6 Cu1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/755/min_e_strc.cif,no_error,755,0.05547697842121124,0.05547697842121124
+102,Ti6 Ge3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/135/min_e_strc.cif,No valid decomposition found for PDEntry : Ti6 Ge3 with energy = -66.6938! (e_h: -0.020633220672607422),135,0.0,-0.020633220672607422
+103,Al2 Ga4 Ni6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/434/min_e_strc.cif,no_error,434,0.4047980372110995,0.4047980372110995
+104,Ti4 Tl8 Te20,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/545/min_e_strc.cif,No valid decomposition found for PDEntry : Ti4 Tl8 Te20 with energy = -134.7962! (e_h: -0.05065280199050903),545,0.0,-0.05065280199050903
+105,Pr4 Pa2 O4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/483/min_e_strc.cif,no_error,483,0.15449396769205848,0.15449396769205848
+106,Sm6 Tl2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/742/min_e_strc.cif,no_error,742,0.026897430419921875,0.026897430419921875
+107,Ac12 Cu4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/659/min_e_strc.cif,no_error,659,0.22742692629496286,0.22742692629496286
+108,K8 Pd24 F32,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/975/min_e_strc.cif,no_error,975,0.8236544330914812,0.8236544330914812
+109,In4 Sn4 Rh4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/517/min_e_strc.cif,No valid decomposition found for PDEntry : In4 Sn4 Rh4 with energy = -61.1783! (e_h: -0.02974828084309955),517,0.0,-0.02974828084309955
+110,Cr8 Bi4 Se20,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/586/min_e_strc.cif,no_error,586,0.08243998885154724,0.08243998885154724
+111,Yb4 Eu4 Pt8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/770/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb4 Eu4 Pt8 with energy = -111.1436,770,0.0,0.0
+112,Na4 Bi4 N4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/290/min_e_strc.cif,no_error,290,0.4024117257859965,0.4024117257859965
+113,Nb8 Sb4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/406/min_e_strc.cif,no_error,406,0.011904716491699219,0.011904716491699219
+114,Ho2 Mg2 Ga2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/399/min_e_strc.cif,no_error,399,0.30444836616516113,0.30444836616516113
+115,Eu2 In4 Ga6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/142/min_e_strc.cif,no_error,142,0.04645223418871591,0.04645223418871591
+116,Tl4 Cu4 Cl16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/330/min_e_strc.cif,No valid decomposition found for PDEntry : Tl4 Cu4 Cl16 with energy = -80.1476! (e_h: -0.005429625511169434),330,0.0,-0.005429625511169434
+117,Tb1 Te2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/146/min_e_strc.cif,no_error,146,0.10265641742282483,0.10265641742282483
+118,Ce3 As6 Au3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/852/min_e_strc.cif,no_error,852,0.10781669616699219,0.10781669616699219
+119,Tb2 Zr2 I2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/420/min_e_strc.cif,no_error,420,0.2995081477695045,0.2995081477695045
+120,Ac4 Eu4 Hg8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/591/min_e_strc.cif,No valid decomposition found for PDEntry : Ac4 Eu4 Hg8 with energy = -68.1458! (e_h: -0.1052389939626055),591,0.0,-0.1052389939626055
+121,Na4 Ca4 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/939/min_e_strc.cif,no_error,939,0.08729147911071689,0.08729147911071689
+122,Eu2 Er4 S16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/291/min_e_strc.cif,no_error,291,0.06315235658125307,0.06315235658125307
+123,Yb2 Ga6 Co2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/696/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb2 Ga6 Co2 with energy = -39.6526,696,0.0,0.0
+124,Er4 Al2 Au4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/723/min_e_strc.cif,no_error,723,0.033731937408447266,0.033731937408447266
+125,Ti2 S4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/489/min_e_strc.cif,no_error,489,0.053971767425538,0.053971767425538
+126,Hg8 I4 Br8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/589/min_e_strc.cif,No valid decomposition found for PDEntry : Hg8 I4 Br8 with energy = -35.9060! (e_h: -0.05448548453194779),589,0.0,-0.05448548453194779
+127,Li4 Ti4 Rh8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/634/min_e_strc.cif,No valid decomposition found for PDEntry : Li4 Ti4 Rh8 with energy = -108.7049! (e_h: -0.005438804626464844),634,0.0,-0.005438804626464844
+128,Ac8 Zn4 Pt4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/853/min_e_strc.cif,No valid decomposition found for PDEntry : Ac8 Zn4 Pt4 with energy = -72.0889! (e_h: -0.37650108337402344),853,0.0,-0.37650108337402344
+129,Sr8 Cd4 Hg4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/530/min_e_strc.cif,No valid decomposition found for PDEntry : Sr8 Cd4 Hg4 with energy = -25.4358! (e_h: -0.002262592315673828),530,0.0,-0.002262592315673828
+130,Eu4 Se8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/650/min_e_strc.cif,no_error,650,0.007494449615478516,0.007494449615478516
+131,Tb6 Te4 O4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/924/min_e_strc.cif,no_error,924,0.6241698946271663,0.6241698946271663
+132,Si8 Ni10 Ge4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/722/min_e_strc.cif,no_error,722,0.1829805374145499,0.1829805374145499
+133,Cs2 Zn6 Sn4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/738/min_e_strc.cif,no_error,738,0.19750440120697021,0.19750440120697021
+134,Zn8 S8 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/532/min_e_strc.cif,no_error,532,0.6702486276626587,0.6702486276626587
+135,Fe6 Bi6 O18,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/175/min_e_strc.cif,no_error,175,0.011136054992675781,0.011136054992675781
+136,Pr2 Si2 Ge2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/966/min_e_strc.cif,no_error,966,0.08580798194522021,0.08580798194522021
+137,La4 Al4 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/687/min_e_strc.cif,no_error,687,0.3625240325927779,0.3625240325927779
+138,Cu8 Sb4 S20,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/570/min_e_strc.cif,no_error,570,0.05504501717430976,0.05504501717430976
+139,Mo2 Cl6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/256/min_e_strc.cif,no_error,256,0.023018598556518555,0.023018598556518555
+140,Na4 Tl4 Sn8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/870/min_e_strc.cif,No valid decomposition found for PDEntry : Na4 Tl4 Sn8 with energy = -48.5944! (e_h: -0.007909774780273438),870,0.0,-0.007909774780273438
+141,Mn2 Ag4 O6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/251/min_e_strc.cif,no_error,251,0.08288796742757842,0.08288796742757842
+142,Y8 Ag4 Cl24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/979/min_e_strc.cif,no_error,979,0.14469570583767233,0.14469570583767233
+143,Mg5 Al1 Ga2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/951/min_e_strc.cif,no_error,951,0.6495419760545098,0.6495419760545098
+144,Ce4 Pd4 Pb4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/156/min_e_strc.cif,No valid decomposition found for PDEntry : Ce4 Pd4 Pb4 with energy = -66.4291! (e_h: -0.018786390622456572),156,0.0,-0.018786390622456572
+145,Ti1 Sn3 Rh1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/169/min_e_strc.cif,no_error,169,0.4978782529416286,0.4978782529416286
+146,Dy8 Mg4 Ag4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/719/min_e_strc.cif,no_error,719,0.05578666925430298,0.05578666925430298
+147,Sc4 Si2 B6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/391/min_e_strc.cif,no_error,391,0.36991941928863525,0.36991941928863525
+148,Ba2 Sr6 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/707/min_e_strc.cif,no_error,707,0.3061089992523165,0.3061089992523165
+149,Rb9 Pb6 Se12 O6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/353/min_e_strc.cif,no_error,353,0.1964599435979668,0.1964599435979668
+150,Cd4 I4 Br4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/309/min_e_strc.cif,no_error,309,0.0015573501586914062,0.0015573501586914062
+151,Sr2 Ca2 O6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/269/min_e_strc.cif,no_error,269,1.628646183013914,1.628646183013914
+152,Y4 Fe4 Sb8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/84/min_e_strc.cif,no_error,84,0.04747730493545532,0.04747730493545532
+153,Nd4 Ge4 Ir8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/992/min_e_strc.cif,no_error,992,0.46355539560317993,0.46355539560317993
+154,V2 W2 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/673/min_e_strc.cif,No valid decomposition found for PDEntry : V2 W2 O8 with energy = -110.8179! (e_h: -0.012844085693359375),673,0.0,-0.012844085693359375
+155,Hf10 Cu2 Si6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/625/min_e_strc.cif,no_error,625,0.03999314705530921,0.03999314705530921
+156,Li4 Al8 Ag4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/494/min_e_strc.cif,no_error,494,0.027979731559753418,0.027979731559753418
+157,V5 As2 P2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/759/min_e_strc.cif,no_error,759,0.1326882574293311,0.1326882574293311
+158,Ce2 Fe4 Si4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/954/min_e_strc.cif,No valid decomposition found for PDEntry : Ce2 Fe4 Si4 with energy = -73.5498! (e_h: -0.002475261688232422),954,0.0,-0.002475261688232422
+159,Lu4 Ni4 Ge4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/258/min_e_strc.cif,No valid decomposition found for PDEntry : Lu4 Ni4 Ge4 with energy = -69.3924! (e_h: -0.002425670623779297),258,0.0,-0.002425670623779297
+160,Pm4 Sn4 Au8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/729/min_e_strc.cif,No valid decomposition found for PDEntry : Pm4 Sn4 Au8 with energy = -72.0179! (e_h: -0.0038514137268101933),729,0.0,-0.0038514137268101933
+161,K10 As8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/558/min_e_strc.cif,No valid decomposition found for PDEntry : K10 As8 with energy = -56.0554! (e_h: -0.00010919570922851562),558,0.0,-0.00010919570922851562
+162,Nd2 In4 Co2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/10/min_e_strc.cif,no_error,10,0.7691905182950638,0.7691905182950638
+163,Pm4 Sm4 Tl8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/896/min_e_strc.cif,no_error,896,0.1318666934967041,0.1318666934967041
+164,P16 Pd16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/429/min_e_strc.cif,no_error,429,0.03949108990755956,0.03949108990755956
+165,Rb3 Pb3 O6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/347/min_e_strc.cif,no_error,347,0.03355097770690918,0.03355097770690918
+166,Ta4 In4 Ni8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/34/min_e_strc.cif,no_error,34,0.05418501581464419,0.05418501581464419
+167,Y4 Ho4 Ir8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/348/min_e_strc.cif,No valid decomposition found for PDEntry : Y4 Ho4 Ir8 with energy = -128.2618! (e_h: -0.00225830078125),348,0.0,-0.00225830078125
+168,Ce2 As24 Os8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/31/min_e_strc.cif,No valid decomposition found for PDEntry : Ce2 As24 Os8 with energy = -224.8945! (e_h: -0.002757549285888672),31,0.0,-0.002757549285888672
+169,Sr6 C3 O18,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/638/min_e_strc.cif,no_error,638,0.3693896929423026,0.3693896929423026
+170,Pd12 Pb4 O14,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/991/min_e_strc.cif,no_error,991,0.3200600624084471,0.3200600624084471
+171,Mg6 Zn2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/923/min_e_strc.cif,no_error,923,0.0015847242998507927,0.0015847242998507927
+172,Li2 Dy4 F10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/414/min_e_strc.cif,no_error,414,0.964166561762493,0.964166561762493
+173,Sm4 Sb12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/141/min_e_strc.cif,no_error,141,0.00815814733505249,0.00815814733505249
+174,Dy4 Sb4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/694/min_e_strc.cif,No valid decomposition found for PDEntry : Dy4 Sb4 with energy = -44.6082! (e_h: -0.00014209747314364307),694,0.0,-0.00014209747314364307
+175,Zr4 Sn4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/524/min_e_strc.cif,no_error,524,0.20754921436309814,0.20754921436309814
+176,Si10 Mo2 Rh4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/892/min_e_strc.cif,no_error,892,0.08930508295695017,0.08930508295695017
+177,Zr10 Sn6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/695/min_e_strc.cif,No valid decomposition found for PDEntry : Zr10 Sn6 with energy = -117.8846! (e_h: -0.0017571449279820683),695,0.0,-0.0017571449279820683
+178,Hf4 Co4 Ge4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/665/min_e_strc.cif,No valid decomposition found for PDEntry : Hf4 Co4 Ge4 with energy = -94.4960! (e_h: -0.003917217254638672),665,0.0,-0.003917217254638672
+179,Be2 Cu2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/299/min_e_strc.cif,No valid decomposition found for PDEntry : Be2 Cu2 with energy = -15.9512! (e_h: -7.414817809969776e-05),299,0.0,-7.414817809969776
+180,Fe2 O1 F6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/59/min_e_strc.cif,no_error,59,0.41416507297092053,0.41416507297092053
+181,Ti2 Ni2 As2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/618/min_e_strc.cif,no_error,618,0.024259567260742188,0.024259567260742188
+182,Yb4 Dy4 Ag8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/590/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb4 Dy4 Ag8 with energy = -53.0385,590,0.0,0.0
+183,Y1 Bi1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/350/min_e_strc.cif,no_error,350,0.21447372436523438,0.21447372436523438
+184,Zr8 Ga8 Si4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/438/min_e_strc.cif,no_error,438,0.21830158233642383,0.21830158233642383
+185,Cu2 Te1 O2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/639/min_e_strc.cif,no_error,639,0.28842451095580923,0.28842451095580923
+186,V4 O4 F9,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/39/min_e_strc.cif,no_error,39,0.04266691207885742,0.04266691207885742
+187,Si2 P4 N8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/418/min_e_strc.cif,no_error,418,0.6393915040152365,0.6393915040152365
+188,Li3 Fe3 O6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/455/min_e_strc.cif,No valid decomposition found for PDEntry : Li3 Fe3 O6 with energy = -83.5099! (e_h: -0.006443500518798828),455,0.0,-0.006443500518798828
+189,Nd2 Ga2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/908/min_e_strc.cif,no_error,908,0.021007537841796875,0.021007537841796875
+190,Y3 C9 I6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/30/min_e_strc.cif,no_error,30,1.32726690504286,1.32726690504286
+191,Sc10 Ge6 Au2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/536/min_e_strc.cif,no_error,536,0.023986646864148753,0.023986646864148753
+192,Lu8 Ga8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/736/min_e_strc.cif,no_error,736,0.01109170913696289,0.01109170913696289
+193,Li8 In4 Cl4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/437/min_e_strc.cif,no_error,437,0.13324499130249023,0.13324499130249023
+194,Nb12 Ni2 Te8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/555/min_e_strc.cif,no_error,555,0.8641835270505958,0.8641835270505958
+195,Th16 Ti4 O44,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/312/min_e_strc.cif,no_error,312,0.35289520025253296,0.35289520025253296
+196,La2 Ho2 C8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/713/min_e_strc.cif,no_error,713,0.2691113551457729,0.2691113551457729
+197,Mg4 Cr4 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/977/min_e_strc.cif,no_error,977,0.15974842707316483,0.15974842707316483
+198,Gd16 Sn4 S8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/104/min_e_strc.cif,No valid decomposition found for PDEntry : Gd16 Sn4 S8 with energy = -318.9526! (e_h: -0.16132961000715085),104,0.0,-0.16132961000715085
+199,Mg2 Zn6 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/177/min_e_strc.cif,no_error,177,0.4445952574412031,0.4445952574412031
+200,Ca4 P4 I4 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/602/min_e_strc.cif,no_error,602,0.2709003278187332,0.2709003278187332
+201,Pm3 Sm3 Te3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/843/min_e_strc.cif,no_error,843,0.05779743194580078,0.05779743194580078
+202,Sn4 Ge4 Se8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/465/min_e_strc.cif,no_error,465,0.003040313720704013,0.003040313720704013
+203,Cu4 Ag2 O4 F16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/523/min_e_strc.cif,No valid decomposition found for PDEntry : Cu4 Ag2 O4 F16 with energy = -106.5039! (e_h: -0.049427463458135534),523,0.0,-0.049427463458135534
+204,Be4 Tl8 F16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/963/min_e_strc.cif,no_error,963,0.00647735595703125,0.00647735595703125
+205,Mn4 Sn4 Ir8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/213/min_e_strc.cif,no_error,213,0.07697105407714755,0.07697105407714755
+206,Sc4 Cd4 Ag8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/466/min_e_strc.cif,no_error,466,0.0012786388397216797,0.0012786388397216797
+207,La6 Mg2 Ge4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/914/min_e_strc.cif,no_error,914,0.37846678495407104,0.37846678495407104
+208,Nb8 Ir4 F24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/178/min_e_strc.cif,no_error,178,1.264076921674941,1.264076921674941
+209,Y4 Er4 Mg8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/331/min_e_strc.cif,No valid decomposition found for PDEntry : Y4 Er4 Mg8 with energy = -58.1092! (e_h: -1.430511474609375e-05),331,0.0,-1.430511474609375
+210,U4 Sn4 Ru8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/653/min_e_strc.cif,no_error,653,0.01504305998484412,0.01504305998484412
+211,Al4 Cu4 S8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/192/min_e_strc.cif,no_error,192,0.20589351654051846,0.20589351654051846
+212,Sm4 Lu4 Ru8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/730/min_e_strc.cif,no_error,730,0.0328967422246933,0.0328967422246933
+213,La16 As8 Se4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/580/min_e_strc.cif,No valid decomposition found for PDEntry : La16 As8 Se4 with energy = -173.7718! (e_h: -0.030375866662888384),580,0.0,-0.030375866662888384
+214,Ge6 Sb6 Te18,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/346/min_e_strc.cif,no_error,346,0.1062307357788086,0.1062307357788086
+215,Eu1 Zn1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/90/min_e_strc.cif,no_error,90,0.01033174991607666,0.01033174991607666
+216,Tb4 In2 Pd2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/15/min_e_strc.cif,no_error,15,0.2564073324203484,0.2564073324203484
+217,Pm2 Hg6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/281/min_e_strc.cif,no_error,281,0.20749568939208984,0.20749568939208984
+218,Eu4 Zn4 F16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/50/min_e_strc.cif,No valid decomposition found for PDEntry : Eu4 Zn4 F16 with energy = -156.8164! (e_h: -0.04696631431579412),50,0.0,-0.04696631431579412
+219,Tl1 Cd1 F3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/408/min_e_strc.cif,no_error,408,1.1444091798651357e-05,1.1444091798651357e-05
+220,Ti20 Ge8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/106/min_e_strc.cif,no_error,106,0.06601510729108462,0.06601510729108462
+221,Nd8 P4 Se16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/587/min_e_strc.cif,no_error,587,0.06073408126831126,0.06073408126831126
+222,Nd3 Ni4 Ge10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/230/min_e_strc.cif,no_error,230,0.11591594359453605,0.11591594359453605
+223,La4 Ho4 Pd8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/413/min_e_strc.cif,no_error,413,0.027309417724609375,0.027309417724609375
+224,La2 Ce2 Ni8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/676/min_e_strc.cif,no_error,676,0.13158162434895804,0.13158162434895804
+225,Ni2 Sn1 Bi4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/148/min_e_strc.cif,no_error,148,0.03691046578543489,0.03691046578543489
+226,Cu4 Sn4 Rh8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/962/min_e_strc.cif,No valid decomposition found for PDEntry : Cu4 Sn4 Rh8 with energy = -96.5447! (e_h: -0.008880615234375),962,0.0,-0.008880615234375
+227,Cs4 La4 F14,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/352/min_e_strc.cif,No valid decomposition found for PDEntry : Cs4 La4 F14 with energy = -133.7167! (e_h: -0.029623096639459057),352,0.0,-0.029623096639459057
+228,Mn4 As2 P3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/699/min_e_strc.cif,no_error,699,0.09567022323608665,0.09567022323608665
+229,Zr8 B8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/86/min_e_strc.cif,no_error,86,0.3201477527618408,0.3201477527618408
+230,Sc6 Sb2 Pd1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/111/min_e_strc.cif,No valid decomposition found for PDEntry : Sc6 Sb2 Pd1 with energy = -58.3242! (e_h: -0.0017452239990225493),111,0.0,-0.0017452239990225493
+231,Re4 Cl20,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/376/min_e_strc.cif,no_error,376,0.29063844680786133,0.29063844680786133
+232,Eu2 Cu4 Si4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/341/min_e_strc.cif,No valid decomposition found for PDEntry : Eu2 Cu4 Si4 with energy = -63.1003! (e_h: -0.001110076904296875),341,0.0,-0.001110076904296875
+233,Gd4 In4 Co16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/430/min_e_strc.cif,no_error,430,0.0592849675346816,0.0592849675346816
+234,Ti4 B2 Rh2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/652/min_e_strc.cif,no_error,652,0.4198284149169922,0.4198284149169922
+235,Al4 Se4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/891/min_e_strc.cif,no_error,891,0.3015057643254604,0.3015057643254604
+236,Rb4 Nd8 In4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/336/min_e_strc.cif,no_error,336,0.477140337228775,0.477140337228775
+237,Nd16 C24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/216/min_e_strc.cif,No valid decomposition found for PDEntry : Nd16 C24 with energy = -304.6828! (e_h: -0.0029921531677246094),216,0.0,-0.0029921531677246094
+238,K10 Pb6 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/838/min_e_strc.cif,no_error,838,0.4669775962829501,0.4669775962829501
+239,Bi2 Pb2 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/930/min_e_strc.cif,No valid decomposition found for PDEntry : Bi2 Pb2 O8 with energy = -70.6636! (e_h: -0.02148747444152832),930,0.0,-0.02148747444152832
+240,Ti2 Nb3 Al3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/604/min_e_strc.cif,no_error,604,0.7355375289916983,0.7355375289916983
+241,Ni2 O4 F2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/454/min_e_strc.cif,no_error,454,0.24527257680892944,0.24527257680892944
+242,Y4 N4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/477/min_e_strc.cif,No valid decomposition found for PDEntry : Y4 N4 with energy = -73.6899! (e_h: -0.0026922225952148438),477,0.0,-0.0026922225952148438
+243,Na3 Nb1 Te4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/594/min_e_strc.cif,no_error,594,0.09364899992942988,0.09364899992942988
+244,U3 Au3 O6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/298/min_e_strc.cif,no_error,298,0.4389656186103821,0.4389656186103821
+245,Mg4 In4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/809/min_e_strc.cif,no_error,809,0.018496990203857422,0.018496990203857422
+246,Cs12 Bi4 S4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/35/min_e_strc.cif,no_error,35,0.030708169937134766,0.030708169937134766
+247,Tb2 Ga18 Cu12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/75/min_e_strc.cif,no_error,75,0.04898119270801882,0.04898119270801882
+248,Nb4 Al16 Ga2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/197/min_e_strc.cif,no_error,197,0.04994429241527243,0.04994429241527243
+249,Sb2 Te4 O14,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/22/min_e_strc.cif,no_error,22,0.05360734462736971,0.05360734462736971
+250,Sm10 Ge6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/864/min_e_strc.cif,No valid decomposition found for PDEntry : Sm10 Ge6 with energy = -86.6870! (e_h: -0.007240772247314453),864,0.0,-0.007240772247314453
+251,Ni2 Cl2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/573/min_e_strc.cif,no_error,573,0.3786674737930298,0.3786674737930298
+252,Ho4 Au4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/807/min_e_strc.cif,No valid decomposition found for PDEntry : Ho4 Au4 with energy = -38.4346! (e_h: -0.0011034011840820312),807,0.0,-0.0011034011840820312
+253,Mg1 Ni3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/328/min_e_strc.cif,no_error,328,0.05540740489959717,0.05540740489959717
+254,Nd4 Sb4 Au4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/877/min_e_strc.cif,no_error,877,0.028995513916015625,0.028995513916015625
+255,Sc8 Zn4 Ir4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/988/min_e_strc.cif,no_error,988,0.00414586067199707,0.00414586067199707
+256,Y4 Ir4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/794/min_e_strc.cif,No valid decomposition found for PDEntry : Y4 Ir4 with energy = -67.8393! (e_h: -0.027378082275390625),794,0.0,-0.027378082275390625
+257,Sr16 Li4 Pb12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/97/min_e_strc.cif,no_error,97,0.0009537488222122192,0.0009537488222122192
+258,Nd1 Al1 Zn1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/745/min_e_strc.cif,no_error,745,0.279476523399353,0.279476523399353
+259,Hf8 P4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/235/min_e_strc.cif,no_error,235,0.0012836456298810361,0.0012836456298810361
+260,Rb2 P4 Ru4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/107/min_e_strc.cif,No valid decomposition found for PDEntry : Rb2 P4 Ru4 with energy = -67.0369! (e_h: -0.007556915283203125),107,0.0,-0.007556915283203125
+261,K6 Rb6 Cl18,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/800/min_e_strc.cif,no_error,800,0.09280176162719744,0.09280176162719744
+262,Gd4 In12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/261/min_e_strc.cif,no_error,261,0.026216983795166016,0.026216983795166016
+263,Pm8 Cd4 Hg4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/505/min_e_strc.cif,No valid decomposition found for PDEntry : Pm8 Cd4 Hg4 with energy = -49.2534! (e_h: -0.0016202926635742188),505,0.0,-0.0016202926635742188
+264,Al2 Ru6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/124/min_e_strc.cif,no_error,124,1.030665397644043,1.030665397644043
+265,Mg4 Sn8 S8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/656/min_e_strc.cif,no_error,656,0.1222477436065681,0.1222477436065681
+266,Cd9 Sn3 S6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/415/min_e_strc.cif,no_error,415,0.07503700256347745,0.07503700256347745
+267,Li4 Zn8 Pb4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/267/min_e_strc.cif,no_error,267,0.08318090438842818,0.08318090438842818
+268,Al2 Fe1 C2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/928/min_e_strc.cif,no_error,928,0.4005459075750313,0.4005459075750313
+269,Tb8 Ag4 Au4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/663/min_e_strc.cif,No valid decomposition found for PDEntry : Tb8 Ag4 Au4 with energy = -71.1184! (e_h: -0.007738828659057617),663,0.0,-0.007738828659057617
+270,Hf2 Ni1 S4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/173/min_e_strc.cif,no_error,173,0.4929796627589642,0.4929796627589642
+271,Al2 Cu4 S2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/974/min_e_strc.cif,no_error,974,0.23619190851847272,0.23619190851847272
+272,Ga1 Sn3 I4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/671/min_e_strc.cif,no_error,671,0.3334990814328189,0.3334990814328189
+273,Sb4 Te6 Pb8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/491/min_e_strc.cif,no_error,491,0.10215425491333008,0.10215425491333008
+274,Mn8 O8 F6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/868/min_e_strc.cif,no_error,868,0.06547732786700244,0.06547732786700244
+275,Tb4 Sc4 Tl8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/354/min_e_strc.cif,No valid decomposition found for PDEntry : Tb4 Sc4 Tl8 with energy = -68.0011! (e_h: -0.05762513478596887),354,0.0,-0.05762513478596887
+276,Er2 Tm2 In6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/77/min_e_strc.cif,no_error,77,0.42152523994445845,0.42152523994445845
+277,In10 Cu6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/91/min_e_strc.cif,no_error,91,0.08418542146682784,0.08418542146682784
+278,Ba1 Bi2 Sb2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/153/min_e_strc.cif,no_error,153,0.16010680198669291,0.16010680198669291
+279,Fe4 Co8 As4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/709/min_e_strc.cif,no_error,709,0.11137127876281738,0.11137127876281738
+280,Ca4 Cl8 O4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/239/min_e_strc.cif,no_error,239,0.39246219396591187,0.39246219396591187
+281,Li4 Ho8 Ir4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/829/min_e_strc.cif,no_error,829,0.0058373808860761045,0.0058373808860761045
+282,Cs6 K4 Cl14,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/302/min_e_strc.cif,no_error,302,0.023071487744649843,0.023071487744649843
+283,Nd1 Al2 Co3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/1/min_e_strc.cif,no_error,1,0.0671362170466665,0.0671362170466665
+284,Nd2 In8 Rh4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/159/min_e_strc.cif,No valid decomposition found for PDEntry : Nd2 In8 Rh4 with energy = -68.1942! (e_h: -0.02877031053815493),159,0.0,-0.02877031053815493
+285,Ba4 Pt4 S16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/184/min_e_strc.cif,no_error,184,0.056534528732299805,0.056534528732299805
+286,Pm8 Mg4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/136/min_e_strc.cif,no_error,136,0.15278053283691406,0.15278053283691406
+287,Pr4 Sn4 Au4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/504/min_e_strc.cif,no_error,504,0.050336360931396484,0.050336360931396484
+288,La2 Cu10 Ni4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/21/min_e_strc.cif,no_error,21,0.03603026270865861,0.03603026270865861
+289,V4 Fe2 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/824/min_e_strc.cif,no_error,824,0.1717669169108227,0.1717669169108227
+290,Tm8 Pd4 Ru4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/614/min_e_strc.cif,No valid decomposition found for PDEntry : Tm8 Pd4 Ru4 with energy = -105.1284! (e_h: -0.0036110877990722656),614,0.0,-0.0036110877990722656
+291,Np1 Ir3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/99/min_e_strc.cif,No valid decomposition found for PDEntry : Np1 Ir3 with energy = -41.0177! (e_h: -0.17351007461547852),99,0.0,-0.17351007461547852
+292,Ca2 Mn1 N2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/335/min_e_strc.cif,no_error,335,0.2656021118164018,0.2656021118164018
+293,Y4 Ge12 Pd2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/390/min_e_strc.cif,no_error,390,0.06150579452514471,0.06150579452514471
+294,Sr4 Sn4 O24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/295/min_e_strc.cif,no_error,295,0.4625236988067627,0.4625236988067627
+295,U1 Al1 Co3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/952/min_e_strc.cif,no_error,952,1.3639883041381813,1.3639883041381813
+296,Na1 Nb4 S6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/708/min_e_strc.cif,no_error,708,0.17313437028363854,0.17313437028363854
+297,Tb2 Mg2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/94/min_e_strc.cif,no_error,94,0.28910064697265625,0.28910064697265625
+298,Sb1 Rh2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/917/min_e_strc.cif,no_error,917,0.9597015380859384,0.9597015380859384
+299,Fe2 Mo4 P4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/592/min_e_strc.cif,no_error,592,0.3296255111694357,0.3296255111694357
+300,Na4 Li8 S6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/715/min_e_strc.cif,no_error,715,0.051112810770667316,0.051112810770667316
+301,Sm4 Er4 Ru8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/221/min_e_strc.cif,no_error,221,0.02263993620872551,0.02263993620872551
+302,Ta4 Co6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/574/min_e_strc.cif,no_error,574,0.1709486007690426,0.1709486007690426
+303,Eu4 Cr2 P12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/837/min_e_strc.cif,no_error,837,0.09774333106146749,0.09774333106146749
+304,Y16 Hf8 Si16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/584/min_e_strc.cif,no_error,584,0.34973007202148665,0.34973007202148665
+305,Lu3 Co39,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/846/min_e_strc.cif,no_error,846,0.19854274817875428,0.19854274817875428
+306,K9 In12 Au6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/631/min_e_strc.cif,no_error,631,0.008892167358052205,0.008892167358052205
+307,Cr9 Bi3 Te6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/842/min_e_strc.cif,no_error,842,0.4846354524294547,0.4846354524294547
+308,Li8 Ho2 Pb24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/225/min_e_strc.cif,no_error,225,0.11286311991074482,0.11286311991074482
+309,Al1 Ni1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/507/min_e_strc.cif,No valid decomposition found for PDEntry : Al1 Ni1 with energy = -10.8209! (e_h: -0.004681110382080078),507,0.0,-0.004681110382080078
+310,Ni33 B6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/321/min_e_strc.cif,no_error,321,0.4004794389773636,0.4004794389773636
+311,In9 Ag3 Se12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/68/min_e_strc.cif,no_error,68,0.03449585040409886,0.03449585040409886
+312,Li12 In9 P6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/70/min_e_strc.cif,no_error,70,0.09738241301642514,0.09738241301642514
+313,Zn9 Sn3 P6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/300/min_e_strc.cif,no_error,300,0.30860614776611284,0.30860614776611284
+314,Cr8 Bi6 O20,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/971/min_e_strc.cif,no_error,971,0.371174896464626,0.371174896464626
+315,Li4 Ta4 Ag2 F24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/16/min_e_strc.cif,no_error,16,0.11820650100708008,0.11820650100708008
+316,Dy4 Tl4 Zn8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/931/min_e_strc.cif,no_error,931,0.06725017229716013,0.06725017229716013
+317,Yb4 Rh4 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/333/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb4 Rh4 O8 with energy = -109.2733,333,0.0,0.0
+318,Ho10 Ge8 Rh4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/443/min_e_strc.cif,no_error,443,0.10037722154097128,0.10037722154097128
+319,Zr4 Pd4 S4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/200/min_e_strc.cif,no_error,200,0.2962459500630681,0.2962459500630681
+320,Zr8 Br4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/510/min_e_strc.cif,no_error,510,0.5734313329060878,0.5734313329060878
+321,Na2 H4 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/425/min_e_strc.cif,no_error,425,0.078498227255686,0.078498227255686
+322,Mn4 Fe4 N4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/514/min_e_strc.cif,no_error,514,0.13569617271423517,0.13569617271423517
+323,Ca2 Sm16 O24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/909/min_e_strc.cif,no_error,909,0.18895492856464458,0.18895492856464458
+324,Mg4 Sc4 P4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/795/min_e_strc.cif,no_error,795,0.1315516233444214,0.1315516233444214
+325,Li4 Gd4 O4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/128/min_e_strc.cif,no_error,128,0.13930959171718982,0.13930959171718982
+326,Ga1 Fe3 N1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/313/min_e_strc.cif,No valid decomposition found for PDEntry : Ga1 Fe3 N1 with energy = -37.8576! (e_h: -0.005523204803466797),313,0.0,-0.005523204803466797
+327,Sm1 Te6 I2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/109/min_e_strc.cif,no_error,109,0.06307269908763757,0.06307269908763757
+328,Ca4 Zn10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/4/min_e_strc.cif,no_error,4,0.19619587489536827,0.19619587489536827
+329,Ho2 Er2 S10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/588/min_e_strc.cif,no_error,588,0.30622690064566616,0.30622690064566616
+330,Mn6 O8 F4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/621/min_e_strc.cif,no_error,621,0.030962371826160684,0.030962371826160684
+331,Pr2 Cu2 Sn2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/205/min_e_strc.cif,No valid decomposition found for PDEntry : Pr2 Cu2 Sn2 with energy = -29.2497! (e_h: -0.0037975311279296875),205,0.0,-0.0037975311279296875
+332,Sr4 Y6 O14,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/938/min_e_strc.cif,no_error,938,0.21064668893814442,0.21064668893814442
+333,La4 H6 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/254/min_e_strc.cif,no_error,254,0.11220802201165547,0.11220802201165547
+334,Cu3 Au1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/64/min_e_strc.cif,No valid decomposition found for PDEntry : Cu3 Au1 with energy = -15.6337! (e_h: -0.006497621536255771),64,0.0,-0.006497621536255771
+335,V20 Zn2 P12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/895/min_e_strc.cif,no_error,895,0.33512105661280067,0.33512105661280067
+336,Er4 H8 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/147/min_e_strc.cif,no_error,147,0.19536372025807935,0.19536372025807935
+337,Rb2 O2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/826/min_e_strc.cif,no_error,826,0.25167012214660645,0.25167012214660645
+338,La10 Bi6 S2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/819/min_e_strc.cif,No valid decomposition found for PDEntry : La10 Bi6 S2 with energy = -103.6308! (e_h: -0.0009551578097832802),819,0.0,-0.0009551578097832802
+339,K4 Se4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/716/min_e_strc.cif,No valid decomposition found for PDEntry : K4 Se4 with energy = -27.7170! (e_h: -0.004010200500488281),716,0.0,-0.004010200500488281
+340,Nb1 S1 F2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/228/min_e_strc.cif,no_error,228,0.34323911666871787,0.34323911666871787
+341,Th4 Tl4 In8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/731/min_e_strc.cif,no_error,731,0.0801568031311044,0.0801568031311044
+342,Lu2 V4 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/480/min_e_strc.cif,no_error,480,0.11466058095298592,0.11466058095298592
+343,La2 Co1 Ni4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/858/min_e_strc.cif,no_error,858,1.4610947147830506,1.4610947147830506
+344,Yb1 In2 Ni2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/901/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb1 In2 Ni2 with energy = -20.1432,901,0.0,0.0
+345,Ti4 Al4 Co4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/88/min_e_strc.cif,no_error,88,0.664949735005699,0.664949735005699
+346,Cs16 Ti16 S32,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/633/min_e_strc.cif,no_error,633,0.02705860137939453,0.02705860137939453
+347,Gd2 Al16 Cu8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/271/min_e_strc.cif,No valid decomposition found for PDEntry : Gd2 Al16 Cu8 with energy = -129.4295! (e_h: -0.0034494400024414062),271,0.0,-0.0034494400024414062
+348,Mn6 Al22 Co6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/384/min_e_strc.cif,no_error,384,0.06691417974584013,0.06691417974584013
+349,Hf4 Sc4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/497/min_e_strc.cif,no_error,497,0.02396702766418457,0.02396702766418457
+350,Ta2 W1 Se5,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/559/min_e_strc.cif,no_error,559,0.1536757946014422,0.1536757946014422
+351,Pa2 Br6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/65/min_e_strc.cif,no_error,65,0.02614501118659973,0.02614501118659973
+352,Zr1 Sn2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/672/min_e_strc.cif,no_error,672,0.5959758758544922,0.5959758758544922
+353,Tb6 Sm2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/444/min_e_strc.cif,no_error,444,0.0021131038665771484,0.0021131038665771484
+354,Li4 V4 F16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/527/min_e_strc.cif,no_error,527,0.057845115661621094,0.057845115661621094
+355,Sr1 Ca1 Eu3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/100/min_e_strc.cif,no_error,100,0.4851819515228275,0.4851819515228275
+356,Tb8 Pd4 Pt4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/542/min_e_strc.cif,no_error,542,0.00581049919128418,0.00581049919128418
+357,Pa4 Ga4 Tc8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/871/min_e_strc.cif,No valid decomposition found for PDEntry : Pa4 Ga4 Tc8 with energy = -137.4021! (e_h: -0.006087303161621094),871,0.0,-0.006087303161621094
+358,Cu4 Hg4 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/609/min_e_strc.cif,no_error,609,0.013003349304199219,0.013003349304199219
+359,Al8 Cu2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/615/min_e_strc.cif,no_error,615,0.2748939514160158,0.2748939514160158
+360,K2 Pu2 Br8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/383/min_e_strc.cif,No valid decomposition found for PDEntry : K2 Pu2 Br8 with energy = -67.8698! (e_h: -0.018667777379354433),383,0.0,-0.018667777379354433
+361,Li4 Lu8 In4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/683/min_e_strc.cif,No valid decomposition found for PDEntry : Li4 Lu8 In4 with energy = -58.8988! (e_h: -2.9087066650390625e-05),683,0.0,-2.9087066650390625
+362,Ca8 Mn16 S32,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/704/min_e_strc.cif,no_error,704,0.10834598541259943,0.10834598541259943
+363,Ca6 Ti4 F24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/255/min_e_strc.cif,no_error,255,0.14689563302432784,0.14689563302432784
+364,La2 Tb6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/792/min_e_strc.cif,no_error,792,0.0010104179382324219,0.0010104179382324219
+365,Ba4 Co4 F12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/320/min_e_strc.cif,no_error,320,0.3768301486969019,0.3768301486969019
+366,Li2 V4 F12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/985/min_e_strc.cif,no_error,985,0.01666259765625,0.01666259765625
+367,Ba2 Au3 Se4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/237/min_e_strc.cif,No valid decomposition found for PDEntry : Ba2 Au3 Se4 with energy = -38.2031! (e_h: -0.04338553216722296),237,0.0,-0.04338553216722296
+368,Nd4 Cu2 Ge8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/76/min_e_strc.cif,no_error,76,0.11555587852394034,0.11555587852394034
+369,K6 Tl2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/151/min_e_strc.cif,no_error,151,0.20664296405656035,0.20664296405656035
+370,Ca4 Bi4 Pb8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/243/min_e_strc.cif,no_error,243,0.08837835490703494,0.08837835490703494
+371,Cr4 Pb2 Se12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/812/min_e_strc.cif,no_error,812,0.0563009579976379,0.0563009579976379
+372,Pr3 Tm1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/903/min_e_strc.cif,no_error,903,0.004836440086364746,0.004836440086364746
+373,Tb2 Pm6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/948/min_e_strc.cif,No valid decomposition found for PDEntry : Tb2 Pm6 with energy = -37.5790! (e_h: -0.00048482418060302734),948,0.0,-0.00048482418060302734
+374,Na4 Cu16 S8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/776/min_e_strc.cif,no_error,776,0.07018831798008307,0.07018831798008307
+375,Er16 Zn16 O48,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/688/min_e_strc.cif,no_error,688,0.4531152725219716,0.4531152725219716
+376,Rb8 Er4 F24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/435/min_e_strc.cif,no_error,435,0.009621606932747717,0.009621606932747717
+377,Sr4 Ca4 B8 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/49/min_e_strc.cif,no_error,49,0.43605382641158563,0.43605382641158563
+378,Sc8 Ta4 O18,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/89/min_e_strc.cif,no_error,89,0.24957041422526594,0.24957041422526594
+379,Mg1 Ti5 O10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/818/min_e_strc.cif,no_error,818,0.05328178405761541,0.05328178405761541
+380,Ho8 Tc4 Au4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/143/min_e_strc.cif,no_error,143,0.13475263118743896,0.13475263118743896
+381,Li4 Yb4 Hg8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/476/min_e_strc.cif,Unable to get decomposition for PDEntry : Li4 Yb4 Hg8 with energy = -24.3091,476,0.0,0.0
+382,Cu2 Ag6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/356/min_e_strc.cif,no_error,356,0.03338587284088135,0.03338587284088135
+383,Sr4 Mg8 Pt4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/343/min_e_strc.cif,no_error,343,0.2105024456977862,0.2105024456977862
+384,Mn6 O6 F4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/698/min_e_strc.cif,no_error,698,0.13527452945709229,0.13527452945709229
+385,Nb4 Si4 Te12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/624/min_e_strc.cif,No valid decomposition found for PDEntry : Nb4 Si4 Te12 with energy = -111.4433! (e_h: -0.024102783203124645),624,0.0,-0.024102783203124645
+386,Rb2 Nb2 P4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/266/min_e_strc.cif,no_error,266,1.4687679708003998,1.4687679708003998
+387,Ni8 As8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/802/min_e_strc.cif,no_error,802,0.02258777618408203,0.02258777618408203
+388,Na4 Sr4 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/509/min_e_strc.cif,no_error,509,0.08464164733886737,0.08464164733886737
+389,Hf4 Mn4 Pd24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/644/min_e_strc.cif,No valid decomposition found for PDEntry : Hf4 Mn4 Pd24 with energy = -217.7948! (e_h: -0.017916858196258545),644,0.0,-0.017916858196258545
+390,Na2 Mg2 Sn4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/69/min_e_strc.cif,no_error,69,0.07225003507402228,0.07225003507402228
+391,Fe4 Sn2 S4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/188/min_e_strc.cif,No valid decomposition found for PDEntry : Fe4 Sn2 S4 with energy = -63.5211! (e_h: -0.0025231043497715433),188,0.0,-0.0025231043497715433
+392,U2 Ge2 P2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/750/min_e_strc.cif,no_error,750,0.18064431349436294,0.18064431349436294
+393,Nd3 Mg3 Pd3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/940/min_e_strc.cif,No valid decomposition found for PDEntry : Nd3 Mg3 Pd3 with energy = -40.5560! (e_h: -0.0021491050720214844),940,0.0,-0.0021491050720214844
+394,Li4 Nd4 Ag8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/277/min_e_strc.cif,no_error,277,0.028806135058403903,0.028806135058403903
+395,Li10 Mn6 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/292/min_e_strc.cif,no_error,292,0.1454114913940181,0.1454114913940181
+396,Sc1 Cu1 P1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/585/min_e_strc.cif,no_error,585,0.6698657671610526,0.6698657671610526
+397,Yb3 Al8 Ge5,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/85/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb3 Al8 Ge5 with energy = -60.8917,85,0.0,0.0
+398,Mn6 O2 F11,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/174/min_e_strc.cif,no_error,174,0.04719788777200762,0.04719788777200762
+399,Re2 H7 O10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/263/min_e_strc.cif,no_error,263,0.2914470120479953,0.2914470120479953
+400,Mg2 Zn2 As4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/920/min_e_strc.cif,no_error,920,0.28447274367014597,0.28447274367014597
+401,Ce6 Si14 Ni4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/165/min_e_strc.cif,no_error,165,0.2595823407173157,0.2595823407173157
+402,Yb6 As12 Pd12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/48/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb6 As12 Pd12 with energy = -149.4268,48,0.0,0.0
+403,Ti1 In1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/929/min_e_strc.cif,no_error,929,0.6624007225036621,0.6624007225036621
+404,Nd1 Cu1 Si1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/854/min_e_strc.cif,no_error,854,0.0042514801025390625,0.0042514801025390625
+405,Tm1 Pd3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/944/min_e_strc.cif,No valid decomposition found for PDEntry : Tm1 Pd3 with energy = -23.5172! (e_h: -0.006793498992919922),944,0.0,-0.006793498992919922
+406,Sc4 Sb4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/700/min_e_strc.cif,No valid decomposition found for PDEntry : Sc4 Sb4 with energy = -49.8750! (e_h: -0.0009717941284179688),700,0.0,-0.0009717941284179688
+407,Li2 Cu4 Te6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/714/min_e_strc.cif,no_error,714,0.17283505201339722,0.17283505201339722
+408,Sr2 Cd3 Sb5,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/834/min_e_strc.cif,no_error,834,0.11258870363235474,0.11258870363235474
+409,Tb3 Ag3 S3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/556/min_e_strc.cif,no_error,556,0.5082290967305516,0.5082290967305516
+410,Y6 Sn10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/734/min_e_strc.cif,No valid decomposition found for PDEntry : Y6 Sn10 with energy = -88.8997! (e_h: -0.0014138221740722656),734,0.0,-0.0014138221740722656
+411,Mg17 Ag3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/607/min_e_strc.cif,no_error,607,0.13900639479224752,0.13900639479224752
+412,Li4 Fe4 F8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/324/min_e_strc.cif,no_error,324,0.4176121950149536,0.4176121950149536
+413,Fe4 Sb4 Pt4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/232/min_e_strc.cif,no_error,232,0.3188050587972011,0.3188050587972011
+414,Rb2 Lu2 F4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/190/min_e_strc.cif,no_error,190,0.9606603860855101,0.9606603860855101
+415,Cu4 As4 Pb4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/260/min_e_strc.cif,No valid decomposition found for PDEntry : Cu4 As4 Pb4 with energy = -49.9805! (e_h: -0.05159301227993485),260,0.0,-0.05159301227993485
+416,Tb4 Sm4 Cl24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/42/min_e_strc.cif,No valid decomposition found for PDEntry : Tb4 Sm4 Cl24 with energy = -168.6490! (e_h: -0.01395416259765625),42,0.0,-0.01395416259765625
+417,Ca3 Tm9 N12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/119/min_e_strc.cif,no_error,119,0.08993507921695709,0.08993507921695709
+418,Yb8 Dy16 Pd28,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/664/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb8 Dy16 Pd28 with energy = -261.5245,664,0.0,0.0
+419,Ca4 Nb10 S20,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/725/min_e_strc.cif,no_error,725,0.18723243825576574,0.18723243825576574
+420,Tm3 In4 Rh2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/120/min_e_strc.cif,No valid decomposition found for PDEntry : Tm3 In4 Rh2 with energy = -44.8789! (e_h: -0.002705637613932055),120,0.0,-0.002705637613932055
+421,Ho8 Mn4 Ge20,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/990/min_e_strc.cif,no_error,990,0.02708247303962974,0.02708247303962974
+422,Li4 Pa4 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/297/min_e_strc.cif,no_error,297,0.08209276199340643,0.08209276199340643
+423,Ti4 Cr6 Se16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/161/min_e_strc.cif,no_error,161,0.14078219120319257,0.14078219120319257
+424,Li6 As12 O18,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/264/min_e_strc.cif,no_error,264,0.0876582286975971,0.0876582286975971
+425,Cr10 Fe6 B8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/288/min_e_strc.cif,no_error,288,0.6321649212307392,0.6321649212307392
+426,Zr3 Mn3 Ge5 Rh1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/337/min_e_strc.cif,no_error,337,0.5646737813949603,0.5646737813949603
+427,Li4 Pr8 Mg8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/201/min_e_strc.cif,no_error,201,0.010792160034179599,0.010792160034179599
+428,Zr2 U2 Si8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/422/min_e_strc.cif,no_error,422,1.3138338724772112,1.3138338724772112
+429,Nd2 Si4 Rh4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/885/min_e_strc.cif,No valid decomposition found for PDEntry : Nd2 Si4 Rh4 with energy = -71.3183! (e_h: -0.0038537979125976562),885,0.0,-0.0038537979125976562
+430,Pu4 In2 Pd4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/839/min_e_strc.cif,no_error,839,0.3099713325500506,0.3099713325500506
+431,Li8 P8 I4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/949/min_e_strc.cif,no_error,949,0.029616451263428267,0.029616451263428267
+432,V6 O9 F5,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/171/min_e_strc.cif,no_error,171,0.0872539520263178,0.0872539520263178
+433,Sc2 B2 Ru2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/784/min_e_strc.cif,no_error,784,1.2886627038319922,1.2886627038319922
+434,Hf20 Ga8 Sb4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/600/min_e_strc.cif,no_error,600,0.11169799168904149,0.11169799168904149
+435,Ni9 Pb3 Se6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/283/min_e_strc.cif,no_error,283,0.18874760468800833,0.18874760468800833
+436,Rb1 Li1 P1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/887/min_e_strc.cif,no_error,887,0.5648974445131087,0.5648974445131087
+437,Y2 W2 N4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/822/min_e_strc.cif,no_error,822,1.5935051441192627,1.5935051441192627
+438,Sc4 Mn4 Si4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/98/min_e_strc.cif,No valid decomposition found for PDEntry : Sc4 Mn4 Si4 with energy = -90.9438! (e_h: -0.022791385650635654),98,0.0,-0.022791385650635654
+439,La8 Mg4 In4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/845/min_e_strc.cif,no_error,845,0.003445953130722046,0.003445953130722046
+440,Gd2 O3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/815/min_e_strc.cif,no_error,815,0.030473709106445312,0.030473709106445312
+441,Ti1 Cr5 Fe6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/875/min_e_strc.cif,no_error,875,0.005339543024698301,0.005339543024698301
+442,Sm8 Tl4 Cd4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/550/min_e_strc.cif,No valid decomposition found for PDEntry : Sm8 Tl4 Cd4 with energy = -56.7214! (e_h: -0.0006618499755863816),550,0.0,-0.0006618499755863816
+443,Th2 U2 Te2 N4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/296/min_e_strc.cif,no_error,296,0.21940326690673828,0.21940326690673828
+444,Y4 Pt8 Pb4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/836/min_e_strc.cif,no_error,836,0.06715387105941772,0.06715387105941772
+445,Cu8 I6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/52/min_e_strc.cif,no_error,52,0.06456000464303191,0.06456000464303191
+446,Tb2 Ho2 Cu8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/20/min_e_strc.cif,no_error,20,0.5661211013793945,0.5661211013793945
+447,Pm3 Sm1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/805/min_e_strc.cif,no_error,805,0.0007022619247436523,0.0007022619247436523
+448,Cs4 Sb8 S12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/645/min_e_strc.cif,no_error,645,0.020920647515183965,0.020920647515183965
+449,Lu2 Zr2 O2 F14,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/535/min_e_strc.cif,no_error,535,0.09370012283324058,0.09370012283324058
+450,Mg3 Cu1 Ag2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/385/min_e_strc.cif,no_error,385,0.36417893568674664,0.36417893568674664
+451,Ho8 Au4 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/884/min_e_strc.cif,No valid decomposition found for PDEntry : Ho8 Au4 O16 with energy = -212.3725! (e_h: -0.013763802392143809),884,0.0,-0.013763802392143809
+452,Tb2 Cl6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/844/min_e_strc.cif,no_error,844,0.02536153793334961,0.02536153793334961
+453,Cu8 Sn4 P16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/578/min_e_strc.cif,no_error,578,0.061142206192014825,0.061142206192014825
+454,Zn4 Cl4 O4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/130/min_e_strc.cif,no_error,130,0.24273654392787503,0.24273654392787503
+455,Pr4 O8 F8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/933/min_e_strc.cif,no_error,933,0.4476926803588883,0.4476926803588883
+456,Ti2 Be6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/927/min_e_strc.cif,no_error,927,0.19353818893432617,0.19353818893432617
+457,La4 Pr4 Tl8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/448/min_e_strc.cif,no_error,448,0.0020946264266967773,0.0020946264266967773
+458,Sc3 Al3 Co1 Rh2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/557/min_e_strc.cif,No valid decomposition found for PDEntry : Sc3 Al3 Co1 Rh2 with energy = -59.3150! (e_h: -0.04779234119489928),557,0.0,-0.04779234119489928
+459,Yb3 Ge21 Te12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/441/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb3 Ge21 Te12 with energy = -149.5849,441,0.0,0.0
+460,Zr1 Al3 Pd1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/552/min_e_strc.cif,no_error,552,0.7103166262308811,0.7103166262308811
+461,Ho6 In4 Ir8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/883/min_e_strc.cif,no_error,883,0.2236277262369768,0.2236277262369768
+462,Ce2 Lu2 F10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/351/min_e_strc.cif,no_error,351,0.0446911539350241,0.0446911539350241
+463,Dy2 Ga2 Co6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/220/min_e_strc.cif,no_error,220,0.0955832130030565,0.0955832130030565
+464,Fe3 Pd1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/436/min_e_strc.cif,no_error,436,0.015235265096029238,0.015235265096029238
+465,Mg8 Ni16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/651/min_e_strc.cif,No valid decomposition found for PDEntry : Mg8 Ni16 with energy = -109.6179! (e_h: -0.00470733642578125),651,0.0,-0.00470733642578125
+466,Er3 Cd3 Pd3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/686/min_e_strc.cif,No valid decomposition found for PDEntry : Er3 Cd3 Pd3 with energy = -38.3026! (e_h: -0.009443044662477362),686,0.0,-0.009443044662477362
+467,Li6 V6 S18,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/412/min_e_strc.cif,no_error,412,0.08166227340698207,0.08166227340698207
+468,Rb4 Tm8 In4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/387/min_e_strc.cif,no_error,387,0.540186196565628,0.540186196565628
+469,Lu2 Tl6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/410/min_e_strc.cif,No valid decomposition found for PDEntry : Lu2 Tl6 with energy = -24.3912! (e_h: -0.012531042098999468),410,0.0,-0.012531042098999468
+470,Cd4 P4 O24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/717/min_e_strc.cif,no_error,717,0.5236854553222656,0.5236854553222656
+471,Cs2 Tl2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/242/min_e_strc.cif,No valid decomposition found for PDEntry : Cs2 Tl2 with energy = -7.0026! (e_h: -0.1439896821975708),242,0.0,-0.1439896821975708
+472,Ag48 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/617/min_e_strc.cif,no_error,617,0.11256533861160278,0.11256533861160278
+473,Na8 U4 Cl48,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/27/min_e_strc.cif,no_error,27,0.6681494553883871,0.6681494553883871
+474,Mn8 O8 F8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/577/min_e_strc.cif,no_error,577,0.09825944900512695,0.09825944900512695
+475,Gd4 Tm4 Hg8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/926/min_e_strc.cif,No valid decomposition found for PDEntry : Gd4 Tm4 Hg8 with energy = -84.5589! (e_h: -0.004355430603027344),926,0.0,-0.004355430603027344
+476,V12 Fe2 B1 Mo6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/245/min_e_strc.cif,no_error,245,1.9766310737246577,1.9766310737246577
+477,Ca4 Au8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/847/min_e_strc.cif,No valid decomposition found for PDEntry : Ca4 Au8 with energy = -42.9953! (e_h: -0.00591588020324707),847,0.0,-0.00591588020324707
+478,Zr6 Mn12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/203/min_e_strc.cif,no_error,203,0.6335716247558576,0.6335716247558576
+479,Tm4 B8 C4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/720/min_e_strc.cif,no_error,720,0.22477197647094727,0.22477197647094727
+480,K4 Cr8 F20,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/304/min_e_strc.cif,no_error,304,0.13244152069091264,0.13244152069091264
+481,Li4 Mg2 I4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/314/min_e_strc.cif,no_error,314,0.2401713609695424,0.2401713609695424
+482,Li2 Ni4 Ge4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/894/min_e_strc.cif,no_error,894,0.006530382973808813,0.006530382973808813
+483,Y3 Zr3 O6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/209/min_e_strc.cif,no_error,209,0.15763205289840698,0.15763205289840698
+484,Cs4 Cu8 F24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/11/min_e_strc.cif,no_error,11,0.11402034759522284,0.11402034759522284
+485,Li4 V4 O10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/478/min_e_strc.cif,no_error,478,0.40888088881367946,0.40888088881367946
+486,Pr8 Al4 Ni12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/581/min_e_strc.cif,no_error,581,0.11982417106628418,0.11982417106628418
+487,Ba2 Ti4 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/19/min_e_strc.cif,no_error,19,0.49634755312741063,0.49634755312741063
+488,Ce2 P2 Pt4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/540/min_e_strc.cif,no_error,540,0.05962944030761541,0.05962944030761541
+489,Nb8 N12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/231/min_e_strc.cif,no_error,231,0.016253166198730185,0.016253166198730185
+490,P3 Se3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/365/min_e_strc.cif,no_error,365,0.03743886947631836,0.03743886947631836
+491,Ce4 Lu4 Ru8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/447/min_e_strc.cif,No valid decomposition found for PDEntry : Ce4 Lu4 Ru8 with energy = -123.1902! (e_h: -0.030841016769408647),447,0.0,-0.030841016769408647
+492,Co18 Bi9,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/596/min_e_strc.cif,no_error,596,0.1635775566101083,0.1635775566101083
+493,La10 Mn4 Sb4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/54/min_e_strc.cif,no_error,54,0.4334165785047741,0.4334165785047741
+494,Y2 Cu4 P4 H8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/60/min_e_strc.cif,no_error,60,0.26504299375745966,0.26504299375745966
+495,Sc4 Sn4 Au8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/280/min_e_strc.cif,no_error,280,0.001946055889129994,0.001946055889129994
+496,Sr1 Ag1 Se2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/43/min_e_strc.cif,no_error,43,0.7405166625976562,0.7405166625976562
+497,Nb6 Se12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/386/min_e_strc.cif,no_error,386,0.11447858810424805,0.11447858810424805
+498,Er4 Pd8 Pb4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/115/min_e_strc.cif,No valid decomposition found for PDEntry : Er4 Pd8 Pb4 with energy = -85.9613! (e_h: -0.006508350372314453),115,0.0,-0.006508350372314453
+499,W2 N8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/739/min_e_strc.cif,no_error,739,0.03759536743164027,0.03759536743164027
+500,K3 I1 Br1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/886/min_e_strc.cif,no_error,886,0.20513472557067924,0.20513472557067924
+501,Sr4 La8 O20,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/637/min_e_strc.cif,no_error,637,0.14646857976913452,0.14646857976913452
+502,Na3 Mo3 O6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/982/min_e_strc.cif,no_error,982,0.6733264327049246,0.6733264327049246
+503,Ce4 Si8 Pd8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/841/min_e_strc.cif,no_error,841,0.09488487243652344,0.09488487243652344
+504,Pm4 Tl4 Hg8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/14/min_e_strc.cif,no_error,14,0.0016961097717285156,0.0016961097717285156
+505,Zn4 Pd8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/554/min_e_strc.cif,no_error,554,0.08017539978027344,0.08017539978027344
+506,Pm4 Mg4 Rh8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/823/min_e_strc.cif,No valid decomposition found for PDEntry : Pm4 Mg4 Rh8 with energy = -93.8843! (e_h: -0.004860401153564453),823,0.0,-0.004860401153564453
+507,Nb4 P4 O20,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/212/min_e_strc.cif,no_error,212,0.12630271911621094,0.12630271911621094
+508,Rb4 Co2 Te4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/835/min_e_strc.cif,no_error,835,0.26934018135070925,0.26934018135070925
+509,Pr6 Ga2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/121/min_e_strc.cif,no_error,121,0.0824268658955889,0.0824268658955889
+510,Ce2 Mn6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/82/min_e_strc.cif,no_error,82,0.7139178514480591,0.7139178514480591
+511,Ag6 Pt6 O36,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/458/min_e_strc.cif,no_error,458,0.7155374884605408,0.7155374884605408
+512,Pr2 S1 O2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/179/min_e_strc.cif,No valid decomposition found for PDEntry : Pr2 S1 O2 with energy = -40.5394! (e_h: -0.0013093948364257812),179,0.0,-0.0013093948364257812
+513,Fe6 Re2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/131/min_e_strc.cif,no_error,131,0.014358043670654297,0.014358043670654297
+514,Cs4 S4 O4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/798/min_e_strc.cif,no_error,798,0.512274364630378,0.512274364630378
+515,P2 H8 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/984/min_e_strc.cif,no_error,984,0.11530496857382833,0.11530496857382833
+516,Sm4 Sc4 Hg8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/751/min_e_strc.cif,No valid decomposition found for PDEntry : Sm4 Sc4 Hg8 with energy = -53.9554! (e_h: -0.06948654651641917),751,0.0,-0.06948654651641917
+517,Pr1 Ga6 Ni3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/473/min_e_strc.cif,no_error,473,0.2466835242051344,0.2466835242051344
+518,Nb2 Mo12 W12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/506/min_e_strc.cif,no_error,506,0.3001251954298727,0.3001251954298727
+519,Ho6 Al3 Co51,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/907/min_e_strc.cif,no_error,907,0.32522708177566706,0.32522708177566706
+520,Pa4 Ge8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/503/min_e_strc.cif,No valid decomposition found for PDEntry : Pa4 Ge8 with energy = -79.6541! (e_h: -0.02864440282185754),503,0.0,-0.02864440282185754
+521,Li4 Co8 Si4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/855/min_e_strc.cif,No valid decomposition found for PDEntry : Li4 Co8 Si4 with energy = -92.1809! (e_h: -0.010663509368896484),855,0.0,-0.010663509368896484
+522,Np4 Zn8 Ru4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/32/min_e_strc.cif,no_error,32,0.19104512532552143,0.19104512532552143
+523,Tl4 N4 Cl8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/754/min_e_strc.cif,no_error,754,0.9135182499885559,0.9135182499885559
+524,Cd8 Ag16 O32,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/799/min_e_strc.cif,no_error,799,0.06928586959838867,0.06928586959838867
+525,Eu4 Mo4 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/12/min_e_strc.cif,no_error,12,0.0821390151977539,0.0821390151977539
+526,Sm2 Pd2 Au2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/33/min_e_strc.cif,no_error,33,0.0995133188035755,0.0995133188035755
+527,Cu2 O2 F8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/41/min_e_strc.cif,no_error,41,0.04181373119354248,0.04181373119354248
+528,Li3 Cl2 O3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/902/min_e_strc.cif,no_error,902,0.14372117817401886,0.14372117817401886
+529,Sr16 Sn48,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/599/min_e_strc.cif,no_error,599,0.04821944236755282,0.04821944236755282
+530,Gd16 Cu4 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/426/min_e_strc.cif,no_error,426,0.4317825458667883,0.4317825458667883
+531,Sc2 Ta2 O4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/936/min_e_strc.cif,no_error,936,0.7370064735412605,0.7370064735412605
+532,V8 O14 F6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/635/min_e_strc.cif,no_error,635,0.08735663550238648,0.08735663550238648
+533,Cu1 Sn1 O6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/778/min_e_strc.cif,no_error,778,0.11072951555252075,0.11072951555252075
+534,La4 Mg4 Al8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/17/min_e_strc.cif,no_error,17,0.06954315304756165,0.06954315304756165
+535,Tm10 Fe2 Ge10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/968/min_e_strc.cif,no_error,968,0.2345931833440602,0.2345931833440602
+536,Co3 H1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/925/min_e_strc.cif,no_error,925,0.4608912467956543,0.4608912467956543
+537,Ho3 Tl3 Se6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/756/min_e_strc.cif,No valid decomposition found for PDEntry : Ho3 Tl3 Se6 with energy = -61.0801! (e_h: -0.0038781166076748974),756,0.0,-0.0038781166076748974
+538,Ce4 Si4 Ru2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/207/min_e_strc.cif,no_error,207,0.24188032150268768,0.24188032150268768
+539,Pr4 Ni14 Ge12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/25/min_e_strc.cif,no_error,25,0.11592335928053554,0.11592335928053554
+540,Mn4 Fe8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/735/min_e_strc.cif,no_error,735,0.06604332394070056,0.06604332394070056
+541,Hg2 Pb4 Se10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/411/min_e_strc.cif,no_error,411,0.025243103504180908,0.025243103504180908
+542,Sc2 Al8 Ag8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/519/min_e_strc.cif,no_error,519,0.21184382886968,0.21184382886968
+543,Cs4 Se10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/496/min_e_strc.cif,No valid decomposition found for PDEntry : Cs4 Se10 with energy = -51.4964! (e_h: -0.0025784969329829543),496,0.0,-0.0025784969329829543
+544,Ti4 Ru4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/648/min_e_strc.cif,No valid decomposition found for PDEntry : Ti4 Ru4 with energy = -74.1674! (e_h: -0.0025911331176757812),648,0.0,-0.0025911331176757812
+545,Na4 Cd12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/13/min_e_strc.cif,no_error,13,0.007327795028686301,0.007327795028686301
+546,Sr4 Mn12 Zn8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/955/min_e_strc.cif,no_error,955,0.396773099899292,0.396773099899292
+547,Ca2 Ni2 Sb4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/380/min_e_strc.cif,no_error,380,0.3110594532706532,0.3110594532706532
+548,Cs16 Li24 Br24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/492/min_e_strc.cif,no_error,492,0.4066454768180847,0.4066454768180847
+549,Ca3 Sn1 O4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/229/min_e_strc.cif,no_error,229,0.35178710520267487,0.35178710520267487
+550,Mn4 Se2 N2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/601/min_e_strc.cif,no_error,601,0.036739349365234375,0.036739349365234375
+551,Tm8 Cu8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/46/min_e_strc.cif,No valid decomposition found for PDEntry : Tm8 Cu8 with energy = -72.9255! (e_h: -0.0031800270080566406),46,0.0,-0.0031800270080566406
+552,Fe4 Ge4 Pt4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/998/min_e_strc.cif,no_error,998,0.06825081507364938,0.06825081507364938
+553,La6 Mg6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/451/min_e_strc.cif,no_error,451,0.02226239442825273,0.02226239442825273
+554,Co2 Ge2 Sb6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/772/min_e_strc.cif,No valid decomposition found for PDEntry : Co2 Ge2 Sb6 with energy = -50.2682! (e_h: -0.018184089660642222),772,0.0,-0.018184089660642222
+555,Ti15 Se18,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/139/min_e_strc.cif,no_error,139,0.009719967842102939,0.009719967842102939
+556,Al16 Ga2 Ni4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/780/min_e_strc.cif,no_error,780,0.07701204039833787,0.07701204039833787
+557,La4 Os4 N12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/407/min_e_strc.cif,no_error,407,0.056622505187986505,0.056622505187986505
+558,Na8 Pd4 O4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/431/min_e_strc.cif,no_error,431,0.21216869354248047,0.21216869354248047
+559,Pr1 Y1 Ni1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/252/min_e_strc.cif,no_error,252,0.1712813377380371,0.1712813377380371
+560,Y2 Zn2 Ni4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/912/min_e_strc.cif,no_error,912,0.04543312390645493,0.04543312390645493
+561,Li8 Ge8 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/234/min_e_strc.cif,no_error,234,0.1955531239509556,0.1955531239509556
+562,Ta2 Cr1 Fe10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/340/min_e_strc.cif,no_error,340,0.10103086324838273,0.10103086324838273
+563,Nd4 Co8 B4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/865/min_e_strc.cif,no_error,865,0.3286722633573751,0.3286722633573751
+564,Gd8 Ag8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/958/min_e_strc.cif,No valid decomposition found for PDEntry : Gd8 Ag8 with energy = -140.3311! (e_h: -0.0013742446899414062),958,0.0,-0.0013742446899414062
+565,Th4 N1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/459/min_e_strc.cif,no_error,459,0.04021577835083079,0.04021577835083079
+566,Pd2 Pt6 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/533/min_e_strc.cif,no_error,533,0.17767608165740967,0.17767608165740967
+567,Ti8 Mn4 Ir4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/53/min_e_strc.cif,No valid decomposition found for PDEntry : Ti8 Mn4 Ir4 with energy = -144.9020! (e_h: -0.0035009384155255674),53,0.0,-0.0035009384155255674
+568,Dy4 Fe4 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/526/min_e_strc.cif,No valid decomposition found for PDEntry : Dy4 Fe4 O12 with energy = -168.5952! (e_h: -0.00463104248046875),526,0.0,-0.00463104248046875
+569,Hf8 Al16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/287/min_e_strc.cif,no_error,287,0.00820551978217221,0.00820551978217221
+570,Ta1 Sn3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/732/min_e_strc.cif,no_error,732,0.3081185221672058,0.3081185221672058
+571,Er4 Cu4 Pd8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/211/min_e_strc.cif,No valid decomposition found for PDEntry : Er4 Cu4 Pd8 with energy = -87.5624! (e_h: -0.018482017517089666),211,0.0,-0.018482017517089666
+572,Sm4 Mg8 Pt4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/316/min_e_strc.cif,no_error,316,0.23916807770729065,0.23916807770729065
+573,Tb3 In1 Pd2 Pb3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/501/min_e_strc.cif,no_error,501,0.041836868632923796,0.041836868632923796
+574,Y8 C32,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/250/min_e_strc.cif,no_error,250,0.20954794883727956,0.20954794883727956
+575,Tb2 Sc2 S7,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/495/min_e_strc.cif,no_error,495,0.17705505544489064,0.17705505544489064
+576,Co2 Ge4 Rh4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/79/min_e_strc.cif,no_error,79,0.44564042091369593,0.44564042091369593
+577,Ce2 Mg3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/832/min_e_strc.cif,no_error,832,0.014206433296203969,0.014206433296203969
+578,U8 C16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/218/min_e_strc.cif,no_error,218,1.3639793395996112,1.3639793395996112
+579,Li3 P1 Ru2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/830/min_e_strc.cif,no_error,830,0.09845097859700491,0.09845097859700491
+580,Dy3 Mg2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/771/min_e_strc.cif,no_error,771,0.09544219970703116,0.09544219970703116
+581,Ba4 Fe4 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/487/min_e_strc.cif,no_error,487,0.28207031885782996,0.28207031885782996
+582,Tl4 Ag4 Cl16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/513/min_e_strc.cif,No valid decomposition found for PDEntry : Tl4 Ag4 Cl16 with energy = -74.1305! (e_h: -0.04462130864461633),513,0.0,-0.04462130864461633
+583,Ba2 Al2 Pd4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/612/min_e_strc.cif,no_error,612,0.3213682174682617,0.3213682174682617
+584,Pm4 As4 Pd8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/397/min_e_strc.cif,No valid decomposition found for PDEntry : Pm4 As4 Pd8 with energy = -90.7183! (e_h: -0.05913480122884174),397,0.0,-0.05913480122884174
+585,Sr3 Co3 F18,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/446/min_e_strc.cif,No valid decomposition found for PDEntry : Sr3 Co3 F18 with energy = -126.6808! (e_h: -0.08783495426177979),446,0.0,-0.08783495426177979
+586,Cd4 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/859/min_e_strc.cif,no_error,859,0.20354938507080078,0.20354938507080078
+587,Nd4 Al4 Si6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/371/min_e_strc.cif,no_error,371,0.31266798291887543,0.31266798291887543
+588,Mn4 Al4 Fe8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/692/min_e_strc.cif,No valid decomposition found for PDEntry : Mn4 Al4 Fe8 with energy = -122.2273! (e_h: -0.00019025802612304688),692,0.0,-0.00019025802612304688
+589,Ce3 Sb1 Pd2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/452/min_e_strc.cif,no_error,452,0.22923864258659954,0.22923864258659954
+590,Ga1 Pd4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/246/min_e_strc.cif,no_error,246,0.48224878311157227,0.48224878311157227
+591,Nd6 Si8 Au8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/103/min_e_strc.cif,no_error,103,0.14405005194924136,0.14405005194924136
+592,Eu2 Si2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/959/min_e_strc.cif,no_error,959,0.5486063957214355,0.5486063957214355
+593,Li2 B16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/817/min_e_strc.cif,no_error,817,1.1823347939385318,1.1823347939385318
+594,Li1 H2 C2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/808/min_e_strc.cif,no_error,808,0.20853090286254883,0.20853090286254883
+595,Mn4 Sb4 Pd4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/241/min_e_strc.cif,no_error,241,0.10303401947021484,0.10303401947021484
+596,Gd4 Sb4 Pt8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/549/min_e_strc.cif,no_error,549,0.12508070468902588,0.12508070468902588
+597,Ba4 Ge4 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/150/min_e_strc.cif,no_error,150,0.2047939896583557,0.2047939896583557
+598,Y4 Al4 Co2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/983/min_e_strc.cif,no_error,983,0.015161132812499645,0.015161132812499645
+599,Bi3 Pt3 Cl36,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/463/min_e_strc.cif,No valid decomposition found for PDEntry : Bi3 Pt3 Cl36 with energy = -125.6392! (e_h: -0.06201720237731845),463,0.0,-0.06201720237731845
+600,Dy8 Cu8 Se16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/905/min_e_strc.cif,no_error,905,0.07220983505249023,0.07220983505249023
+601,Nd3 In3 Ni3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/779/min_e_strc.cif,No valid decomposition found for PDEntry : Nd3 In3 Ni3 with energy = -43.9550! (e_h: -0.004775047302246094),779,0.0,-0.004775047302246094
+602,Sr1 Mg3 Pb1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/916/min_e_strc.cif,no_error,916,0.41194429397583,0.41194429397583
+603,Ho4 Si1 Ge4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/997/min_e_strc.cif,no_error,997,0.2901876237657337,0.2901876237657337
+604,Sc3 Mo18 O36,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/308/min_e_strc.cif,no_error,308,0.05395760034259567,0.05395760034259567
+605,Tm8 Zn4 Ir4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/582/min_e_strc.cif,no_error,582,0.019970893859865946,0.019970893859865946
+606,Pr4 Al4 Pt4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/986/min_e_strc.cif,No valid decomposition found for PDEntry : Pr4 Al4 Pt4 with energy = -70.8717! (e_h: -0.00166749954223544),986,0.0,-0.00166749954223544
+607,Sr12 N2 Cl6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/342/min_e_strc.cif,no_error,342,0.29825384616851736,0.29825384616851736
+608,Re4 As24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/702/min_e_strc.cif,no_error,702,0.026382605234782197,0.026382605234782197
+609,Er2 Al8 P4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/44/min_e_strc.cif,no_error,44,0.7243867117659484,0.7243867117659484
+610,Fe3 Se9,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/743/min_e_strc.cif,No valid decomposition found for PDEntry : Fe3 Se9 with energy = -62.2738! (e_h: -0.002187371253967285),743,0.0,-0.002187371253967285
+611,Ag4 Pd4 Pb8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/757/min_e_strc.cif,no_error,757,0.08494985103607178,0.08494985103607178
+612,Ce4 O4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/78/min_e_strc.cif,No valid decomposition found for PDEntry : Ce4 O4 with energy = -69.3790! (e_h: -0.0005702972412109375),78,0.0,-0.0005702972412109375
+613,Tb4 Se4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/219/min_e_strc.cif,No valid decomposition found for PDEntry : Tb4 Se4 with energy = -48.5998! (e_h: -0.0017561912536621094),219,0.0,-0.0017561912536621094
+614,Cu2 H4 N2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/482/min_e_strc.cif,no_error,482,0.18564303716023733,0.18564303716023733
+615,Mg2 Co2 S16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/816/min_e_strc.cif,no_error,816,0.07063484191894531,0.07063484191894531
+616,Sc4 Ta4 Si4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/67/min_e_strc.cif,no_error,67,0.039766502380373936,0.039766502380373936
+617,Pr16 Bi12 Se16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/937/min_e_strc.cif,no_error,937,0.6809092434969806,0.6809092434969806
+618,Nd8 Sm4 S16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/611/min_e_strc.cif,no_error,611,7.724761962890625e-05,7.724761962890625e-05
+619,Cr6 B2 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/785/min_e_strc.cif,no_error,785,0.15995121002197266,0.15995121002197266
+620,Bi4 N8 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/500/min_e_strc.cif,no_error,500,0.4342646598815918,0.4342646598815918
+621,Mg6 Ga4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/202/min_e_strc.cif,no_error,202,0.005119466781616566,0.005119466781616566
+622,Sr8 Au4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/7/min_e_strc.cif,no_error,7,0.07885281244913722,0.07885281244913722
+623,Sm16 Se12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/282/min_e_strc.cif,no_error,282,0.07035357611519988,0.07035357611519988
+624,Th1 Fe3 B2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/960/min_e_strc.cif,No valid decomposition found for PDEntry : Th1 Fe3 B2 with energy = -48.2367! (e_h: -0.06867131038467811),960,0.0,-0.06867131038467811
+625,Pr3 Ga1 N1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/758/min_e_strc.cif,No valid decomposition found for PDEntry : Pr3 Ga1 N1 with energy = -30.1499! (e_h: -0.07676022847493513),758,0.0,-0.07676022847493513
+626,Zr8 Cr28 Ga4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/904/min_e_strc.cif,no_error,904,0.505816614627836,0.505816614627836
+627,Y4 Cd4 S12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/749/min_e_strc.cif,no_error,749,0.11523995399475062,0.11523995399475062
+628,K8 As8 P8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/164/min_e_strc.cif,no_error,164,0.022723914066078876,0.022723914066078876
+629,Hf4 Ni2 Sn8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/788/min_e_strc.cif,no_error,788,0.1618424824305933,0.1618424824305933
+630,K4 Rb2 Sb2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/157/min_e_strc.cif,no_error,157,0.40873146057128906,0.40873146057128906
+631,K4 Sn4 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/915/min_e_strc.cif,no_error,915,0.3734012444814052,0.3734012444814052
+632,Mn8 F18,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/284/min_e_strc.cif,no_error,284,0.5383128661375789,0.5383128661375789
+633,Li2 Mn2 F8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/899/min_e_strc.cif,no_error,899,0.06998109817504883,0.06998109817504883
+634,Li4 Ca4 Si4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/867/min_e_strc.cif,no_error,867,0.46233581966824033,0.46233581966824033
+635,H8 I12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/862/min_e_strc.cif,no_error,862,0.11806869506835938,0.11806869506835938
+636,Tm4 Zr8 Co4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/783/min_e_strc.cif,no_error,783,0.0019533634185791016,0.0019533634185791016
+637,Ru1 Rh1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/182/min_e_strc.cif,no_error,182,0.07587051391601562,0.07587051391601562
+638,Ba2 Sr4 Se4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/400/min_e_strc.cif,no_error,400,0.14314723014831543,0.14314723014831543
+639,Rb12 Pr4 Cl24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/301/min_e_strc.cif,no_error,301,0.05660057067871449,0.05660057067871449
+640,Ce1 Zr2 F14,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/942/min_e_strc.cif,No valid decomposition found for PDEntry : Ce1 Zr2 F14 with energy = -112.1392! (e_h: -0.11148003970875031),942,0.0,-0.11148003970875031
+641,Pr2 Ga2 Se6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/339/min_e_strc.cif,no_error,339,0.10927115546332011,0.10927115546332011
+642,Mg4 Cd8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/152/min_e_strc.cif,No valid decomposition found for PDEntry : Mg4 Cd8 with energy = -14.5890! (e_h: -0.0013922452926635742),152,0.0,-0.0013922452926635742
+643,Li12 Eu6 Sb12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/158/min_e_strc.cif,no_error,158,0.04436401509224197,0.04436401509224197
+644,Ti4 Zn12 N12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/479/min_e_strc.cif,no_error,479,0.07943950380597897,0.07943950380597897
+645,Ho4 Cl12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/710/min_e_strc.cif,No valid decomposition found for PDEntry : Ho4 Cl12 with energy = -83.9710! (e_h: -0.03397560119628906),710,0.0,-0.03397560119628906
+646,Cs1 C6 Cl1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/893/min_e_strc.cif,no_error,893,2.5124752521514893,2.5124752521514893
+647,Gd16 P12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/969/min_e_strc.cif,No valid decomposition found for PDEntry : Gd16 P12 with energy = -328.9379! (e_h: -0.043849263872417055),969,0.0,-0.043849263872417055
+648,Cs12 Au4 Br24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/326/min_e_strc.cif,no_error,326,0.04998841285705691,0.04998841285705691
+649,Yb4 Sc4 Pd8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/910/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb4 Sc4 Pd8 with energy = -86.5294,910,0.0,0.0
+650,Pr4 Se4 S4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/950/min_e_strc.cif,No valid decomposition found for PDEntry : Pr4 Se4 S4 with energy = -73.3199! (e_h: -0.010208606719981361),950,0.0,-0.010208606719981361
+651,Ba2 B6 N4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/541/min_e_strc.cif,no_error,541,0.910828649997713,0.910828649997713
+652,Li2 P2 N2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/357/min_e_strc.cif,no_error,357,0.8706480662027998,0.8706480662027998
+653,Ba2 Cl2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/620/min_e_strc.cif,no_error,620,0.10557252168655396,0.10557252168655396
+654,Ca8 Mg4 N8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/689/min_e_strc.cif,no_error,689,0.3708064556121826,0.3708064556121826
+655,Tl1 Bi3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/643/min_e_strc.cif,no_error,643,0.07098754247029637,0.07098754247029637
+656,Er4 Cu2 Ge12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/227/min_e_strc.cif,no_error,227,0.04482406283181817,0.04482406283181817
+657,Ce1 Ga9 Co4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/222/min_e_strc.cif,no_error,222,0.026339803423201857,0.026339803423201857
+658,Ti4 Co4 P4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/547/min_e_strc.cif,No valid decomposition found for PDEntry : Ti4 Co4 P4 with energy = -94.5467! (e_h: -0.006289958953857422),547,0.0,-0.006289958953857422
+659,Ca1 Ni5,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/375/min_e_strc.cif,No valid decomposition found for PDEntry : Ca1 Ni5 with energy = -31.6006! (e_h: -0.0015034675598144531),375,0.0,-0.0015034675598144531
+660,Tb4 In4 Ir4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/440/min_e_strc.cif,no_error,440,0.03894758224487305,0.03894758224487305
+661,Sm8 Si4 Ge4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/684/min_e_strc.cif,no_error,684,0.15630173683166504,0.15630173683166504
+662,Na4 Cr4 S12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/167/min_e_strc.cif,no_error,167,0.19038829803466406,0.19038829803466406
+663,K2 P2 Se10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/562/min_e_strc.cif,no_error,562,0.16776743389311655,0.16776743389311655
+664,U4 P8 Se16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/45/min_e_strc.cif,no_error,45,0.07525212424142147,0.07525212424142147
+665,Y16 Tl4 Ga24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/897/min_e_strc.cif,no_error,897,0.17328062924471688,0.17328062924471688
+666,U2 Ni16 Sn4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/191/min_e_strc.cif,no_error,191,0.2323294986378066,0.2323294986378066
+667,Sm1 Y3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/238/min_e_strc.cif,no_error,238,0.005019187927246094,0.005019187927246094
+668,Sr12 Sc8 N12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/796/min_e_strc.cif,no_error,796,0.4134127199649811,0.4134127199649811
+669,Yb2 Ce6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/467/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb2 Ce6 with energy = -34.8952,467,0.0,0.0
+670,Nb4 As4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/701/min_e_strc.cif,No valid decomposition found for PDEntry : Nb4 As4 with energy = -63.9153! (e_h: -0.0009307861328125),701,0.0,-0.0009307861328125
+671,Pr8 Rh16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/38/min_e_strc.cif,No valid decomposition found for PDEntry : Pr8 Rh16 with energy = -170.4246! (e_h: -0.006359100341796875),38,0.0,-0.006359100341796875
+672,Tb1 Y1 I3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/176/min_e_strc.cif,no_error,176,0.007450294494629084,0.007450294494629084
+673,Mn8 Al12 Cr4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/630/min_e_strc.cif,no_error,630,0.05671159426371197,0.05671159426371197
+674,Sc2 Sn6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/593/min_e_strc.cif,no_error,593,0.014382541179656982,0.014382541179656982
+675,Tl3 Co3 Cl6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/522/min_e_strc.cif,no_error,522,0.2744377851486206,0.2744377851486206
+676,Mg6 Hg2 S8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/705/min_e_strc.cif,no_error,705,0.09231382608413696,0.09231382608413696
+677,Mg2 Ga2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/900/min_e_strc.cif,no_error,900,0.0670161247253418,0.0670161247253418
+678,Te1 Se1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/632/min_e_strc.cif,no_error,632,0.014657974243164062,0.014657974243164062
+679,Y3 Hf3 Ni51,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/83/min_e_strc.cif,no_error,83,0.27332421352989034,0.27332421352989034
+680,Al4 Ru2 C4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/398/min_e_strc.cif,no_error,398,0.5461363792419469,0.5461363792419469
+681,Gd6 Cu9 Rh36,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/108/min_e_strc.cif,no_error,108,0.3347059979158278,0.3347059979158278
+682,Er8 Pd4 S16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/424/min_e_strc.cif,no_error,424,0.10056216376168337,0.10056216376168337
+683,Tm6 Al6 Pd6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/763/min_e_strc.cif,no_error,763,0.19450664520263672,0.19450664520263672
+684,Pr4 Ga4 Ni4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/55/min_e_strc.cif,no_error,55,0.06580638885498047,0.06580638885498047
+685,Yb1 Ni3 Ge2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/879/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb1 Ni3 Ge2 with energy = -31.4590,879,0.0,0.0
+686,Te4 Se4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/87/min_e_strc.cif,No valid decomposition found for PDEntry : Te4 Se4 with energy = -27.7860! (e_h: -0.0499730110168457),87,0.0,-0.0499730110168457
+687,Sr3 Rh18 Cl33,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/881/min_e_strc.cif,no_error,881,0.24192365010579486,0.24192365010579486
+688,Er4 Co4 Si4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/223/min_e_strc.cif,no_error,223,0.05088329315185547,0.05088329315185547
+689,Hf16 Cr16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/733/min_e_strc.cif,no_error,733,0.4371988773345947,0.4371988773345947
+690,Er16 Si16 Ir4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/306/min_e_strc.cif,no_error,306,0.26515293121337713,0.26515293121337713
+691,Te8 Au8 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/882/min_e_strc.cif,no_error,882,0.3757893443107605,0.3757893443107605
+692,Eu8 B16 Pt16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/873/min_e_strc.cif,no_error,873,0.508076937445276,0.508076937445276
+693,Th2 Co2 Si2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/71/min_e_strc.cif,no_error,71,0.004750251770019531,0.004750251770019531
+694,Rb6 S6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/279/min_e_strc.cif,no_error,279,0.026862859725951704,0.026862859725951704
+695,U6 Ge10 Ir6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/393/min_e_strc.cif,no_error,393,0.19515631415627333,0.19515631415627333
+696,Li4 Tl2 Au2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/874/min_e_strc.cif,No valid decomposition found for PDEntry : Li4 Tl2 Au2 with energy = -21.9779! (e_h: -0.007245540618896484),874,0.0,-0.007245540618896484
+697,Sm16 Al4 Te8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/561/min_e_strc.cif,No valid decomposition found for PDEntry : Sm16 Al4 Te8 with energy = -144.7960! (e_h: -0.03266150610787477),561,0.0,-0.03266150610787477
+698,Np8 Fe16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/137/min_e_strc.cif,no_error,137,0.06058756510416785,0.06058756510416785
+699,U2 Nb4 N5,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/583/min_e_strc.cif,no_error,583,1.1890159086747651,1.1890159086747651
+700,Tb20 Ru12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/976/min_e_strc.cif,No valid decomposition found for PDEntry : Tb20 Ru12 with energy = -215.2226! (e_h: -0.03248434513807297),976,0.0,-0.03248434513807297
+701,Tm4 Si4 Ni8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/154/min_e_strc.cif,no_error,154,0.1858197748660988,0.1858197748660988
+702,K12 P8 O20 F8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/370/min_e_strc.cif,no_error,370,0.3891278028488152,0.3891278028488152
+703,Cr4 S8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/419/min_e_strc.cif,no_error,419,0.19204950332641602,0.19204950332641602
+704,U2 Si3 Pt1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/946/min_e_strc.cif,no_error,946,1.0830097198486328,1.0830097198486328
+705,Y4 S4 Br8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/93/min_e_strc.cif,no_error,93,0.14383375644683927,0.14383375644683927
+706,Cs1 As1 Se1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/248/min_e_strc.cif,no_error,248,1.3713594688766308,1.3713594688766308
+707,Li7 Co1 O4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/47/min_e_strc.cif,no_error,47,0.14554516474405865,0.14554516474405865
+708,La2 In8 Pt8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/878/min_e_strc.cif,no_error,878,0.16154177983602125,0.16154177983602125
+709,Li6 Sb4 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/372/min_e_strc.cif,no_error,372,0.09840211001309473,0.09840211001309473
+710,Li8 Tm4 Ag4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/718/min_e_strc.cif,no_error,718,0.13319790363311768,0.13319790363311768
+711,Sm4 S8 O4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/361/min_e_strc.cif,no_error,361,0.074951171875,0.074951171875
+712,Tm8 Ga28 Pt12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/81/min_e_strc.cif,no_error,81,0.8620968914031968,0.8620968914031968
+713,Er3 Ge3 Pd3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/564/min_e_strc.cif,no_error,564,0.0425562858581543,0.0425562858581543
+714,Li8 Mg2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/566/min_e_strc.cif,No valid decomposition found for PDEntry : Li8 Mg2 with energy = -18.5858! (e_h: -0.00019578933715846958),566,0.0,-0.00019578933715846958
+715,Ga9 Co3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/498/min_e_strc.cif,no_error,498,0.17759227752685547,0.17759227752685547
+716,Y4 Mg4 Al4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/198/min_e_strc.cif,no_error,198,0.38312244415283203,0.38312244415283203
+717,Ni4 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/61/min_e_strc.cif,no_error,61,0.41674280166625977,0.41674280166625977
+718,Nb24 B8 C4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/379/min_e_strc.cif,no_error,379,0.5780462688869896,0.5780462688869896
+719,K4 B4 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/349/min_e_strc.cif,no_error,349,0.06992101669311523,0.06992101669311523
+720,Sc4 Ag12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/677/min_e_strc.cif,No valid decomposition found for PDEntry : Sc4 Ag12 with energy = -63.3219! (e_h: -0.002562522888184038),677,0.0,-0.002562522888184038
+721,Zn4 In4 Ag8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/661/min_e_strc.cif,no_error,661,0.028832674026489258,0.028832674026489258
+722,Co8 P4 O32,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/777/min_e_strc.cif,no_error,777,0.28670120239257724,0.28670120239257724
+723,Li4 Hf4 Os8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/484/min_e_strc.cif,no_error,484,0.12220901250839233,0.12220901250839233
+724,Te6 Mo18 S24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/898/min_e_strc.cif,no_error,898,0.443088173866272,0.443088173866272
+725,Yb3 Cd3 Au3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/970/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb3 Cd3 Au3 with energy = -23.4204,970,0.0,0.0
+726,Th2 Re2 Rh4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/456/min_e_strc.cif,no_error,456,0.6273007392883301,0.6273007392883301
+727,La2 Si4 Rh4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/319/min_e_strc.cif,No valid decomposition found for PDEntry : La2 Si4 Rh4 with energy = -71.7276! (e_h: -0.004305839538574219),319,0.0,-0.004305839538574219
+728,Na8 Bi3 O11,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/110/min_e_strc.cif,no_error,110,0.423430052670561,0.423430052670561
+729,K8 Hg2 Te12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/364/min_e_strc.cif,no_error,364,0.029121377251365654,0.029121377251365654
+730,Hf6 Al3 Co1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/404/min_e_strc.cif,no_error,404,0.7854504845359109,0.7854504845359109
+731,Eu2 Ni6 Ge2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/508/min_e_strc.cif,no_error,508,0.23097000122070632,0.23097000122070632
+732,Er8 Ti4 Co8 O24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/563/min_e_strc.cif,no_error,563,0.36506392739035753,0.36506392739035753
+733,Gd3 Cd3 Ni18,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/922/min_e_strc.cif,no_error,922,0.43917298316955566,0.43917298316955566
+734,Li8 Pm4 Ga4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/181/min_e_strc.cif,no_error,181,0.0021136999130249023,0.0021136999130249023
+735,Sc4 Bi4 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/996/min_e_strc.cif,no_error,996,0.6732879479726099,0.6732879479726099
+736,Rb3 Cu4 Br1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/840/min_e_strc.cif,no_error,840,0.4395579993724823,0.4395579993724823
+737,Sm2 Tm6 I6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/605/min_e_strc.cif,no_error,605,0.08495698656354644,0.08495698656354644
+738,U6 Fe16 Re4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/690/min_e_strc.cif,No valid decomposition found for PDEntry : U6 Fe16 Re4 with energy = -254.9423! (e_h: -0.004101679875297748),690,0.0,-0.004101679875297748
+739,La8 Sm4 S16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/317/min_e_strc.cif,no_error,317,0.00130462646484375,0.00130462646484375
+740,Mn2 Bi4 I12 Br4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/374/min_e_strc.cif,No valid decomposition found for PDEntry : Mn2 Bi4 I12 Br4 with energy = -77.3645! (e_h: -0.010846094651654425),374,0.0,-0.010846094651654425
+741,Ca2 Ni1 I6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/674/min_e_strc.cif,no_error,674,0.16570115089416415,0.16570115089416415
+742,Li16 Tl8 Pb4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/101/min_e_strc.cif,no_error,101,0.07771573747907379,0.07771573747907379
+743,Mg2 Be16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/123/min_e_strc.cif,no_error,123,0.341002383802691,0.341002383802691
+744,Na2 Mn2 S4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/906/min_e_strc.cif,No valid decomposition found for PDEntry : Na2 Mn2 S4 with energy = -45.7802! (e_h: -0.061307668685913974),906,0.0,-0.061307668685913974
+745,Er1 Tl3 Sn1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/395/min_e_strc.cif,no_error,395,0.8014251708984368,0.8014251708984368
+746,Zr2 Ta1 Mo2 S7,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/670/min_e_strc.cif,no_error,670,0.36728937096065906,0.36728937096065906
+747,Zr3 W3 C6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/721/min_e_strc.cif,no_error,721,0.909949511289593,0.909949511289593
+748,Y6 Mn2 N12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/768/min_e_strc.cif,no_error,768,0.2987773895263679,0.2987773895263679
+749,Yb2 C2 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/233/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb2 C2 O12 with energy = -88.8074,233,0.0,0.0
+750,Li4 V12 O24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/685/min_e_strc.cif,no_error,685,0.11327613483776133,0.11327613483776133
+751,Er4 V4 O26,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/961/min_e_strc.cif,no_error,961,0.5175830897162932,0.5175830897162932
+752,Ni6 Se8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/392/min_e_strc.cif,no_error,392,0.005986213684079367,0.005986213684079367
+753,Mn2 Co6 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/724/min_e_strc.cif,no_error,724,0.22536003589630127,0.22536003589630127
+754,Li4 Cd4 Pt8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/741/min_e_strc.cif,no_error,741,0.016093015670776367,0.016093015670776367
+755,Pm4 Cd4 Hg8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/474/min_e_strc.cif,No valid decomposition found for PDEntry : Pm4 Cd4 Hg8 with energy = -31.4669! (e_h: -0.004066228866576926),474,0.0,-0.004066228866576926
+756,U4 Pd4 S12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/999/min_e_strc.cif,no_error,999,0.0747529983520483,0.0747529983520483
+757,Nb4 Co4 Si4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/598/min_e_strc.cif,No valid decomposition found for PDEntry : Nb4 Co4 Si4 with energy = -98.1174! (e_h: -0.005520820617675781),598,0.0,-0.005520820617675781
+758,Ga2 Fe5 Si5,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/857/min_e_strc.cif,no_error,857,0.16833357016245465,0.16833357016245465
+759,Nd4 Eu4 S16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/168/min_e_strc.cif,no_error,168,0.043071746826171875,0.043071746826171875
+760,Tb6 Cu2 Ge8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/619/min_e_strc.cif,no_error,619,0.09898988902568817,0.09898988902568817
+761,K2 Ga1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/786/min_e_strc.cif,no_error,786,0.21378154224819612,0.21378154224819612
+762,La3 Th3 Nb3 O33,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/149/min_e_strc.cif,no_error,149,0.35714415141514344,0.35714415141514344
+763,In6 Sn2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/965/min_e_strc.cif,No valid decomposition found for PDEntry : In6 Sn2 with energy = -24.4476! (e_h: -0.03972911834716797),965,0.0,-0.03972911834716797
+764,Ce12 Ge12 Pd4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/51/min_e_strc.cif,no_error,51,0.13324083600725256,0.13324083600725256
+765,U1 Si1 Ge2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/275/min_e_strc.cif,no_error,275,0.2698973019917714,0.2698973019917714
+766,In2 Br2 O2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/481/min_e_strc.cif,no_error,481,0.020547760857477115,0.020547760857477115
+767,Ce6 Sm6 Fe27 B18,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/57/min_e_strc.cif,no_error,57,0.4614908444254038,0.4614908444254038
+768,Li8 Eu4 Pb4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/660/min_e_strc.cif,No valid decomposition found for PDEntry : Li8 Eu4 Pb4 with energy = -77.2198! (e_h: -0.05790134037242112),660,0.0,-0.05790134037242112
+769,K6 Pb6 I8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/334/min_e_strc.cif,no_error,334,0.3148330211639401,0.3148330211639401
+770,Ce4 Mg2 Ge4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/919/min_e_strc.cif,No valid decomposition found for PDEntry : Ce4 Mg2 Ge4 with energy = -51.8572! (e_h: -0.007925033569335938),919,0.0,-0.007925033569335938
+771,Ac2 Si2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/24/min_e_strc.cif,No valid decomposition found for PDEntry : Ac2 Si2 with energy = -20.3500! (e_h: -0.1612270673116054),24,0.0,-0.1612270673116054
+772,Zr6 Cr2 S12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/113/min_e_strc.cif,no_error,113,0.12698587644845283,0.12698587644845283
+773,Ca4 Tl12 Sn8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/126/min_e_strc.cif,no_error,126,0.10390361150105809,0.10390361150105809
+774,Hf9 O9 F12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/63/min_e_strc.cif,no_error,63,0.23377122879028356,0.23377122879028356
+775,K1 W3 Cl9,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/681/min_e_strc.cif,no_error,681,0.2494838971358142,0.2494838971358142
+776,Si4 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/820/min_e_strc.cif,no_error,820,0.6580841064453109,0.6580841064453109
+777,Li4 Pd8 Pt4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/40/min_e_strc.cif,No valid decomposition found for PDEntry : Li4 Pd8 Pt4 with energy = -78.5914! (e_h: -0.02702967325846295),40,0.0,-0.02702967325846295
+778,Na4 Li8 Sn4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/303/min_e_strc.cif,No valid decomposition found for PDEntry : Na4 Li8 Sn4 with energy = -41.6429! (e_h: -0.0010156631469726562),303,0.0,-0.0010156631469726562
+779,Li2 Mn2 O2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/978/min_e_strc.cif,no_error,978,0.5224114259084089,0.5224114259084089
+780,V4 Ni2 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/512/min_e_strc.cif,no_error,512,0.05245072501046444,0.05245072501046444
+781,Ba2 Cd4 F10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/636/min_e_strc.cif,no_error,636,0.09467846155166804,0.09467846155166804
+782,Rb3 Bi3 Te6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/9/min_e_strc.cif,no_error,9,0.03194844722747847,0.03194844722747847
+783,U2 Te2 S1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/560/min_e_strc.cif,no_error,560,0.021935596466059692,0.021935596466059692
+784,Mg4 Ni16 Sb4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/525/min_e_strc.cif,no_error,525,0.051977055413383155,0.051977055413383155
+785,Cr6 Rh2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/488/min_e_strc.cif,no_error,488,0.031197547912597656,0.031197547912597656
+786,Cd8 Hg8 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/740/min_e_strc.cif,no_error,740,0.16067799925804138,0.16067799925804138
+787,Ce4 B4 Pt4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/746/min_e_strc.cif,no_error,746,0.346879839897154,0.346879839897154
+788,Y2 Ge4 Ru4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/129/min_e_strc.cif,No valid decomposition found for PDEntry : Y2 Ge4 Ru4 with energy = -75.0002! (e_h: -0.003945350646972656),129,0.0,-0.003945350646972656
+789,Ho4 V4 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/568/min_e_strc.cif,No valid decomposition found for PDEntry : Ho4 V4 O12 with energy = -179.4842! (e_h: -0.006985664367675781),568,0.0,-0.006985664367675781
+790,Y8 Mg2 Ga18,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/416/min_e_strc.cif,no_error,416,0.13520152909415284,0.13520152909415284
+791,Ti8 Mo4 W4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/409/min_e_strc.cif,No valid decomposition found for PDEntry : Ti8 Mo4 W4 with energy = -160.9910! (e_h: -0.06636381149291992),409,0.0,-0.06636381149291992
+792,K4 Ti6 S18,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/654/min_e_strc.cif,no_error,654,0.01215887069702326,0.01215887069702326
+793,Tm4 Cr8 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/760/min_e_strc.cif,no_error,760,0.07247376441955566,0.07247376441955566
+794,Mg8 Zn4 Cu4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/247/min_e_strc.cif,no_error,247,0.03214779496192932,0.03214779496192932
+795,Yb8 Ga4 Au4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/180/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb8 Ga4 Au4 with energy = -49.0556,180,0.0,0.0
+796,Na1 H2 O1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/543/min_e_strc.cif,no_error,543,1.1300194859504664,1.1300194859504664
+797,Sr4 Al8 N4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/253/min_e_strc.cif,no_error,253,0.4547337591648102,0.4547337591648102
+798,Rb8 Tl8 Cl24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/680/min_e_strc.cif,no_error,680,0.002834002176921757,0.002834002176921757
+799,Ti3 Co3 As3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/359/min_e_strc.cif,No valid decomposition found for PDEntry : Ti3 Co3 As3 with energy = -64.8970! (e_h: -0.08263476689656635),359,0.0,-0.08263476689656635
+800,Tl2 S2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/866/min_e_strc.cif,no_error,866,0.14544528722763017,0.14544528722763017
+801,Na4 H4 O4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/666/min_e_strc.cif,No valid decomposition found for PDEntry : Na4 H4 O4 with energy = -57.3241! (e_h: -0.012134552001953125),666,0.0,-0.012134552001953125
+802,Li4 Co8 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/464/min_e_strc.cif,no_error,464,0.1864786148071289,0.1864786148071289
+803,Mg2 Ni2 N2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/662/min_e_strc.cif,no_error,662,0.2514600223965129,0.2514600223965129
+804,Fe8 O4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/572/min_e_strc.cif,no_error,572,0.5601156552632656,0.5601156552632656
+805,Sm1 Co13 Si2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/827/min_e_strc.cif,no_error,827,0.9542437791824341,0.9542437791824341
+806,V2 Mo2 O4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/208/min_e_strc.cif,no_error,208,0.6027969717979378,0.6027969717979378
+807,Tb4 Co4 Ge10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/576/min_e_strc.cif,no_error,576,0.08009139166937818,0.08009139166937818
+808,Tc6 Ir2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/941/min_e_strc.cif,No valid decomposition found for PDEntry : Tc6 Ir2 with energy = -81.2753! (e_h: -0.007645606994628906),941,0.0,-0.007645606994628906
+809,Ho2 Sc2 O5,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/831/min_e_strc.cif,no_error,831,0.20727482548466547,0.20727482548466547
+810,Te2 Os2 Ru8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/679/min_e_strc.cif,no_error,679,0.19514870643615723,0.19514870643615723
+811,Er1 Cu3 Si1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/499/min_e_strc.cif,no_error,499,0.7981237411499009,0.7981237411499009
+812,Ta8 Ge4 As4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/748/min_e_strc.cif,no_error,748,0.12918669836861696,0.12918669836861696
+813,Ho4 B16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/520/min_e_strc.cif,No valid decomposition found for PDEntry : Ho4 B16 with energy = -137.1381! (e_h: -0.000591278076171875),520,0.0,-0.000591278076171875
+814,Tm2 Ga8 B8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/394/min_e_strc.cif,no_error,394,0.5863222016228615,0.5863222016228615
+815,Na4 N4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/217/min_e_strc.cif,no_error,217,1.3689572016398115,1.3689572016398115
+816,Fe6 Sb3 O36,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/244/min_e_strc.cif,no_error,244,0.5292751948038745,0.5292751948038745
+817,Nd3 Ni6 Sn6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/362/min_e_strc.cif,no_error,362,0.5635876655578631,0.5635876655578631
+818,Li2 Cu12 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/72/min_e_strc.cif,no_error,72,0.1047972043355303,0.1047972043355303
+819,Sr8 Sb16 O40,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/810/min_e_strc.cif,no_error,810,0.1420905833894679,0.1420905833894679
+820,Rb2 Cr4 Cl2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/628/min_e_strc.cif,no_error,628,1.5262207984924316,1.5262207984924316
+821,Ce12 Ti4 O32,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/249/min_e_strc.cif,no_error,249,0.24528050422668457,0.24528050422668457
+822,Ho4 S8 Br8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/183/min_e_strc.cif,No valid decomposition found for PDEntry : Ho4 S8 Br8 with energy = -97.6951! (e_h: -0.060553820927938595),183,0.0,-0.060553820927938595
+823,Sr6 P4 Pd4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/318/min_e_strc.cif,no_error,318,0.25875401496887207,0.25875401496887207
+824,Sr3 Hg3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/876/min_e_strc.cif,No valid decomposition found for PDEntry : Sr3 Hg3 with energy = -9.2516! (e_h: -0.00854790210723877),876,0.0,-0.00854790210723877
+825,Mg4 Ga4 As4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/775/min_e_strc.cif,no_error,775,0.28939265675014925,0.28939265675014925
+826,Nb8 I32,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/381/min_e_strc.cif,No valid decomposition found for PDEntry : Nb8 I32 with energy = -161.4399! (e_h: -0.0051136016845703125),381,0.0,-0.0051136016845703125
+827,Li8 V4 O4 F12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/433/min_e_strc.cif,no_error,433,0.03491678692046385,0.03491678692046385
+828,Dy4 Ho4 Cd8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/682/min_e_strc.cif,No valid decomposition found for PDEntry : Dy4 Ho4 Cd8 with energy = -49.2787! (e_h: -0.0017735958099365234),682,0.0,-0.0017735958099365234
+829,B12 W8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/538/min_e_strc.cif,no_error,538,0.00015354156494140625,0.00015354156494140625
+830,Ce2 Hg4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/697/min_e_strc.cif,no_error,697,0.18210434913635254,0.18210434913635254
+831,Nd3 Dy3 S6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/787/min_e_strc.cif,No valid decomposition found for PDEntry : Nd3 Dy3 S6 with energy = -79.3917! (e_h: -0.0020356178283691406),787,0.0,-0.0020356178283691406
+832,Sc8 Zn4 Hg4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/833/min_e_strc.cif,no_error,833,0.006832718849182129,0.006832718849182129
+833,Mg12 In8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/471/min_e_strc.cif,no_error,471,0.023303031921387163,0.023303031921387163
+834,Lu4 Bi4 Pd8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/274/min_e_strc.cif,No valid decomposition found for PDEntry : Lu4 Bi4 Pd8 with energy = -87.2683! (e_h: -2.7656555180222142e-05),274,0.0,-2.765655518022214
+835,Zn1 In1 Se2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/627/min_e_strc.cif,no_error,627,0.19223916530609175,0.19223916530609175
+836,Y2 Er2 Ag2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/338/min_e_strc.cif,no_error,338,0.08544317881266217,0.08544317881266217
+837,Tb24 Te4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/116/min_e_strc.cif,no_error,116,0.13024323327200804,0.13024323327200804
+838,In4 Te8 Pd4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/36/min_e_strc.cif,no_error,36,0.3287816540948274,0.3287816540948274
+839,Ca1 Yb3 O4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/3/min_e_strc.cif,Unable to get decomposition for PDEntry : Ca1 Yb3 O4 with energy = -54.5337,3,0.0,0.0
+840,Ca2 Fe4 P6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/790/min_e_strc.cif,no_error,790,0.09235154257880218,0.09235154257880218
+841,Na8 Pm2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/712/min_e_strc.cif,no_error,712,0.4395960807800292,0.4395960807800292
+842,Cu1 Bi2 S1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/450/min_e_strc.cif,no_error,450,0.22323834896087646,0.22323834896087646
+843,Sm6 Al4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/475/min_e_strc.cif,no_error,475,0.9502808570861818,0.9502808570861818
+844,Ce8 Cd8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/616/min_e_strc.cif,no_error,616,0.02160090208053589,0.02160090208053589
+845,Th6 Co51,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/278/min_e_strc.cif,no_error,278,0.21034955978393555,0.21034955978393555
+846,Cs8 Ga6 Te12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/765/min_e_strc.cif,No valid decomposition found for PDEntry : Cs8 Ga6 Te12 with energy = -88.0275! (e_h: -0.01712371752812203),765,0.0,-0.01712371752812203
+847,K1 Lu1 C12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/657/min_e_strc.cif,no_error,657,0.0020402840205591133,0.0020402840205591133
+848,Yb2 Lu2 S8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/932/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb2 Lu2 S8 with energy = -66.6913,932,0.0,0.0
+849,Li4 Al2 I4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/363/min_e_strc.cif,no_error,363,0.3638493537902825,0.3638493537902825
+850,Ba2 Zr1 Br6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/603/min_e_strc.cif,no_error,603,0.12970081965129054,0.12970081965129054
+851,Ta4 Sn4 Rh8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/2/min_e_strc.cif,No valid decomposition found for PDEntry : Ta4 Sn4 Rh8 with energy = -130.3624! (e_h: -0.007284402847290039),2,0.0,-0.007284402847290039
+852,Tb2 Ag4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/307/min_e_strc.cif,no_error,307,0.23803464571634958,0.23803464571634958
+853,Ti3 Cl18,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/442/min_e_strc.cif,no_error,442,0.024971961975097656,0.024971961975097656
+854,Sc4 Ga6 P4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/189/min_e_strc.cif,no_error,189,0.27561279705592767,0.27561279705592767
+855,Hg4 Br4 Cl6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/402/min_e_strc.cif,no_error,402,0.009681565420968319,0.009681565420968319
+856,Co2 F4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/668/min_e_strc.cif,No valid decomposition found for PDEntry : Co2 F4 with energy = -35.4711! (e_h: -0.007491588592528409),668,0.0,-0.007491588592528409
+857,Y4 Co4 Si8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/285/min_e_strc.cif,no_error,285,0.6083388328552246,0.6083388328552246
+858,Nb2 Ir2 Se4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/325/min_e_strc.cif,no_error,325,0.6658066213130951,0.6658066213130951
+859,Cs2 Yb2 O6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/470/min_e_strc.cif,Unable to get decomposition for PDEntry : Cs2 Yb2 O6 with energy = -47.8690,470,0.0,0.0
+860,Ba8 Sn12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/956/min_e_strc.cif,no_error,956,0.4684036254882811,0.4684036254882811
+861,Yb2 Cu3 Ge2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/980/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb2 Cu3 Ge2 with energy = -24.8027,980,0.0,0.0
+862,La4 S4 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/432/min_e_strc.cif,no_error,432,0.45774364471434836,0.45774364471434836
+863,Ho2 Al4 Si4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/608/min_e_strc.cif,no_error,608,0.03048849105834961,0.03048849105834961
+864,Sr2 Ca4 Si11,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/913/min_e_strc.cif,no_error,913,0.17272797752829128,0.17272797752829128
+865,Dy2 Mn2 Si2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/667/min_e_strc.cif,No valid decomposition found for PDEntry : Dy2 Mn2 Si2 with energy = -41.5251! (e_h: -0.005634285154797247),667,0.0,-0.005634285154797247
+866,Hf16 V8 S32,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/37/min_e_strc.cif,no_error,37,0.14971314838954441,0.14971314838954441
+867,Mn10 O4 F6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/127/min_e_strc.cif,no_error,127,0.3152651309967034,0.3152651309967034
+868,Li4 Pm8 Tl4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/114/min_e_strc.cif,No valid decomposition found for PDEntry : Li4 Pm8 Tl4 with energy = -59.3339! (e_h: -0.06498658657073975),114,0.0,-0.06498658657073975
+869,Y4 W4 C2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/360/min_e_strc.cif,no_error,360,0.0975803375244162,0.0975803375244162
+870,V32 S16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/551/min_e_strc.cif,no_error,551,0.3625114304678778,0.3625114304678778
+871,Dy2 Co2 Si2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/358/min_e_strc.cif,No valid decomposition found for PDEntry : Dy2 Co2 Si2 with energy = -38.6170! (e_h: -0.0370182991027832),358,0.0,-0.0370182991027832
+872,Yb8 Ga4 Ag4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/62/min_e_strc.cif,Unable to get decomposition for PDEntry : Yb8 Ga4 Ag4 with energy = -42.7782,62,0.0,0.0
+873,Th8 Si6 Ru4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/272/min_e_strc.cif,no_error,272,0.1717288011039777,0.1717288011039777
+874,Mn6 O8 F2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/405/min_e_strc.cif,no_error,405,0.055164873600006104,0.055164873600006104
+875,Sn4 I2 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/485/min_e_strc.cif,no_error,485,0.17004093064201964,0.17004093064201964
+876,Nb1 Sn3 Te8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/377/min_e_strc.cif,no_error,377,0.012047608693441347,0.012047608693441347
+877,Te2 Au2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/185/min_e_strc.cif,no_error,185,0.025642096996307373,0.025642096996307373
+878,Nd4 Fe8 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/268/min_e_strc.cif,no_error,268,0.15704318455287414,0.15704318455287414
+879,Mg16 Cd8 Se32,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/423/min_e_strc.cif,no_error,423,0.1596779482705255,0.1596779482705255
+880,Li4 Dy8 Zn4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/162/min_e_strc.cif,no_error,162,0.014432132244110107,0.014432132244110107
+881,Pr4 Lu4 In8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/622/min_e_strc.cif,No valid decomposition found for PDEntry : Pr4 Lu4 In8 with energy = -66.5871! (e_h: -0.0012230873107901274),622,0.0,-0.0012230873107901274
+882,Mg8 Hg8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/270/min_e_strc.cif,No valid decomposition found for PDEntry : Mg8 Hg8 with energy = -18.8345! (e_h: -0.004848003387451172),270,0.0,-0.004848003387451172
+883,Gd4 Ti4 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/789/min_e_strc.cif,no_error,789,0.03760719299316406,0.03760719299316406
+884,Nb4 I16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/332/min_e_strc.cif,No valid decomposition found for PDEntry : Nb4 I16 with energy = -80.9498! (e_h: -0.016608715057373047),332,0.0,-0.016608715057373047
+885,Er4 Tm4 Cl8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/711/min_e_strc.cif,no_error,711,0.032835682233174346,0.032835682233174346
+886,Cr18 Br6 O18,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/595/min_e_strc.cif,no_error,595,0.08579062280200844,0.08579062280200844
+887,Ca4 Pb4 Au8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/305/min_e_strc.cif,No valid decomposition found for PDEntry : Ca4 Pb4 Au8 with energy = -57.7502! (e_h: -0.01083868741989047),305,0.0,-0.01083868741989047
+888,Dy4 Ga8 Hg4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/528/min_e_strc.cif,no_error,528,0.11985022574663162,0.11985022574663162
+889,Sr8 Te4 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/29/min_e_strc.cif,no_error,29,0.11809478487286817,0.11809478487286817
+890,Th2 Zn4 Sb2 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/373/min_e_strc.cif,no_error,373,0.692341685295105,0.692341685295105
+891,Y4 Zn8 Ru4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/766/min_e_strc.cif,no_error,766,0.04411525196499433,0.04411525196499433
+892,Sr12 N4 O4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/693/min_e_strc.cif,no_error,693,0.16402263641357528,0.16402263641357528
+893,Nd6 Dy2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/797/min_e_strc.cif,no_error,797,0.0004143714904785156,0.0004143714904785156
+894,Mg2 Sn2 Au8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/199/min_e_strc.cif,no_error,199,0.2957586447398022,0.2957586447398022
+895,Sr1 Ca2 Si4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/428/min_e_strc.cif,no_error,428,0.6289856774466376,0.6289856774466376
+896,Al3 Fe6 Si3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/236/min_e_strc.cif,no_error,236,0.5456132888793945,0.5456132888793945
+897,Ca2 Al11,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/96/min_e_strc.cif,no_error,96,0.5830470782059889,0.5830470782059889
+898,Mn24 Re4 W4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/964/min_e_strc.cif,No valid decomposition found for PDEntry : Mn24 Re4 W4 with energy = -321.8248! (e_h: -0.05669196446736535),964,0.0,-0.05669196446736535
+899,Ca4 Zn4 Ga4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/989/min_e_strc.cif,no_error,989,0.025052189826965332,0.025052189826965332
+900,Sb4 Br12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/461/min_e_strc.cif,No valid decomposition found for PDEntry : Sb4 Br12 with energy = -52.2111! (e_h: -0.019657611846923828),461,0.0,-0.019657611846923828
+901,Se8 S8 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/311/min_e_strc.cif,no_error,311,0.45275259017944425,0.45275259017944425
+902,Fe16 Se32,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/821/min_e_strc.cif,no_error,821,0.06309366226196289,0.06309366226196289
+903,Ce8 In24 Cu4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/642/min_e_strc.cif,no_error,642,0.12677473492092783,0.12677473492092783
+904,Al4 Cr24 N10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/118/min_e_strc.cif,no_error,118,0.9138853173506885,0.9138853173506885
+905,Mn15 O21 F3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/774/min_e_strc.cif,no_error,774,0.25624865752000225,0.25624865752000225
+906,Ce1 Si2 Ag1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/544/min_e_strc.cif,no_error,544,0.24758243560791016,0.24758243560791016
+907,Nb2 Tl2 S2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/193/min_e_strc.cif,no_error,193,1.2414393517706124,1.2414393517706124
+908,Ce3 Mo18 S24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/860/min_e_strc.cif,No valid decomposition found for PDEntry : Ce3 Mo18 S24 with energy = -364.0819! (e_h: -0.004225730895981883),860,0.0,-0.004225730895981883
+909,Nd2 Co12 Sb24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/80/min_e_strc.cif,no_error,80,0.09792649118523844,0.09792649118523844
+910,Mn8 O11 F1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/240/min_e_strc.cif,no_error,240,0.06136395931244465,0.06136395931244465
+911,Pr12 Te8 Ir8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/943/min_e_strc.cif,no_error,943,0.15451962607247438,0.15451962607247438
+912,Dy2 W2 Br8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/403/min_e_strc.cif,no_error,403,0.7644133170445802,0.7644133170445802
+913,Cs1 H1 O2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/323/min_e_strc.cif,no_error,323,1.6847162246704102,1.6847162246704102
+914,K6 Hg3 Pb3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/782/min_e_strc.cif,no_error,782,0.12127318978309631,0.12127318978309631
+915,Ta1 Al3 N1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/872/min_e_strc.cif,no_error,872,0.7348236799240091,0.7348236799240091
+916,Na4 V4 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/117/min_e_strc.cif,no_error,117,0.372359196345009,0.372359196345009
+917,La2 Co2 Sn2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/92/min_e_strc.cif,no_error,92,0.1184797592652167,0.1184797592652167
+918,V2 Co2 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/567/min_e_strc.cif,no_error,567,0.3189713597297663,0.3189713597297663
+919,Hf3 Fe3 Si3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/640/min_e_strc.cif,no_error,640,0.03764629364013672,0.03764629364013672
+920,K2 V8 S10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/388/min_e_strc.cif,no_error,388,0.3084814647833509,0.3084814647833509
+921,Mg4 Al8 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/73/min_e_strc.cif,no_error,73,0.2507816155751543,0.2507816155751543
+922,Nd4 Co4 Ni4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/468/min_e_strc.cif,no_error,468,0.21436540753233757,0.21436540753233757
+923,La2 H1 O2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/95/min_e_strc.cif,no_error,95,0.01208659807840995,0.01208659807840995
+924,Na12 Mg4 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/439/min_e_strc.cif,no_error,439,0.12597090857369597,0.12597090857369597
+925,Al4 Cu8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/918/min_e_strc.cif,no_error,918,0.2628983656565351,0.2628983656565351
+926,Er1 Ti5,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/646/min_e_strc.cif,no_error,646,0.14554270108540912,0.14554270108540912
+927,La12 Pt4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/814/min_e_strc.cif,no_error,814,0.010187625885009766,0.010187625885009766
+928,Mg4 Al4 Se8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/170/min_e_strc.cif,no_error,170,0.02311585346857825,0.02311585346857825
+929,Cs4 K8 Sn4 F24,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/953/min_e_strc.cif,no_error,953,0.11375803947448748,0.11375803947448748
+930,Tb4 Al4 Cu16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/773/min_e_strc.cif,no_error,773,0.8414082527160565,0.8414082527160565
+931,Mn6 O7 F6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/469/min_e_strc.cif,no_error,469,0.0998807405170643,0.0998807405170643
+932,La2 Pr2 Zn2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/102/min_e_strc.cif,no_error,102,0.022845347722371123,0.022845347722371123
+933,Tb3 Ce1 Ni7,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/265/min_e_strc.cif,no_error,265,0.1933383941650373,0.1933383941650373
+934,Na3 Zr6 Ge9,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/675/min_e_strc.cif,no_error,675,0.4514592488606777,0.4514592488606777
+935,Tm4 Ag4 Hg8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/125/min_e_strc.cif,No valid decomposition found for PDEntry : Tm4 Ag4 Hg8 with energy = -36.8468! (e_h: -0.02871624628702829),125,0.0,-0.02871624628702829
+936,Pr3 Mg4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/163/min_e_strc.cif,no_error,163,0.16404346057346908,0.16404346057346908
+937,Nd4 Sm4 In8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/649/min_e_strc.cif,No valid decomposition found for PDEntry : Nd4 Sm4 In8 with energy = -67.7320! (e_h: -0.00031566619873046875),649,0.0,-0.00031566619873046875
+938,Nb4 O4 F2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/987/min_e_strc.cif,no_error,987,0.1617247899373382,0.1617247899373382
+939,Cd2 In2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/226/min_e_strc.cif,no_error,226,0.10223329067230225,0.10223329067230225
+940,Ho4 Al4 Fe16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/66/min_e_strc.cif,no_error,66,0.02258373366462152,0.02258373366462152
+941,Os1 Rh4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/366/min_e_strc.cif,no_error,366,1.6678392410278313,1.6678392410278313
+942,Rb2 Ti4 Nb4 Te10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/186/min_e_strc.cif,no_error,186,0.10409656252179822,0.10409656252179822
+943,In21 Ni15 P6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/869/min_e_strc.cif,no_error,869,0.0774247390883307,0.0774247390883307
+944,Mg4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/764/min_e_strc.cif,no_error,764,0.00018012523651100842,0.00018012523651100842
+945,Ba4 H16 Se8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/327/min_e_strc.cif,no_error,327,0.026021037782940848,0.026021037782940848
+946,La8 V16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/529/min_e_strc.cif,no_error,529,0.5030508041381836,0.5030508041381836
+947,Tl3 As3 Se6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/575/min_e_strc.cif,no_error,575,0.031409502029418945,0.031409502029418945
+948,Ho8 Os4 Ru4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/781/min_e_strc.cif,no_error,781,0.06155911087989807,0.06155911087989807
+949,Li4 Zn4 Pd8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/669/min_e_strc.cif,No valid decomposition found for PDEntry : Li4 Zn4 Pd8 with energy = -63.0909! (e_h: -0.008947372436523438),669,0.0,-0.008947372436523438
+950,Na3 Cu3 O6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/921/min_e_strc.cif,no_error,921,0.09331941604614258,0.09331941604614258
+951,Nb7 Al2 Ni3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/973/min_e_strc.cif,no_error,973,1.5500761926174143,1.5500761926174143
+952,La6 Pm2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/737/min_e_strc.cif,no_error,737,0.010204792022705078,0.010204792022705078
+953,Ga4 Fe4 Rh8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/825/min_e_strc.cif,No valid decomposition found for PDEntry : Ga4 Fe4 Rh8 with energy = -110.5083! (e_h: -0.005119800567626953),825,0.0,-0.005119800567626953
+954,V6 O10 F2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/8/min_e_strc.cif,no_error,8,0.11376190185546875,0.11376190185546875
+955,Tm10 S14,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/728/min_e_strc.cif,no_error,728,0.06254386901855469,0.06254386901855469
+956,La4 V2 O11,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/421/min_e_strc.cif,no_error,421,0.13324753576968185,0.13324753576968185
+957,Tm4 Lu6 C2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/453/min_e_strc.cif,no_error,453,0.23742326100667288,0.23742326100667288
+958,Mn3 Sn1 F1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/134/min_e_strc.cif,no_error,134,0.501419639587402,0.501419639587402
+959,Mg8 Sb4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/531/min_e_strc.cif,no_error,531,0.07481994231541922,0.07481994231541922
+960,Ca8 Zn4 Hg4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/187/min_e_strc.cif,no_error,187,0.005199238657951355,0.005199238657951355
+961,Li8 V4 F12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/214/min_e_strc.cif,no_error,214,0.37633069356282434,0.37633069356282434
+962,Gd4 Y4 Ni16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/74/min_e_strc.cif,No valid decomposition found for PDEntry : Gd4 Y4 Ni16 with energy = -185.0274! (e_h: -0.002454996109008789),74,0.0,-0.002454996109008789
+963,K8 Co4 O16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/160/min_e_strc.cif,no_error,160,0.5222408090318931,0.5222408090318931
+964,Mn4 Co4 B4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/355/min_e_strc.cif,no_error,355,0.24744606018066406,0.24744606018066406
+965,Mn4 Cr4 B8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/493/min_e_strc.cif,no_error,493,0.016195297241210938,0.016195297241210938
+966,Li8 Tl4 Pd4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/744/min_e_strc.cif,No valid decomposition found for PDEntry : Li8 Tl4 Pd4 with energy = -50.9468! (e_h: -0.013386726379394531),744,0.0,-0.013386726379394531
+967,K2 O10,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/537/min_e_strc.cif,no_error,537,0.30802083015441895,0.30802083015441895
+968,Tb6 Pr3 Ni15,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/534/min_e_strc.cif,no_error,534,0.21728968620300293,0.21728968620300293
+969,Cs1 Se2 Br1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/597/min_e_strc.cif,no_error,597,0.14953229162428006,0.14953229162428006
+970,Tb2 Fe20 Mo4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/848/min_e_strc.cif,no_error,848,0.001615524291960213,0.001615524291960213
+971,Li1 V2 O6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/565/min_e_strc.cif,no_error,565,0.022114980788465743,0.022114980788465743
+972,Y2 B8 Ir8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/194/min_e_strc.cif,no_error,194,0.0162506103515625,0.0162506103515625
+973,Na2 W6 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/571/min_e_strc.cif,no_error,571,0.5808053273420644,0.5808053273420644
+974,Sb6 Pd18,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/378/min_e_strc.cif,no_error,378,0.04602670669555664,0.04602670669555664
+975,Nb4 Si4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/981/min_e_strc.cif,No valid decomposition found for PDEntry : Nb4 Si4 with energy = -67.3330! (e_h: -0.10326242446899414),981,0.0,-0.10326242446899414
+976,Ho2 Cu2 Te2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/518/min_e_strc.cif,no_error,518,0.6182146390279168,0.6182146390279168
+977,Cs2 Rb4 P4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/804/min_e_strc.cif,No valid decomposition found for PDEntry : Cs2 Rb4 P4 with energy = -30.3114! (e_h: -0.024059414863585538),804,0.0,-0.024059414863585538
+978,Ho1 Pt2 C3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/629/min_e_strc.cif,no_error,629,1.604750633239746,1.604750633239746
+979,Eu2 Al8 Si4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/752/min_e_strc.cif,no_error,752,1.530371052878241,1.530371052878241
+980,Pu3 Sb1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/994/min_e_strc.cif,no_error,994,0.09343663851420203,0.09343663851420203
+981,Lu4 Al4 Cd8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/967/min_e_strc.cif,no_error,967,0.0928084552288051,0.0928084552288051
+982,Pd24 Pb4 C4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/806/min_e_strc.cif,no_error,806,0.6128052473068237,0.6128052473068237
+983,Nd1 Gd1,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/273/min_e_strc.cif,no_error,273,0.027728557586669922,0.027728557586669922
+984,Be1 Cu2 P2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/289/min_e_strc.cif,no_error,289,0.12151632308959925,0.12151632308959925
+985,V4 Cr4 P4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/145/min_e_strc.cif,No valid decomposition found for PDEntry : V4 Cr4 P4 with energy = -104.5134! (e_h: -0.05271638764275366),145,0.0,-0.05271638764275366
+986,Dy4 Co4 Ge4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/753/min_e_strc.cif,No valid decomposition found for PDEntry : Dy4 Co4 Ge4 with energy = -73.3295! (e_h: -0.0033202171325683594),753,0.0,-0.0033202171325683594
+987,Ba4 Bi8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/655/min_e_strc.cif,no_error,655,0.17387998104095548,0.17387998104095548
+988,Tb6 Ge8 Pd6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/801/min_e_strc.cif,no_error,801,0.4189550399780275,0.4189550399780275
+989,Dy3 In3 Pd3,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/368/min_e_strc.cif,No valid decomposition found for PDEntry : Dy3 In3 Pd3 with energy = -44.8306! (e_h: -0.0226229031880667),368,0.0,-0.0226229031880667
+990,Ta2 Rh6,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/172/min_e_strc.cif,No valid decomposition found for PDEntry : Ta2 Rh6 with energy = -72.5041! (e_h: -0.014395713806152344),172,0.0,-0.014395713806152344
+991,V6 O16 F4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/486/min_e_strc.cif,no_error,486,0.1742468393765959,0.1742468393765959
+992,Ni2 H8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/647/min_e_strc.cif,no_error,647,0.260817098617554,0.260817098617554
+993,Mo4 O12,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/490/min_e_strc.cif,No valid decomposition found for PDEntry : Mo4 O12 with energy = -132.9400! (e_h: -0.004233360290527344),490,0.0,-0.004233360290527344
+994,V6 B2,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/811/min_e_strc.cif,no_error,811,0.2977854013442993,0.2977854013442993
+995,Cs4 Na4 Se16,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/579/min_e_strc.cif,No valid decomposition found for PDEntry : Cs4 Na4 Se16 with energy = -87.3817! (e_h: -0.002502269215056696),579,0.0,-0.002502269215056696
+996,Cr4 Au4 S4,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/972/min_e_strc.cif,no_error,972,0.21051935354868512,0.21051935354868512
+997,Y1 Ir5,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/329/min_e_strc.cif,no_error,329,0.027805010477703007,0.027805010477703007
+998,Nd4 Te2 O8,temp_files/nikita_Tformer_gene2/wyckoff_genes_nikita/957/min_e_strc.cif,no_error,957,0.4034660203116305,0.4034660203116305
