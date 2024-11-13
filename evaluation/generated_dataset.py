@@ -125,7 +125,10 @@ def load_NongWei(path: Path):
         data = pd.read_csv(path/"id_with_energy_per_atom.csv", index_col="id",
                 usecols=["id", "energy_per_atom"])
     except FileNotFoundError:
-        data = pd.read_csv(path/"WyCryst_mp20_result.csv", index_col=0)
+        try:
+            data = pd.read_csv(path/"WyCryst_mp20_result.csv", index_col=0)
+        except FileNotFoundError:
+            data = pd.DataFrame()
     data['structure'] = pd.Series(dtype=object, index=data.index)
     with warnings.catch_warnings():
         warnings.filterwarnings(
