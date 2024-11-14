@@ -63,7 +63,7 @@ def get_perceptron(input_dim: int, output_dim:int, num_layers:int) -> torch.nn.M
             this_sequence.append(nn.Linear(input_dim, input_dim))
             this_sequence.append(nn.ReLU())
         this_sequence.append(nn.Linear(input_dim, output_dim))
-    return torch.compile(nn.Sequential(*this_sequence), fullgraph=True)
+    return nn.Sequential(*this_sequence)
 
 
 def get_pyramid_perceptron(
@@ -87,7 +87,7 @@ def get_pyramid_perceptron(
                 this_sequence.append(nn.Dropout(dropout))
             if len(this_sequence) < num_layers * 2 - 1:
                 this_sequence.append(nn.ReLU())
-    return torch.compile(nn.Sequential(*this_sequence), fullgraph=True)
+    return nn.Sequential(*this_sequence)
 
 
 class CascadeTransformer(nn.Module):
@@ -141,7 +141,8 @@ class CascadeTransformer(nn.Module):
                  outputs: str|int,
                  perceptron_shape: str,
                  TransformerEncoderLayer_args: dict,
-                 TransformerEncoder_args: dict):
+                 TransformerEncoder_args: dict,
+                 compile_perceptrons: bool = False):
         """
         Expects tokens in the following format:
         START_k -> [] -> STOP -> PAD
@@ -176,11 +177,16 @@ class CascadeTransformer(nn.Module):
         self.learned_positional_encoding_max_size = learned_positional_encoding_max_size
         self.learned_positional_encoding_only_masked = learned_positional_encoding_only_masked
         if perceptron_shape == "pyramid":
-            percepron_generator = get_pyramid_perceptron
+            percepron_generator_raw = get_pyramid_perceptron
         elif perceptron_shape == "input":
-            percepron_generator = get_perceptron
+            percepron_generator_raw = get_perceptron
         else:
             raise ValueError(f"Unknown perceptron_shape {perceptron_shape}")
+        if compile_perceptrons:
+            def percepron_generator(*args, **kwargs):
+                return torch.compile(percepron_generator_raw(*args, **kwargs), fullgraph=True)
+        else:
+            percepron_generator = percepron_generator_raw
         if learned_positional_encoding_max_size != 0:
             self.positions_embedding = nn.Embedding(
                 learned_positional_encoding_max_size,
