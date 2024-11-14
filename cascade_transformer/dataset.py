@@ -228,17 +228,31 @@ class AugmentedCascadeDataset():
                     self.masks[name].expand(cascade_vector.size(0), 1)], dim=1))
         return self.start_tokens[target_is_viable], res, target[target_is_viable]
 
-    def get_augmented_data(self):
+
+    def get_augmented_data(self) -> Tuple[Tensor, List[Tensor], Tensor, Tensor]:
+        """
+        Returns the full sequences, using a randon augmentation for the augmented field.
+        """
         if self.batch_size is not None:
-            raise NotImplementedError("Batch size is not supported for get_augmented_data")
+            batch_start = self.next_batch_index * self.batch_size
+            batch_end = batch_start + self.batch_size
+            batch_selection = self.this_shuffle_order[batch_start:batch_end]
+            logging.debug("The current batch size is %i", len(batch_selection))
+            if batch_end >= self.num_examples:
+                self.this_shuffle_order = torch.randperm(self.num_examples, device=self.device)
+                self.next_batch_index = 0
+            else:
+                self.next_batch_index += 1
+        else:
+            batch_selection = slice(None)
         res = []
         for name in self.cascade_order:
             if name == self.augmented_field:
                 cascade_vector = self.get_augmentation()
             else:
                 cascade_vector = self.data[name]
-            res.append(cascade_vector)
-        return self.start_tokens, res, self.target, self.padding_mask
+            res.append(cascade_vector[batch_selection])
+        return self.start_tokens[batch_selection], res, self.target[batch_selection], self.padding_mask[batch_selection]
 
 
     def get_masked_multiclass_cascade_data(

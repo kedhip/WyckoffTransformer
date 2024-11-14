@@ -362,19 +362,23 @@ class WyckoffTrainer():
         self.model.train()
         for _ in range(self.batches_per_epoch):
             self.optimizer.zero_grad(set_to_none=True)
-            known_seq_len = randint(0, self.train_dataset.max_sequence_length - 1)
             if self.target == TargetClass.NextToken:
                 known_cascade_len = randint(0, self.cascade_target_count - 1)
+                known_seq_len = randint(0, self.train_dataset.max_sequence_length - 1)
             elif self.target == TargetClass.NumUniqueTokens:
                 known_cascade_len = 0
+                known_seq_len = randint(0, self.train_dataset.max_sequence_length - 1)
             elif self.target == TargetClass.Scalar:
                 # Use full sequences
                 known_cascade_len = None
                 known_seq_len = self.train_dataset.max_sequence_length - 1
+            else:
+                raise ValueError(f"Unknown target: {self.target}")
             loss = self.get_loss(self.train_dataset, known_seq_len, known_cascade_len, False)
             if self.kl_samples is not None:
                 kl_loss = self.get_permutation_kl_compiled(self.kl_samples, self.train_dataset.max_sequence_length)
                 loss += kl_loss
+                wandb.log({"kl_loss": kl_loss}, commit=False)
             if self.target == TargetClass.NumUniqueTokens:
                 # Predictions are [batch_size, cascade_size]
                 # Unreduced MSE is [batch_size, cascade_size]
@@ -385,7 +389,6 @@ class WyckoffTrainer():
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
             self.optimizer.step()
             wandb.log({"loss.batch.train": loss,
-                       "loss.kl": kl_loss,
                        "known_seq_len": known_seq_len,
                        "known_cascade_len": known_cascade_len})
 
