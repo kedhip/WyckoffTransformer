@@ -1,4 +1,5 @@
 from typing import Dict
+from math import gcd
 from collections import defaultdict, Counter
 from pandas import Series
 import pandas as pd
@@ -55,6 +56,57 @@ def record_to_anonymous_fingerprint(row: Dict|Series) -> tuple:
                 ).items()), row["sites_enumeration_augmented"]
             )
         )
+    )
+
+
+def count_and_freeze(data):
+    return frozenset(Counter(data).items())
+
+def record_to_relaxed_AFLOW_fingerprint(row: Dict|Series) -> tuple:
+    sites = frozenset(            
+            map(lambda enumertaion:
+                frozenset(Counter(
+                    map(
+                        tuple,
+                        zip(row["site_symmetries"], enumertaion)
+                    )
+                ).items()), row["sites_enumeration_augmented"]
+            )
+        )
+    element_counts = defaultdict(int)
+    for element, multiplicity in zip(row["elements"], row["multiplicity"]):
+        element_counts[element] += multiplicity
+    stochio_gcd = gcd(*element_counts.values())
+    simplified_stochio = [multiplicity // stochio_gcd for multiplicity in element_counts.values()]
+    return (
+        row["spacegroup_number"],
+        count_and_freeze(simplified_stochio),
+        sites
+    )
+
+def record_to_strict_AFLOW_fingerprint(row: Dict|Series) -> tuple:
+    """
+    Computes a fingerprint taking into account equivalent Wyckoff position enumeration.
+    Fingerprint doesn't contain chemical elements, but keeps track which Wyckoff positions have
+    the same elements.
+    Args:
+        row contains the Wyckoff information:
+        - spacegroup_number
+        - elements
+        - site_symmetries
+        - sites_enumeration_augmented
+    Returns:
+        frozenset of all possible Wyckoff representations of the structure.
+    """
+    all_variants = []
+    for enumeration in row["sites_enumeration_augmented"]:
+        per_element_wyckoffs = defaultdict(list)
+        for element, site_symmetry, site_enumeration in zip(row["elements"], row["site_symmetries"], enumeration):
+            per_element_wyckoffs[element].append((site_symmetry, site_enumeration))
+        all_variants.append(count_and_freeze(map(count_and_freeze, per_element_wyckoffs.values())))
+    return (
+        row["spacegroup_number"],
+        frozenset(all_variants)
     )
 
 
