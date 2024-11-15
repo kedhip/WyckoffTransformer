@@ -242,7 +242,7 @@ def read_all_MP_csv(
         try:
             datasets_pd[dataset_name] = read_MP(mp_path / f"{dataset_name}.{file_format}")
         except FileNotFoundError:
-            logger.warning(f"Dataset {dataset_name} not found.")
+            logger.warning("Dataset %s not found.", dataset_name)
     symmetry_datasets = compute_symmetry_sites(datasets_pd, wychoffs_enumerated_by_ss_file, n_jobs=n_jobs)
     return symmetry_datasets
 
