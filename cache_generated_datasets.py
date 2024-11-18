@@ -11,6 +11,7 @@ def compute_fields_and_cache(data: GeneratedDataset) -> None:
     data.compute_wyckoff_fingerprints()
     if "numIons" not in data.data.columns:
         data.convert_wyckoffs_to_pyxtal()
+    data.compute_smact_validity()
     if "structure" in data.data.columns:
         data.compute_cdvae_crystals()
         data.compute_naive_validity()

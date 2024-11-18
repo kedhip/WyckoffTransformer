@@ -116,8 +116,6 @@ class FeatureEngineer():
                 wp.get_site_symmetry()
                 #if key not in symmetry_matrices:
 
-            
-            
 
     def __init__(self,
             data: Dict[Tuple, int]|Series,

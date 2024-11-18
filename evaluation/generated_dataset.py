@@ -11,7 +11,7 @@ from pathlib import Path
 from ast import literal_eval
 import json
 from operator import attrgetter
-from pymatgen.core import Composition, DummySpecies
+from pymatgen.core import Composition, DummySpecies, Element
 from omegaconf import OmegaConf
 import monty.json
 import torch
@@ -42,7 +42,9 @@ StructureStorage = Enum("StructureStorage", [
 WyckoffStorage = Enum("WyckoffStorage", [
     "pyxtal_json",
     "WyCryst_csv",
-    "WTCache"])
+    "WTCache",
+    "letters_json"
+    ])
 
 DATA_KEYS = frozenset(("structures", "wyckoffs", "e_hull"))
 
@@ -182,6 +184,7 @@ def load_Raymond(path: Path):
     data.dropna(axis=0, subset=["structure"], inplace=True)
     return data
 
+
 def load_WyCryst_csv(path: Path) -> pd.Series:
     wycryst_data_raw = pd.read_csv(path, index_col=0, converters=dict(zip(
                                     ("reconstructed_ratio1", "reconstructed_wyckoff",
@@ -191,10 +194,72 @@ def load_WyCryst_csv(path: Path) -> pd.Series:
     wycryst_data = wycryst_data_raw.apply(wycryst_to_pyxtal_dict, axis=1).dropna()
     return pd.DataFrame.from_records(wycryst_data.tolist(), index=wycryst_data.index)
 
+
 def load_ehull_csv_cif(path: Path):
     data = pd.read_csv(path, index_col=0)
     data["structure"] = data.relxed_structure.apply(read_cif)
     return data
+
+
+class LetterDictToSitesConverter:
+    def __init__(self, 
+        wyckoffs_db_file = Path(__file__).parent.parent / "cache" / "wychoffs_enumerated_by_ss.pkl.gz",
+        multiplicity_engineer_file = Path(__file__).parent.parent / "cache" / "engineers" / "multiplicity.pkl.gz"):
+            with open(wyckoffs_db_file, "rb") as f:
+                self.wychoffs_enumerated_by_ss, _, self.ss_from_letter = pickle.load(f)
+            with gzip.open(multiplicity_engineer_file, "rb") as f:
+                self.multiplicity_engineer = pickle.load(f)
+            self.augmentation_dict = get_augmentation_dict()
+
+    def __call__(self, letter_dict: dict) -> dict:
+        site_symmetries = []
+        elements = []
+        sites_enumeration = []
+        multiplicity = []
+        wyckoff_letters = []
+        space_group = letter_dict["spacegroup_number"]
+        for this_element, letter in letter_dict["wyckoff_sites"]:
+            true_element = Element(this_element)
+            
+            elements.append(true_element)
+            wyckoff_letters.append(letter)
+            sites_enumeration.append(self.wychoffs_enumerated_by_ss[space_group][letter])
+            ss = self.ss_from_letter[space_group][letter]
+            site_symmetries.append(ss)
+            multiplicity.append(self.multiplicity_engineer.db.loc[
+                space_group, ss, sites_enumeration[-1]])
+
+        sites_dict = {
+            "site_symmetries": site_symmetries,
+            "elements": elements,
+            "multiplicity": multiplicity,
+            "wyckoff_letters": wyckoff_letters,
+            "sites_enumeration": sites_enumeration,
+            "spacegroup_number": space_group
+        }
+
+        augmented_enumeration = [
+            [self.wychoffs_enumerated_by_ss[space_group][augmentator[letter]] for
+            letter in sites_dict["wyckoff_letters"]]
+                for augmentator in self.augmentation_dict[space_group]
+        ]
+        sites_dict["sites_enumeration_augmented"] = frozenset(map(tuple, augmented_enumeration))
+        return sites_dict
+
+
+def load_letters_json(path: Path):
+    with open(path, "rt", encoding="ascii") as f:
+        data = json.load(f)
+    converter = LetterDictToSitesConverter()
+    converted_data = []
+    for letter_dict in data:
+        try:
+            converted_data.append(converter(letter_dict))
+        except KeyError:
+            continue
+    print(f"Valid records: {len(converted_data)} / {len(data)} = {len(converted_data) / len(data):.2%}")
+    return pd.DataFrame.from_records(converted_data, index=range(len(converted_data)))
+
 
 class GeneratedDataset():
     @classmethod
@@ -310,8 +375,10 @@ class GeneratedDataset():
                 wcykoffs = pickle.load(f)[cache_key]
         elif storage_type == WyckoffStorage.WyCryst_csv:
             wcykoffs = load_WyCryst_csv(path)
+        elif storage_type == WyckoffStorage.letters_json:
+            wcykoffs = load_letters_json(path)
         else:
-            raise ValueError("Unknown storage type")
+            raise ValueError(f"Unknown storage type {storage_type}")
         if len(self.data) == 0:
             self.data = wcykoffs
         else:
@@ -363,9 +430,13 @@ class GeneratedDataset():
         with gzip.open(path, "wb") as f:
             pickle.dump(self, f)
 
-    def compute_naive_validity(self):
-        self.data["structural_validity"] = self.data["structure"].apply(structure_validity)
+    def compute_smact_validity(self):
         self.data["smact_validity"] = self.data.apply(timed_smact_validity_from_record, axis=1)
+
+    def compute_naive_validity(self):
+        if "smact_validity" not in self.data.columns:
+            self.compute_smact_validity()
+        self.data["structural_validity"] = self.data["structure"].apply(structure_validity)
         self.data["naive_validity"] = self.data["structural_validity"] & self.data["smact_validity"]
 
     def compute_cdvae_e(self,
