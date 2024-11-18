@@ -28,14 +28,14 @@ class TemperatureScaling(nn.Module):
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.LBFGS([self.temperature], lr=0.01, max_iter=50)
 
-        def eval():
+        def eval_():
             optimizer.zero_grad()
             loss = criterion(self.temperature_scale(logits), labels)
             loss.backward()
             return loss
 
         logger.info("Cross entropy before calibration: %f", criterion(logits, labels).item())
-        optimizer.step(eval)
+        optimizer.step(eval_)
         logger.info("Cross entropy after calibration: %f", criterion(self.temperature_scale(logits), labels).item())
         logger.info("Temperature: %f", self.temperature.item())
         return self
