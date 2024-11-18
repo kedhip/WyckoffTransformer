@@ -581,7 +581,7 @@ def train_from_config(config_dict: dict, device: torch.device, run_path: Optiona
     trainer.train()
     if config.model.WyckoffTrainer_args.target == "NextToken":
         print("Training complete, loading the best model")
-        trainer.model.load_state_dict(torch.load(trainer.run_path / "best_model_params.pt"))
+        trainer.model.load_state_dict(torch.load(trainer.run_path / "best_model_params.pt"), weight_only=True)
         data_cache_path = Path(__file__).parent.parent.resolve() / "cache" / config.dataset / "data.pkl.gz"
         with gzip.open(data_cache_path, "rb") as f:
             datasets_pd = pickle.load(f)
