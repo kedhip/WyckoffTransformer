@@ -31,9 +31,9 @@ def main():
         
     config = OmegaConf.load(args.config)
     if args.pilot:
-        print("Pilot run; overwriting epochs to 101")
-        config['optimisation']['epochs'] = 101
-        config['optimisation']['validation_period'] = 50
+        print("Pilot run; overwriting epochs to 3")
+        config['optimisation']['epochs'] = 3
+        config['optimisation']['validation_period'] = 1
         tags = ["pilot"]
     else:
         tags = []
