@@ -1,7 +1,9 @@
 from functools import partial
+import time
 from multiprocessing import Pool
 import argparse
 import torch
+# torch.set_float32_matmul_precision('high')
 import json
 import gzip
 import wandb
@@ -27,6 +29,7 @@ def main():
         "subsampling the valid ones if nesessary.")
     parser.add_argument("--update-wandb", action="store_true", help="Update the W&B run with the "
         "generated structures and quality metrics.")
+    parser.add_argument("--device", type=torch.device, default=torch.device("cpu"), help="The device to use.")
     parser.add_argument("--calibrate", action="store_true", help="Calibrate the generator.")
     parser.add_argument("--debug", action="store_true", help="Run in debug mode.")
     args = parser.parse_args()
@@ -34,7 +37,7 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
     if args.output.suffixes != [".json", ".gz"]:
         raise ValueError("Output file must be a .json.gz file.")
-    device = torch.device("cpu")
+
     if args.update_wandb:
         wandb_run = wandb.init(project="WyckoffTransformer", id=args.wandb_run, resume=True)
     else:
@@ -46,11 +49,13 @@ def main():
     tensors, tokenisers, engineers = load_tensors_and_tokenisers(config.dataset, config.tokeniser.name)
     del tensors["test"]
     
-    model = CascadeTransformer.from_config_and_tokenisers(config, tokenisers, device)
-    model.load_state_dict(torch.load(Path("runs", args.wandb_run, "best_model_params.pt"), map_location=device))
+    model = CascadeTransformer.from_config_and_tokenisers(config, tokenisers, args.device)
+    model.load_state_dict(
+        torch.load(Path("runs", args.wandb_run, "best_model_params.pt"),
+                   map_location=args.device, weights_only=False))
     # We need to grab any tensor from the train dataset
     max_sequence_len = tensors["train"][config.model.cascade.order[0]].size(1)
-    
+
     masks_dict = {field: tokenisers[field].mask_token for field in config.model.cascade.order}
     pad_dict = {field: tokenisers[field].pad_token for field in config.model.cascade.order}
     stops_dict = {field: tokenisers[field].stop_token for field in config.model.cascade.order}
@@ -65,6 +70,8 @@ def main():
         start_dtype = torch.float
     elif config.model.CascadeTransformer_args.start_type == "categorial":
         start_dtype = torch.long
+    else:
+        raise ValueError("Invalid start type.")
     if args.calibrate:
         validation_dataset = AugmentedCascadeDataset(
             data=tensors["val"],
@@ -77,9 +84,10 @@ def main():
             augmented_field=config.tokeniser.augmented_token_fields[0],
             dtype=torch.long,
             start_dtype=start_dtype,
-            device=device)
+            device=args.device)
         generator.calibrate(validation_dataset)
 
+    generation_start_time = time.time()
     # Should we maybe sample wih replacement?
     all_starts = torch.cat([tensors["train"][config.model.start_token], tensors["val"][config.model.start_token]], dim=0)
     if args.initial_n_samples is None:
@@ -89,9 +97,9 @@ def main():
     if generation_size > len(all_starts):
         all_starts = all_starts.repeat((generation_size // all_starts.size(0)) + 1, 1)
     permutation = torch.randperm(all_starts.size(0))
-    start = all_starts[permutation[:generation_size]].to(dtype=start_dtype, device=device)
+    start = all_starts[permutation[:generation_size]].to(dtype=start_dtype, device=args.device)
     generated_tensors = torch.stack(generator.generate_tensors(start), dim=-1)
-
+    tensor_generated_time = time.time()
     letter_from_ss_enum_idx = get_letter_from_ss_enum_idx(tokenisers['sites_enumeration'])
     to_pyxtal = partial(tensor_to_pyxtal,
                         tokenisers=tokenisers,
@@ -102,6 +110,10 @@ def main():
         generated_wp = p.starmap(to_pyxtal, zip(start.detach().cpu(), generated_tensors.detach().cpu()))
 
     generated_wp = [s for s in generated_wp if s is not None]
+    generation_end_time = time.time()
+    print(f"Generation in total took {generation_end_time - generation_start_time} seconds")
+    print(f"Tensor generation took {tensor_generated_time - generation_start_time} seconds")
+    print(f"Detokenizing took {generation_end_time - tensor_generated_time} seconds")
     wp_formal_validity = len(generated_wp) / generation_size
     print(f"Wyckchoffs formal validity: {wp_formal_validity}")
     if args.firm_n_samples is not None:
@@ -114,6 +126,4 @@ def main():
 
 
 if __name__ == "__main__":
-    import os
-    os.environ["CUDA_VISIBLE_DEVICES"] = ""
     main()
