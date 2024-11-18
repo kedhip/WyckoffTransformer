@@ -45,7 +45,7 @@ class WyckoffTrainer():
         optimisation_config: dict,
         device: torch.DeviceObjType,
         batch_size: Optional[int] = None,
-        run_path: Optional[Path] = Path("runs"),
+        run_path: Optional[Path] = None,
         target_name = None,
         kl_samples: Optional[int] = None,
         weights_path: Optional[Path] = None,
@@ -71,7 +71,7 @@ class WyckoffTrainer():
         # Nothing else will work in foreseeable future
         self.dtype = torch.int64
         self.batch_size = batch_size
-        self.run_path = run_path / wandb.run.id
+        self.run_path = run_path
         if isinstance(target, str):
             target = TargetClass[target]
         if target == TargetClass.NextToken:
@@ -576,12 +576,14 @@ class WyckoffTrainer():
 
 
 def train_from_config(config_dict: dict, device: torch.device, run_path: Optional[Path] = Path("runs")):
-    trainer = WyckoffTrainer.from_config(config_dict, device, run_path)
+    if wandb.run is None:
+        raise ValueError("W&B run must be initialized")
+    trainer = WyckoffTrainer.from_config(config_dict, device, run_path / wandb.run.id)
     config = OmegaConf.create(config_dict)
     trainer.train()
     if config.model.WyckoffTrainer_args.target == "NextToken":
         print("Training complete, loading the best model")
-        trainer.model.load_state_dict(torch.load(trainer.run_path / "best_model_params.pt"), weight_only=True)
+        trainer.model.load_state_dict(torch.load(trainer.run_path / "best_model_params.pt", weights_only=True))
         data_cache_path = Path(__file__).parent.parent.resolve() / "cache" / config.dataset / "data.pkl.gz"
         with gzip.open(data_cache_path, "rb") as f:
             datasets_pd = pickle.load(f)
