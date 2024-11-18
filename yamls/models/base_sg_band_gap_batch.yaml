@@ -16,7 +16,7 @@ model:
   WyckoffTrainer_args:
     multiclass_next_token_with_order_permutation: false
     target: Scalar
-    target_name: formation_energy_per_atom
+    target_name: band_gap
     evaluation_samples: 1
     batch_size: 500
   CascadeTransformer_args:
@@ -48,7 +48,7 @@ optimisation:
   optimiser:
     name: SGD
     config:
-      lr: 0.1
+      lr: 0.2
   scheduler:
     name: ReduceLROnPlateau
     config:

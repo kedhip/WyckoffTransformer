@@ -3757,13 +3757,13 @@ files = [
 
 [[package]]
 name = "pyxtal"
-version = "1.0.4"
+version = "1.0.5"
 description = "Python code for generation of crystal structures based on symmetry constraints."
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "pyxtal-1.0.4-py3-none-any.whl", hash = "sha256:4bb6c9d9ce506545c210c4ad115128ba1a5ad8b471aa7be56a3db26a3584b981"},
-    {file = "pyxtal-1.0.4.tar.gz", hash = "sha256:6428402eed59180d99321de17ae5059c00cc8fdb42ae5f3a7c1e46b43ca4ef0a"},
+    {file = "pyxtal-1.0.5-py3-none-any.whl", hash = "sha256:bd105a4c16e999dd872f512be4bcbc4ad6c9e900c346bd83cf0a47e6dd082627"},
+    {file = "pyxtal-1.0.5.tar.gz", hash = "sha256:81bf7a0a6a7721b24c525e082cbd88c47bcf9a890b4cb025d7353fa8d637c2c2"},
 ]
 
 [package.dependencies]

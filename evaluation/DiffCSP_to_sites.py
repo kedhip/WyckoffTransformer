@@ -9,14 +9,15 @@ from collections import defaultdict, Counter
 import argparse
 from functools import partial
 from pathlib import Path
+from multiprocessing import Pool
 import torch
 import json
 import gzip
 import pickle
+import numpy as np
 import pandas as pd
 import logging
 from pathlib import Path
-from multiprocessing import Pool
 from pymatgen.core.structure import Structure, Lattice
 from data import structure_to_sites
 
@@ -73,10 +74,15 @@ def get_structure(record: Dict) -> Structure:
     """
     Converts DiffCSP custom format to pymatgen Structure
     """
+    if len(record["atom_types"].shape) > 1:
+        atom_types = (np.argmax(record["atom_types"], axis=-1) + 1)
+    else:
+        atom_types = record["atom_types"]
+
     return Structure(
                 lattice=Lattice.from_parameters(
                     *(record['lengths'].tolist() + record['angles'].tolist())),
-                species=record['atom_types'], coords=record['frac_coords'], coords_are_cartesian=False)
+                species=atom_types, coords=record['frac_coords'], coords_are_cartesian=False)
 
 
 def record_to_pyxtal(record: Dict) -> Dict:

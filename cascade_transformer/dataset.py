@@ -76,7 +76,8 @@ def jagged_batch_randperm(permutation_lengths: Tensor, max_sequence_length: int)
     padding_mask = torch.arange(
         max_sequence_length, device=permutation_lengths.device).unsqueeze(0) > permutation_lengths.unsqueeze(1)
     logger.debug("Padding mask size: %s", str(padding_mask.size()))
-    logger.debug("Padding mask #0: %s", str(padding_mask[0]))
+    # Fails for padding_mask.size()[0] == 0
+    # logger.debug("Padding mask #0: %s", str(padding_mask[0]))
     random_tensor[padding_mask] = 3.
     # Assign 2. to STOP at every permutation_lengths
     stop_indices = permutation_lengths.unsqueeze(1)

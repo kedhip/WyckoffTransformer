@@ -142,7 +142,7 @@ class CascadeTransformer(nn.Module):
                  perceptron_shape: str,
                  TransformerEncoderLayer_args: dict,
                  TransformerEncoder_args: dict,
-                 compile_perceptrons: bool = False):
+                 compile_perceptrons: bool = True):
         """
         Expects tokens in the following format:
         START_k -> [] -> STOP -> PAD

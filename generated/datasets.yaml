@@ -125,12 +125,12 @@ mp_20_biternary:
     wyckoffs:
       path: WyCryst_mp_20_biternary.csv
       storage_type: WyCryst_csv
-    # CrySPR
-    CHGNet_fix:
-      structures:
-        path: WyCryst_mp20
-        storage_type: NongWei
-      # e_hull: WyCryst_mp_20_biternary.ehull.csv.gz
+    CrySPR:
+      CHGNet_fix:
+        structures:
+          path: WyCryst_mp20
+          storage_type: NongWei
+        # e_hull: WyCryst_mp_20_biternary.ehull.csv.gz
   split:
     train:
       structures:
@@ -154,5 +154,75 @@ mp_20_biternary:
         storage_type: CDVAE_csv_cif
       wyckoffs:
         path: ../cache/mp_20_biternary/data.pkl.gz
+        storage_type: WTCache
+        cache_key: val
+perov_5:
+  WyckoffTransformer:
+    wyckoffs:
+      path: Dropbox/perov_5/WyckoffTransformer/ICLR_perov_5.json.gz
+      storage_type: pyxtal_json
+    CrySPR:
+      CHGNet_fix:
+        structures:
+          path: Dropbox/perov_5/WyckoffTransformer/CrySPR/CHGNet_fix/Tformer_perov5_structures
+          storage_type: NongWei
+  # There is something wrong with the data
+  DiffCSP:
+    structures:
+      path: Dropbox/perov_5/DiffCSP/eval_gen.pt
+      storage_type: DiffCSP_pt
+  split:
+    train:
+      structures:
+        path: ../cdvae/data/perov_5/train.csv
+        storage_type: CDVAE_csv_cif
+      wyckoffs:
+        path: ../cache/perov_5/data.pkl.gz
+        storage_type: WTCache
+        cache_key: train
+    test:
+      structures:
+        path: ../cdvae/data/perov_5/test.csv
+        storage_type: CDVAE_csv_cif
+      wyckoffs:
+        path: ../cache/perov_5/data.pkl.gz
+        storage_type: WTCache
+        cache_key: test
+    val:
+      structures:
+        path: ../cdvae/data/perov_5/val.csv
+        storage_type: CDVAE_csv_cif
+      wyckoffs:
+        path: ../cache/perov_5/data.pkl.gz
+        storage_type: WTCache
+        cache_key: val
+carbon_24:
+  WyckoffTransformer:
+    wyckoffs:
+      path: Dropbox/carbon_24/WyckoffTransformer/ICLR_carbon_24.json.gz
+      storage_type: pyxtal_json
+  split:
+    train:
+      structures:
+        path: ../cdvae/data/carbon_24/train.csv
+        storage_type: CDVAE_csv_cif
+      wyckoffs:
+        path: ../cache/carbon_24/data.pkl.gz
+        storage_type: WTCache
+        cache_key: train
+    test:
+      structures:
+        path: ../cdvae/data/carbon_24/test.csv
+        storage_type: CDVAE_csv_cif
+      wyckoffs:
+        path: ../cache/carbon_24/data.pkl.gz
+        storage_type: WTCache
+        cache_key: test
+    val:
+      structures:
+        path: ../cdvae/data/carbon_24/val.csv
+        storage_type: CDVAE_csv_cif
+      wyckoffs:
+        path: ../cache/carbon_24/data.pkl.gz
         storage_type: WTCache
         cache_key: val

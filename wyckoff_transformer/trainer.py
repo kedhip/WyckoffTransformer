@@ -48,7 +48,8 @@ class WyckoffTrainer():
         run_path: Optional[Path] = Path("runs"),
         target_name = None,
         kl_samples: Optional[int] = None,
-        weights_path: Optional[Path] = None
+        weights_path: Optional[Path] = None,
+        test_dataset: Optional[Dict[str, torch.tensor]] = None
     ):
         """
         Args:
@@ -144,6 +145,24 @@ class WyckoffTrainer():
             device=device,
             target_name=target_name
             )
+        
+        if test_dataset is None:
+            self.test_dataset = None
+        else:
+            self.test_dataset = AugmentedCascadeDataset(
+                data=test_dataset,
+                cascade_order=cascade_order,
+                masks=self.masks_dict,
+                pads=self.pad_dict,
+                stops=self.stops_dict,
+                num_classes=self.num_classes_dict,
+                start_field=start_name,
+                augmented_field=augmented_field,
+                dtype=self.dtype,
+                start_dtype=start_dtype,
+                device=device,
+                target_name=target_name
+            )
 
         assert self.train_dataset.max_sequence_length == self.val_dataset.max_sequence_length
     
@@ -164,6 +183,40 @@ class WyckoffTrainer():
         else:
             # Round up, as the last batch might be smaller, but is still a batch
             self.batches_per_epoch = -(-len(self.train_dataset) // batch_size)
+
+    @classmethod
+    def from_config(cls, config_dict: dict, device: torch.device, run_path: Optional[Path] = Path("runs")):
+        config = OmegaConf.create(config_dict)
+        if config.model.WyckoffTrainer_args.multiclass_next_token_with_order_permutation and not config.model.CascadeTransformer_args.learned_positional_encoding_only_masked:
+            raise ValueError("Multiclass target with order permutation requires learned positional encoding only masked, ",
+                            "otherwise the Transformer is not permutation invariant.")
+        tensors, tokenisers, token_engineers = load_tensors_and_tokenisers(config.dataset, config.tokeniser.name)
+        model = CascadeTransformer.from_config_and_tokenisers(config, tokenisers, device)
+        # Our hihgly dynamic concat-heavy workflow doesn't benefit much from compilation
+        # torch._dynamo.config.cache_size_limit = 128
+        # model = torch.compile(model, dynamic=True)
+        if "augmented_token_fields" in config.tokeniser and len(config.tokeniser.augmented_token_fields) == 1:
+            augmented_field = config.tokeniser.augmented_token_fields[0]
+        else:
+            augmented_field = None
+        if config.model.CascadeTransformer_args.start_type == "categorial":
+            start_dtype = torch.int64
+        # one-hots are encoded by a linear layer
+        elif config.model.CascadeTransformer_args.start_type == "one_hot":
+            start_dtype = torch.float32
+        else:
+            raise ValueError(f"Unknown start type: {config.model.CascadeTransformer_args.start_type}")
+        return cls(
+            model, tensors["train"], tensors["val"], tokenisers, token_engineers, config.model.cascade.order,
+            config.model.cascade.is_target,
+            augmented_field,
+            config.model.start_token,
+            optimisation_config=config.optimisation, device=device,
+            run_path=run_path,
+            start_dtype=start_dtype,
+            test_dataset=tensors["test"],
+            **config.model.WyckoffTrainer_args)
+
 
     # Compilation fails due to the use of jagged_batch_randperm
     # @torch.compile(fullgraph=False)
@@ -392,49 +445,31 @@ class WyckoffTrainer():
                        "known_seq_len": known_seq_len,
                        "known_cascade_len": known_cascade_len})
 
-
-    def evaluate(self) -> Tensor:
+    @torch.no_grad()
+    def evaluate(self, dataset: AugmentedCascadeDataset) -> Tensor:
         """
-        Evaluates the model by calculating the average loss on the validation dataset.
-
+        Evaluates the model by calculating the average loss on the dataset.
+        Args:
+            dataset: The dataset to evaluate on.
         Returns:
-            The average loss on the validation dataset.
+            The average loss on the dataset.
         """
         self.model.eval()
-        with torch.no_grad():
-            if self.target == TargetClass.Scalar:
-                known_cascade_len = self.cascade_target_count - 1
-                known_train_seq_len = self.train_dataset.max_sequence_length - 1
-                known_test_seq_len = self.val_dataset.max_sequence_length - 1
-                train_loss = self.get_loss(
-                    self.train_dataset, known_train_seq_len, known_cascade_len, False, True
-                )
-                val_loss = self.get_loss(
-                    self.val_dataset, known_test_seq_len, known_cascade_len, False, True
-                )
-                return val_loss, train_loss
-
-            val_loss = torch.zeros(self.cascade_len, device=self.device)
-            train_loss = torch.zeros(self.cascade_len, device=self.device)
-            # Since we are sampling permutations and augmentations, and we rely on the
-            # validation loss for early stopping and learning rate scheduling, we need to
-            # average the loss over multiple samples.
-            for _ in range(self.evaluation_samples):
-                for known_seq_len in range(0, self.train_dataset.max_sequence_length):
-                    if self.target == TargetClass.NextToken:
-                        for known_cascade_len in range(0, self.cascade_target_count):
-                            train_loss[known_cascade_len] += self.get_loss(
-                                self.train_dataset, known_seq_len, known_cascade_len, True)
-                            val_loss[known_cascade_len] += self.get_loss(
-                                self.val_dataset, known_seq_len, known_cascade_len, True)
-                    else:
-                        train_loss += self.get_loss(self.train_dataset, known_seq_len, 0, True).sum(dim=0)
-                        val_loss += self.get_loss(self.val_dataset, known_seq_len, 0, True).sum(dim=0)
+        if self.target == TargetClass.Scalar:
+            known_seq_len = dataset.max_sequence_length - 1
+            return self.get_loss(dataset, known_seq_len, None, False, True)
+        loss = torch.zeros(self.cascade_len, device=self.device)
+        for _ in range(self.evaluation_samples):
+            for known_seq_len in range(0, dataset.max_sequence_length):
+                if self.target == TargetClass.NextToken:
+                    for known_cascade_len in range(0, self.cascade_target_count):
+                        loss[known_cascade_len] += self.get_loss(
+                            dataset, known_seq_len, known_cascade_len, True)
+                else: # NumUniqueTokens
+                    loss += self.get_loss(dataset, known_seq_len, 0, True).sum(dim=0)
             # ln(P) = ln p(t_n|t_n-1, ..., t_1) + ... + ln p(t_2|t_1)
             # We are minimising the negative log likelihood of the whole sequences
-            val_loss /= self.evaluation_samples * len(self.val_dataset)
-            train_loss /= self.evaluation_samples * len(self.train_dataset)
-            return val_loss, train_loss
+            return loss / self.evaluation_samples / len(dataset)
 
 
     def train(self):
@@ -452,22 +487,21 @@ class WyckoffTrainer():
         for epoch in trange(self.epochs):
             self.train_epoch()
             if epoch % self.validation_period == 0 or epoch == self.epochs - 1:
-                val_loss_epoch, train_loss_epoch = self.evaluate()
+                val_loss_epoch = self.evaluate(self.val_dataset)
+                train_loss_epoch = self.evaluate(self.train_dataset)
                 if self.target == TargetClass.Scalar:
                     total_val_loss = val_loss_epoch
-                    wandb.log({"train_mae": train_loss_epoch.item(),
-                           "val_mae": val_loss_epoch.item(),
-                           "lr": self.optimizer.param_groups[0]['lr'],
-                           "epoch": epoch}, commit=False)
+                    val_loss_dict = {"mae": total_val_loss.item()}
+                    train_loss_dict = {"mae": train_loss_epoch.item()}
                 else:
                     val_loss_dict = {name: val_loss_epoch[i] for i, name in enumerate(self.cascade_order)}
                     total_val_loss = val_loss_epoch.sum()
                     val_loss_dict["total"] = total_val_loss.item()
                     train_loss_dict = {name: train_loss_epoch[i] for i, name in enumerate(self.cascade_order)}
                     train_loss_dict["total"] = train_loss_epoch.sum().item()
-                    wandb.log({"loss.epoch": {"val": val_loss_dict, "train": train_loss_dict},
-                                "lr": self.optimizer.param_groups[0]['lr'],
-                                "epoch": epoch}, commit=False)
+                wandb.log({"loss.epoch": {"val": val_loss_dict, "train": train_loss_dict},
+                            "lr": self.optimizer.param_groups[0]['lr'],
+                            "epoch": epoch}, commit=False)
                 if total_val_loss < best_val_loss:
                     best_val_loss = total_val_loss
                     best_val_epoch = epoch
@@ -483,8 +517,17 @@ class WyckoffTrainer():
                 # patience behaviour
                 if epoch % self.validation_period == 0:
                     self.scheduler.step(total_val_loss)
+
+        if self.test_dataset is not None:
+            test_loss = self.evaluate(self.test_dataset)
+            if self.target == TargetClass.Scalar:
+                test_loss_dict = {"mae": test_loss.item()}
+            else:
+                test_loss_dict = {name: test_loss[i] for i, name in enumerate(self.cascade_order)}
+                test_loss_dict["total"] = test_loss.sum().item()
+            wandb.run.summary["loss.test"] = test_loss_dict
         # Make sure we log the last evaluation results
-        wandb.log(dict(), commit=True)
+        wandb.log({}, commit=True)
 
 
     def generate_structures(self, n_structures: int, calibrate: bool):
@@ -533,39 +576,12 @@ class WyckoffTrainer():
 
 
 def train_from_config(config_dict: dict, device: torch.device, run_path: Optional[Path] = Path("runs")):
+    trainer = WyckoffTrainer.from_config(config_dict, device, run_path)
     config = OmegaConf.create(config_dict)
-    if config.model.WyckoffTrainer_args.multiclass_next_token_with_order_permutation and not config.model.CascadeTransformer_args.learned_positional_encoding_only_masked:
-        raise ValueError("Multiclass target with order permutation requires learned positional encoding only masked, ",
-                         "otherwise the Transformer is not permutation invariant.")
-    tensors, tokenisers, token_engineers = load_tensors_and_tokenisers(config.dataset, config.tokeniser.name)
-    model = CascadeTransformer.from_config_and_tokenisers(config, tokenisers, device)
-    # Our hihgly dynamic concat-heavy workflow doesn't benefit much from compilation
-    # torch._dynamo.config.cache_size_limit = 128
-    # model = torch.compile(model, dynamic=True)
-    if "augmented_token_fields" in config.tokeniser and len(config.tokeniser.augmented_token_fields) == 1:
-        augmented_field = config.tokeniser.augmented_token_fields[0]
-    else:
-        augmented_field = None
-    if config.model.CascadeTransformer_args.start_type == "categorial":
-        start_dtype = torch.int64
-    # one-hots are encoded by a linear layer
-    elif config.model.CascadeTransformer_args.start_type == "one_hot":
-        start_dtype = torch.float32
-    else:
-        raise ValueError(f"Unknown start type: {config.model.CascadeTransformer_args.start_type}")
-    trainer = WyckoffTrainer(
-        model, tensors["train"], tensors["val"], tokenisers, token_engineers, config.model.cascade.order,
-        config.model.cascade.is_target,
-        augmented_field,
-        config.model.start_token,
-        optimisation_config=config.optimisation, device=device,
-        run_path=run_path,
-        start_dtype=start_dtype,
-        **config.model.WyckoffTrainer_args)
     trainer.train()
     if config.model.WyckoffTrainer_args.target == "NextToken":
         print("Training complete, loading the best model")
-        model.load_state_dict(torch.load(trainer.run_path / "best_model_params.pt"))
+        trainer.model.load_state_dict(torch.load(trainer.run_path / "best_model_params.pt"))
         data_cache_path = Path(__file__).parent.parent.resolve() / "cache" / config.dataset / "data.pkl.gz"
         with gzip.open(data_cache_path, "rb") as f:
             datasets_pd = pickle.load(f)
