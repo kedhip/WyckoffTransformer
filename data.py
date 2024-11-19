@@ -94,7 +94,7 @@ def structure_to_sites(
         pyxtal_structure.from_seed(structure, tol=tol)
     except Exception:
         if return_none_on_exception:
-            return None
+            return {}
         raise
 
     elements = [Element(site.specie) for site in pyxtal_structure.atom_sites]
@@ -171,8 +171,11 @@ def get_composition_from_symmetry_sites(record: pd.Series) -> dict:
         dict: A dictionary with the elements as keys and the number of atoms as values.
     """
     result = Counter()
-    for element, multiplicity in zip(record["elements"], record["multiplicity"]):
-        result[element] += multiplicity
+    try:
+        for element, multiplicity in zip(record["elements"], record["multiplicity"]):
+            result[element] += multiplicity
+    except TypeError:
+        return None
     return result
 
 
@@ -202,13 +205,13 @@ def compute_symmetry_sites(
                 structure_to_sites,
                 wychoffs_enumerated_by_ss=wychoffs_enumerated_by_ss,
                 wychoffs_augmentation=get_augmentation_dict(),
-                return_none_on_exception=False
+                return_none_on_exception=True
     )
     result = {}
     for dataset_name, dataset in datasets_pd.items():
         with Pool(processes=n_jobs) as p:
-            symmetry_list = p.map(structure_to_sites_with_args, dataset['structure'])
-            symmetry_dataset = pd.DataFrame.from_records(symmetry_list).set_index(dataset.index)
+            symmetry_list = p.map(structure_to_sites_with_args, dataset['structure'])    
+        symmetry_dataset = pd.DataFrame.from_records(symmetry_list).set_index(dataset.index)
         symmetry_dataset["composition"] = symmetry_dataset.apply(get_composition_from_symmetry_sites, axis=1)
         if "formation_energy_per_atom" in dataset.columns:
             symmetry_dataset['formation_energy_per_atom'] = dataset['formation_energy_per_atom']

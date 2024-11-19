@@ -44,6 +44,8 @@ def main():
     if args.transformations:
         data = GeneratedDataset.from_transformations(
             args.transformations, config_path=args.config_file, dataset=args.dataset)
+        if len(data.data) == 0:
+            raise ValueError("The dataset has zero length")
         compute_fields_and_cache(data)
     else:
         config = OmegaConf.load(args.config_file)

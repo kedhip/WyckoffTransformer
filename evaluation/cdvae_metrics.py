@@ -126,8 +126,12 @@ def smact_validity_optimised(
         return True
     if include_alloys and element_set.issubset(smact.metals):
         return True
-    
-    space = smact.element_dictionary(elem_symbols)
+  
+    try:
+        space = smact.element_dictionary(elem_symbols)
+    except NameError:
+        # NameError: Elemental data for Hs not found.
+        return False
     electronegs = [e.pauling_eneg for e in space.values()]
     ox_combos = [e.oxidation_states for e in space.values()]
 
@@ -237,10 +241,10 @@ def load_model(model_path, load_data=False, testing=True):
                 ckpt = str(ckpts[ckpt_epochs.argsort()[-1]])
         #hparams = os.path.join(model_path, "model.yaml")
         #print("Loading model from checkpoint:", ckpt)
-        model = template_model.__class__.load_from_checkpoint(ckpt, strict=False)
+        model = template_model.__class__.load_from_checkpoint(ckpt, strict=True)
         #try:
-        model.lattice_scaler = torch.load(model_path / 'lattice_scaler.pt')
-        model.scaler = torch.load(model_path / 'prop_scaler.pt')
+        model.lattice_scaler = torch.load(model_path / 'lattice_scaler.pt', weights_only=False)
+        model.scaler = torch.load(model_path / 'prop_scaler.pt', weights_only=False)
         #except:
         #    pass
 

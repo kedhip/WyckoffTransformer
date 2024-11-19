@@ -1,8 +1,28 @@
 mp_20:
   WyckoffLLM-naive:
     wyckoffs:
-      path: Dropbox/mp_20/parsed_materials_100.json
+      path: Dropbox/mp_20/WyckoffLLM/naive/parsed_materials_10000.json.gz
       storage_type: letters_json
+    DiffCSP++:
+      structures:
+        path: Dropbox/mp_20/WyckoffLLM/naive/parsed_materials_10000_pyxtal.json_structures.json.gz
+        storage_type: PymatgenJson
+  WyckoffLLM-site-symmetry:
+    wyckoffs:
+      path: Dropbox/mp_20/WyckoffLLM/site-symmetry/parsed_materials_augmented_10000.json.gz
+      storage_type: site_symmetry_json
+    DiffCSP++:
+      structures:
+        path: Dropbox/mp_20/WyckoffLLM/site-symmetry/parsed_materials_augmented_10000_pyxtal.json_structures.json.gz
+        storage_type: PymatgenJson
+  WyckoffLLM-vanilla:
+    wyckoffs:
+      path: Dropbox/mp_20/WyckoffLLM/vanilla/parsed_materials_vanilla_10000.json.gz
+      storage_type: letters_json
+    DiffCSP++:
+      structures:
+        path: Dropbox/mp_20/WyckoffLLM/vanilla/parsed_materials_vanilla_10000_pyxtal.json_structures.json.gz
+        storage_type: PymatgenJson
   WyckoffTransformer:
     wyckoffs:
       path: WyckoffTransformer_mp_20.json.gz

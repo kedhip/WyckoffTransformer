@@ -5,6 +5,7 @@ import warnings
 import gzip
 from multiprocessing import Pool
 import pickle
+from copy import deepcopy
 import numpy as np
 from functools import partial
 from pathlib import Path
@@ -22,6 +23,7 @@ sys.path.append("..")
 from data import read_cif, compute_symmetry_sites, read_MP, pyxtal_notation_to_sites
 from preprocess_wychoffs import get_augmentation_dict
 from wyckoff_transformer.evaluation import wycryst_to_pyxtal_dict
+from wyckoff_transformer.tokenization import get_wp_index
 
 from .DiffCSP_to_sites import load_diffcsp_dataset, record_to_pyxtal
 from .cdvae_metrics import (
@@ -43,7 +45,8 @@ WyckoffStorage = Enum("WyckoffStorage", [
     "pyxtal_json",
     "WyCryst_csv",
     "WTCache",
-    "letters_json"
+    "letters_json",
+    "site_symmetry_json"
     ])
 
 DATA_KEYS = frozenset(("structures", "wyckoffs", "e_hull"))
@@ -210,24 +213,57 @@ class LetterDictToSitesConverter:
             with gzip.open(multiplicity_engineer_file, "rb") as f:
                 self.multiplicity_engineer = pickle.load(f)
             self.augmentation_dict = get_augmentation_dict()
+            self.wp_index = get_wp_index()
 
     def __call__(self, letter_dict: dict) -> dict:
+        """
+        Args:
+            letter_dict: A dictionary containing the following keys:
+                "spacegroup_number": int
+                "wyckoff_sites": List[Tuple[str, str]]
+                    [(element, letter), ...] OR [(element, multiplicity and letter), ...] e.g.
+                    ["Ba", "a"] OR ["Ba", "2a"]
+        Returns:
+            sites_dict: A dictionary containing the following keys:
+                "site_symmetries": List[str]
+                "elements": List[Element]
+                "multiplicity": List[int]
+                "wyckoff_letters": List[str]
+                "sites_enumeration": List[int]
+                "spacegroup_number": int
+                "sites_enumeration_augmented": frozenset
+        Raises:
+            KeyError: If the Wyckoff letter is not found in the database
+        """
         site_symmetries = []
         elements = []
         sites_enumeration = []
         multiplicity = []
         wyckoff_letters = []
         space_group = letter_dict["spacegroup_number"]
-        for this_element, letter in letter_dict["wyckoff_sites"]:
+        available_sites = deepcopy(self.wp_index[space_group])
+        for this_element, raw_letter in letter_dict["wyckoff_sites"]:
             true_element = Element(this_element)
-            
+            letter = raw_letter[-1]
             elements.append(true_element)
             wyckoff_letters.append(letter)
-            sites_enumeration.append(self.wychoffs_enumerated_by_ss[space_group][letter])
             ss = self.ss_from_letter[space_group][letter]
+            # Will raise KeyError if the letter is not found in the SG
+            # or a 0-DoF site is repeated
+            this_multiplicity, this_dof = available_sites[ss][letter]
+            if this_dof == 0:
+                del available_sites[ss][letter]
+            sites_enumeration.append(self.wychoffs_enumerated_by_ss[space_group][letter])
             site_symmetries.append(ss)
             multiplicity.append(self.multiplicity_engineer.db.loc[
                 space_group, ss, sites_enumeration[-1]])
+            if this_multiplicity != multiplicity[-1]:
+                raise RuntimeError("Multiplicity does not match for get_wp_index and multiplicity engineer")
+            if len(raw_letter) > 1:
+                declared_multiplicity = int(raw_letter[:-1])
+                if declared_multiplicity != multiplicity[-1]:
+                    raise ValueError(f"Declared multiplicity {declared_multiplicity} does not match "
+                                     f"engineered multiplicity {multiplicity[-1]}")
 
         sites_dict = {
             "site_symmetries": site_symmetries,
@@ -247,15 +283,78 @@ class LetterDictToSitesConverter:
         return sites_dict
 
 
+class SiteSymmetryToRecordConverter:
+    def __init__(self, 
+        wyckoffs_db_file = Path(__file__).parent.parent / "cache" / "wychoffs_enumerated_by_ss.pkl.gz",
+        multiplicity_engineer_file = Path(__file__).parent.parent / "cache" / "engineers" / "multiplicity.pkl.gz"):
+            with open(wyckoffs_db_file, "rb") as f:
+                self.wychoffs_enumerated_by_ss, self.letter_from_ss_enum, _ = pickle.load(f)
+            self.letter_to_record_converter = LetterDictToSitesConverter(
+                wyckoffs_db_file, multiplicity_engineer_file)
+
+
+    def __call__(self, ss_dict: dict) -> dict:
+        """
+        Intended to be used with record_to_pyxtal to get all the variables
+        Args:
+            ss_dict: A dictionary containing the following
+                spacegroup_number: int
+                wyckoff_sites: List[Tuple[str, str, int]]
+                    [(element, site_symmetry, enumeration), ...]
+                    ["Na", "m", 0]
+        Returns:
+            record: A dictionary containing the following keys:
+                wyckoff_letters: List[str]
+                multiplicity: List[int]
+                elements: List[Element]
+                sites_enumeration_augmented: frozenset
+        """
+        lettered_sites = []
+        space_group = ss_dict["spacegroup_number"]
+        for raw_element, site_symmetry, enumeration in ss_dict["wyckoff_sites"]:
+            letter = self.letter_from_ss_enum[space_group][site_symmetry][enumeration]
+            lettered_sites.append((raw_element, letter))
+
+        return self.letter_to_record_converter(
+            {"spacegroup_number": space_group, "wyckoff_sites": lettered_sites})
+
+
+def read_json(path: Path):
+    if path.suffix == ".json":
+        with open(path, "rt", encoding="ascii") as f:
+            return json.load(f)
+    elif path.suffix == ".gz":
+        with gzip.open(path, "rb") as f:
+            return json.load(f)
+    else:
+        raise ValueError(f"Unknown file type {path.suffix}")
+
+
+def load_site_symmetry_json(path: Path):
+    data = read_json(path)
+    converted = SiteSymmetryToRecordConverter()
+    converted_data = []
+    for record in data:
+        try:
+            converted_data.append(converted(record))
+        except (KeyError, ValueError):
+            # KeyError = Invalid Wyckoff representation
+            # ValueError = Invalid Element
+            continue
+    print(f"Valid records: {len(converted_data)} / {len(data)} = {len(converted_data) / len(data):.2%}")
+    return pd.DataFrame.from_records(converted_data, index=range(len(converted_data)))
+
+
 def load_letters_json(path: Path):
-    with open(path, "rt", encoding="ascii") as f:
-        data = json.load(f)
+    data = read_json(path)
     converter = LetterDictToSitesConverter()
     converted_data = []
     for letter_dict in data:
         try:
             converted_data.append(converter(letter_dict))
-        except KeyError:
+        except (KeyError, ValueError):
+            # KeyError = Invalid Wyckoff representation
+            # ValueError = Invalid Element
             continue
     print(f"Valid records: {len(converted_data)} / {len(data)} = {len(converted_data) / len(data):.2%}")
     return pd.DataFrame.from_records(converted_data, index=range(len(converted_data)))
@@ -269,7 +368,8 @@ class GeneratedDataset():
         dataset: str = "mp_20",
         cache_path: Path = Path(__file__).parent.parent / "cache"):
 
-        cache_location = cache_path.joinpath(dataset, "analysis_datasets", *transformations).with_suffix(".pkl.gz")
+        cache_location = cache_path.joinpath(
+            dataset, "analysis_datasets", *transformations).with_suffix(".pkl.gz")
         with gzip.open(cache_location, "rb") as f:
             return pickle.load(f)
 
@@ -338,6 +438,7 @@ class GeneratedDataset():
             raise ValueError("Duplicate indices in the dataset")
         self.data.sort_index(inplace=True)
         self.data["density"] = self.data["structure"].map(attrgetter("density"))
+        self.structures_file = path
 
     def load_corrected_chgnet_ehull(self, path: Path|str, index_json: Optional[Path] = None):
         e_hull_data = pd.read_csv(path, index_col=False)
@@ -377,6 +478,8 @@ class GeneratedDataset():
             wcykoffs = load_WyCryst_csv(path)
         elif storage_type == WyckoffStorage.letters_json:
             wcykoffs = load_letters_json(path)
+        elif storage_type == WyckoffStorage.site_symmetry_json:
+            wcykoffs = load_site_symmetry_json(path)
         else:
             raise ValueError(f"Unknown storage type {storage_type}")
         if len(self.data) == 0:
@@ -399,11 +502,16 @@ class GeneratedDataset():
             proper_wyckoffs = pd.DataFrame.from_records(
                 proper_wyckoffs_series.tolist(), index=proper_wyckoffs_series.index)
             self.data.loc[:, proper_wyckoffs.columns] = proper_wyckoffs
+        if "numIons" not in self.data.columns:
+            self.convert_wyckoffs_to_pyxtal()
+        self.wyckoffs_file = path
 
 
     def compute_wyckoffs(self, n_jobs: Optional[int] = None):
         wyckoffs = compute_symmetry_sites({"_": self.data}, n_jobs=n_jobs)["_"]
         self.data.loc[:, wyckoffs.columns] = wyckoffs
+        # TODO fix data / lib
+        self.data.dropna(axis=0, inplace=True)
 
     def convert_wyckoffs_to_pyxtal(self):
         pyxtal_series = self.data.apply(record_to_pyxtal, axis=1)
@@ -411,14 +519,8 @@ class GeneratedDataset():
         self.data.loc[:, in_pyxtal_format.columns] = in_pyxtal_format
 
     def compute_cdvae_crystals(self, n_jobs: Optional[int] = None):
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore",
-                category=UserWarning,
-                module="pymatgen.analysis.local_env.py"
-            )
-            with Pool(n_jobs) as pool:
-                self.data["cdvae_crystal"] = pool.map(Crystal.from_pymatgen, self.data["structure"])
+        with Pool(n_jobs) as pool:
+            self.data["cdvae_crystal"] = pool.map(Crystal.from_pymatgen, self.data["structure"])
 
     def compute_wyckoff_fingerprints(self):
         self.data["fingerprint"] = self.data.apply(record_to_augmented_fingerprint, axis=1)
@@ -446,6 +548,10 @@ class GeneratedDataset():
 
         sample_rows = self.data.index[:sample_size]
         sample = self.data.loc[sample_rows, "cdvae_crystal"].map(attrgetter("dict"))
-        energies = prop_model_eval(eval_model_name, sample, device=device)
+        try:
+            energies = prop_model_eval(eval_model_name, sample, device=device)
+        except IndexError:
+            # Rare atom types
+            energies = np.nan
         self.data["cdvae_e"] = pd.Series()
         self.data.loc[sample_rows, "cdvae_e"] = energies
