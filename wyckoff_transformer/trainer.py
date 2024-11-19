@@ -578,9 +578,16 @@ class WyckoffTrainer():
 def train_from_config(config_dict: dict, device: torch.device, run_path: Optional[Path] = Path("runs")):
     if wandb.run is None:
         raise ValueError("W&B run must be initialized")
-    trainer = WyckoffTrainer.from_config(config_dict, device, run_path / wandb.run.id)
-    config = OmegaConf.create(config_dict)
+    this_run_path = run_path / wandb.run.id
+    trainer = WyckoffTrainer.from_config(config_dict, device, this_run_path)    
     trainer.train()
+    with gzip.open(this_run_path / "tokenizers.pkl.gz", "wb") as f:
+        pickle.dump(trainer.tokenisers, f)
+    wandb.save(this_run_path / "tokenizers.pkl.gz", base_path=this_run_path, policy="now")
+    with gzip.open(this_run_path / "token_engineers.pkl.gz", "wb") as f:
+        pickle.dump(trainer.token_engineers, f)
+    wandb.save(this_run_path / "token_engineers.pkl.gz", base_path=this_run_path, policy="now")
+    config = OmegaConf.create(config_dict)
     if config.model.WyckoffTrainer_args.target == "NextToken":
         print("Training complete, loading the best model")
         trainer.model.load_state_dict(torch.load(trainer.run_path / "best_model_params.pt", weights_only=True))
