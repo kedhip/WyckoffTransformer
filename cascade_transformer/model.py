@@ -95,7 +95,7 @@ class CascadeTransformer(nn.Module):
     def from_config_and_tokenisers(cls, config: OmegaConf,
         tokenisers: dict, device: torch.device):
 
-        if len(config.tokeniser.augmented_token_fields) > 1:
+        if len(config.tokeniser.get("augmented_token_fields", [])) > 1:
             raise ValueError("Only one augmented field is supported")
 
         cascade_order = config.model.cascade.order

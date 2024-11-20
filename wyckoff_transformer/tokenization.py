@@ -15,7 +15,8 @@ import torch
 import omegaconf
 from pyxtal.symmetry import Group
 
-ServiceToken = Enum('ServiceToken', ['PAD', 'STOP', 'MASK'])
+# Order is important here, as we can use it to sort the tokens
+ServiceToken = Enum('ServiceToken', ['MASK', 'STOP', 'PAD'])
 logger = logging.getLogger(__name__)
 
 class TupleDict(UserDict):
@@ -79,7 +80,7 @@ class EnumeratingTokeniser(dict):
                 raise ValueError(f"Special token {special_token.name} is in the dataset")
         instance = cls()
         instance.update({token: idx for idx, token in enumerate(
-            chain(all_tokens, map(attrgetter('name'), ServiceToken)))})
+            chain(sorted(all_tokens), map(attrgetter('name'), ServiceToken)))})
         instance.stop_token = instance[ServiceToken.STOP.name]
         instance.pad_token = instance[ServiceToken.PAD.name]
         instance.mask_token = instance[ServiceToken.MASK.name]
@@ -209,6 +210,28 @@ def tokenise_engineer(
         stop_token=engineer.stop_token, pad_token=engineer.pad_token, mask_token=engineer.mask_token)
 
 
+def argsort_multiple(*tensors: torch.Tensor, dim: int) -> torch.Tensor:
+    """
+    Argsorts the tensors along the dim dimension. The order is determined by
+    the first tensor, in case of a tie the second tensor is used, and so on.
+    Args:
+        tensors: The tensors to argsort
+        dim: The dimension to argsort along
+    Returns:
+        A tensor with the indices of the sorted tensors
+    """
+    if len(tensors) == 1:
+        return torch.argsort(tensors[0], dim=dim)
+    elif len(tensors) == 2:
+        if tensors[0].dtype != torch.uint8 or tensors[1].dtype != torch.uint8:
+            # Will need to check for overflow
+            raise NotImplementedError("Only uint8 tensors are supported")
+        megaindex = tensors[0].type(torch.int64) * tensors[1].max().type(torch.int64) + tensors[1].type(torch.int64)
+        return torch.argsort(megaindex)
+    else:
+        raise NotImplementedError("Only one or two tensors are supported")
+    
+
 def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                      config: omegaconf.OmegaConf,
                      tokenizer_path: Optional[Path|str] = None) -> \
@@ -262,7 +285,7 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
     original_max_len = max(map(len, chain.from_iterable(
         map(itemgetter(config.token_fields.pure_categorical[0]),
             datasets_pd.values()))))
-    
+  
     tensors = defaultdict(dict)
     for dataset_name, dataset in datasets_pd.items():
         dataset = dataset[dataset['spacegroup_number'].isin(tokenisers['spacegroup_number'])]
@@ -298,28 +321,45 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
             for field in config.sequence_fields.no_processing:
                 tensors[dataset_name][field] = torch.Tensor(dataset[field].array)
 
-        # Counter fields are processed into two tensors: tokenised values, and the counts
-        # WARNING Cell variable tokeniser_filed defined in loopPylintW0640:cell-var-from-loop
-        for field, tokeniser_field in config.sequence_fields.counters.items():
-            tensors[dataset_name][f"{field}_tokens"] = \
-                    dataset[field].map(lambda dict_:
-                        torch.stack([tokenisers[tokeniser_field].tokenise_single(key, dtype=dtype)
-                            for key in dict_.keys()])).to_list()
-            tensors[dataset_name][f"{field}_counts"] = \
-                    dataset[field].map(lambda dict_:
-                        torch.tensor(tuple(dict_.values()), dtype=dtype)).to_list()
+        if "counters" in config.sequence_fields:
+            # Counter fields are processed into two tensors: tokenised values, and the counts
+            # WARNING Cell variable tokeniser_filed defined in loopPylintW0640:cell-var-from-loop
+            for field, tokeniser_field in config.sequence_fields.counters.items():
+                tensors[dataset_name][f"{field}_tokens"] = \
+                        dataset[field].map(lambda dict_:
+                            torch.stack([tokenisers[tokeniser_field].tokenise_single(key, dtype=dtype)
+                                for key in dict_.keys()])).to_list()
+                tensors[dataset_name][f"{field}_counts"] = \
+                        dataset[field].map(lambda dict_:
+                            torch.tensor(tuple(dict_.values()), dtype=dtype)).to_list()
 
-        # WARNING Cell variable field defined in loopPylintW0640:cell-var-from-loop
-        for field in config.augmented_token_fields:
-            augmented_field = f"{field}_augmented"
-            tensors[dataset_name][augmented_field] = dataset[augmented_field].map(lambda variants:
-                    [tokenisers[field].tokenise_sequence(
-                        variant, original_max_len=original_max_len, dtype=dtype)
-                        for variant in variants]).to_list()
+        if "augmented_token_fields" in config:
+            # WARNING Cell variable field defined in loopPylintW0640:cell-var-from-loop
+            for field in config.augmented_token_fields:
+                augmented_field = f"{field}_augmented"
+                tensors[dataset_name][augmented_field] = dataset[augmented_field].map(lambda variants:
+                        [tokenisers[field].tokenise_sequence(
+                            variant, original_max_len=original_max_len, dtype=dtype)
+                            for variant in variants]).to_list()
         # Assuming all the fields have the same length
         tensors[dataset_name]["pure_sequence_length"] = torch.tensor(
             dataset[config.token_fields.pure_categorical[0]].map(len).to_list(), dtype=dtype)
 
+        if "token_sort" in config:
+            if "augmented_token_fields" in config:
+                raise NotImplementedError("Token sort is not implemented for augmented fields")
+            key_tensors = [tensors[dataset_name][field] for field in config.token_sort]
+            order = argsort_multiple(*key_tensors, dim=1)
+            logger.debug("Order tensor")
+            logger.debug(order[:5])
+            fields_to_sort = list(config.token_fields.pure_categorical)
+            fields_to_sort.extend(config.token_fields.get("engineered", []))
+            for field in fields_to_sort:
+                logger.debug("Sorting tensor %s", field)
+                logger.debug(tensors[dataset_name][field][:5])
+                tensors[dataset_name][field] = tensors[dataset_name][field].gather(1, order)
+                logger.debug("Sorted tensor %s", field)
+                logger.debug(tensors[dataset_name][field][:5])
     return tensors, tokenisers, token_engineers
 
 
@@ -368,22 +408,20 @@ def get_letter_from_ss_enum_idx(
     return letter_from_ss_enum_idx  
 
 
-pyxtal_cascade_order = ("elements", "site_symmetries", "sites_enumeration")
-
 def tensor_to_pyxtal(
     space_group_tensor: torch.Tensor,
     wp_tensor: torch.Tensor,
     tokenisers: Dict[str, EnumeratingTokeniser],
     cascade_order: Tuple[str, ...],
     letter_from_ss_enum_idx,
+    ss_from_letter,
     wp_index,
     enforced_min_elements: Optional[int] = None,
     enforced_max_elements: Optional[int] = None) -> Optional[dict]:
     """
-    This function has a lot of expectations.
-    1. The cascade order is ("elements", "site_symmetries", "sites_enumeration")
-    2. Those exact fields are also present in the tokenisers
-    3. "spacegroup_number" is also in the tokenisers
+    The functio supports two cascade modes:
+        (elements, site_symmetries, sites_enumeration)
+        (elements, wyckoff_letters)
     Args:
         space_group_tensor: The tensor with the space group
         wp_tensor: The tensor with the Wyckoff positions
@@ -394,6 +432,17 @@ def tensor_to_pyxtal(
         enforced_max_elements: The maximum number of elements in the structure
 
     """
+    ss_pyxtal_cascde_order = ("elements", "site_symmetries", "sites_enumeration")
+    letters_pyxtal_cascade_order = ("elements", "wyckoff_letters")
+    if set(cascade_order) == set(ss_pyxtal_cascde_order):
+        pyxtal_cascade_order = ss_pyxtal_cascde_order
+        ss_mode = True
+    elif set(cascade_order) == set(letters_pyxtal_cascade_order):
+        pyxtal_cascade_order = letters_pyxtal_cascade_order
+        ss_mode = False
+    else:
+        raise NotImplementedError("Unsupported cascade")
+
     cascade_permutation = [cascade_order.index(field) for field in pyxtal_cascade_order]
     cononical_wp_tensor = wp_tensor[:, cascade_permutation]
 
@@ -416,23 +465,32 @@ def tensor_to_pyxtal(
             break
         if (this_token_cascade == pad_tokens).any():
             logger.info("PAD token in generated sequence")
-            return None
+            return
         if (this_token_cascade == mask_tokens).any():
             logger.info("MASK token in generated sequence")
-            return None
-        element_idx, ss_idx, enum_idx = this_token_cascade.tolist()
-        ss = tokenisers["site_symmetries"].to_token[ss_idx]
-        try:
-            wp_letter = letter_from_ss_enum_idx[space_group_real][ss][enum_idx]
-        except KeyError:
-            logger.info("Invalid combination: space group %i, site symmetry %s, enum token %i", space_group_real,
-                         ss, enum_idx)
-            return None
+            return
+        if ss_mode:
+            element_idx, ss_idx, enum_idx = this_token_cascade.tolist()
+            ss = tokenisers["site_symmetries"].to_token[ss_idx]
+            try:
+                wp_letter = letter_from_ss_enum_idx[space_group_real][ss][enum_idx]
+            except KeyError:
+                logger.info("Invalid combination: space group %i, site symmetry %s, enum token %i", space_group_real,
+                            ss, enum_idx)
+                return
+        else:
+            element_idx, wp_letter_idx = this_token_cascade.tolist()
+            wp_letter = tokenisers["wyckoff_letters"].to_token[wp_letter_idx]
+            try:
+                ss = ss_from_letter[space_group_real][wp_letter]
+            except KeyError:
+                logger.info("Invalid combination: space group %i, wp letter %s", space_group_real, wp_letter)
+                return
         try:
             our_site = available_sites[ss][wp_letter]
         except KeyError:
             logger.info("Repeated special WP: %i, %s, %s", space_group_real, ss, wp_letter)
-            return None
+            return
         element = tokenisers["elements"].to_token[element_idx]
         pyxtal_args[element][0] += our_site[0]
         pyxtal_args[element][1].append(str(our_site[0]) + wp_letter)
@@ -440,13 +498,13 @@ def tensor_to_pyxtal(
             del available_sites[ss][wp_letter]
     if enforced_min_elements is not None and len(pyxtal_args.keys()) < enforced_min_elements:
         logger.info("Not enough elements")
-        return None
+        return
     if enforced_max_elements is not None and len(pyxtal_args.keys()) > enforced_max_elements:
         logger.info("Too many elements")
-        return None
+        return
     if len(pyxtal_args) == 0:
         logger.info("No structure generated, STOP in the first token")
-        return None
+        return
     return {
             "group": space_group_real,
             "sites": [x[1] for x in pyxtal_args.values()],

@@ -42,7 +42,7 @@ def main():
 
     tokeniser_config_path = Path(__file__).parent.resolve() / "yamls" / "tokenisers" / f"{config.tokeniser.name}.yaml"
     tokeniser_config = OmegaConf.load(tokeniser_config_path)
-    if len(tokeniser_config.augmented_token_fields) > 1:
+    if len(tokeniser_config.get("augmented_token_fields", [])) > 1:
         raise ValueError("Only one augmented field is supported")
     config['tokeniser'] = tokeniser_config
 

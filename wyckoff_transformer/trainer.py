@@ -546,14 +546,23 @@ class WyckoffTrainer():
             # We are going to sample with replacement from train+val datasets
             all_starts = torch.cat([self.train_dataset.start_tokens, self.val_dataset.start_tokens], dim=0)
             start_tensor = all_starts[torch.randint(len(all_starts), (n_structures,))]
+        else:
+            raise ValueError(f"Unknown start type: {self.model.start_type}")
         generated_tensors = torch.stack(
             generator.generate_tensors(start_tensor), dim=-1)
 
-        letter_from_ss_enum_idx = get_letter_from_ss_enum_idx(self.tokenisers['sites_enumeration'])
+        if 'sites_enumeration' in self.tokenisers:
+            letter_from_ss_enum_idx = get_letter_from_ss_enum_idx(self.tokenisers['sites_enumeration'])
+        else:
+            letter_from_ss_enum_idx = None
+        preprocessed_wyckhoffs_cache_path = Path(__file__).parent.parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz"
+        with open(preprocessed_wyckhoffs_cache_path, "rb") as f:
+            ss_from_letter = pickle.load(f)[2]
         to_pyxtal = partial(tensor_to_pyxtal,
                             tokenisers=self.tokenisers,
                             cascade_order=self.cascade_order,
                             letter_from_ss_enum_idx=letter_from_ss_enum_idx,
+                            ss_from_letter=ss_from_letter,
                             wp_index=get_wp_index())
         with Pool() as p:
             structures = p.starmap(to_pyxtal, zip(start_tensor.detach().cpu(), generated_tensors.detach().cpu()))

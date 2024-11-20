@@ -2,6 +2,7 @@ from functools import partial
 import time
 from multiprocessing import Pool
 import argparse
+import pickle
 import torch
 # torch.set_float32_matmul_precision('high')
 import json
@@ -101,10 +102,14 @@ def main():
     generated_tensors = torch.stack(generator.generate_tensors(start), dim=-1)
     tensor_generated_time = time.time()
     letter_from_ss_enum_idx = get_letter_from_ss_enum_idx(tokenisers['sites_enumeration'])
+    preprocessed_wyckhoffs_cache_path = Path(__file__).parent.parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz"
+    with open(preprocessed_wyckhoffs_cache_path, "rb") as f:
+        ss_from_letter = pickle.load(f)[2]
     to_pyxtal = partial(tensor_to_pyxtal,
                         tokenisers=tokenisers,
                         cascade_order=config.model.cascade.order,
                         letter_from_ss_enum_idx=letter_from_ss_enum_idx,
+                        ss_from_letter=ss_from_letter,
                         wp_index=get_wp_index())
     with Pool() as p:
         generated_wp = p.starmap(to_pyxtal, zip(start.detach().cpu(), generated_tensors.detach().cpu()))
