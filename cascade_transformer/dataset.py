@@ -109,6 +109,7 @@ class AugmentedCascadeDataset():
         start_field: str,
         augmented_field: str,
         batch_size: Optional[int] = None,
+        fix_batch_size: bool = True,
         dtype: torch.dtype = torch.int64,
         start_dtype: torch.dtype = torch.int64,
         device: str = "cpu",
@@ -136,8 +137,11 @@ class AugmentedCascadeDataset():
         self.batch_size = batch_size
         self.num_examples = len(data[cascade_order[0]])
         if batch_size is not None:
+            if batch_size > self.num_examples:
+                raise ValueError("Batch size is larger than the dataset")
             self.this_shuffle_order = torch.randperm(self.num_examples, device=device)
             self.next_batch_index = 0
+        self.fix_batch_size = fix_batch_size
         self.cascade_order = cascade_order
         self.cascade_index_from_field = {name: i for i, name in enumerate(cascade_order)}
         self.augmented_field = augmented_field
@@ -179,6 +183,11 @@ class AugmentedCascadeDataset():
         self.padding_mask = torch.cat(
             (torch.zeros(self.data[cascade_order[0]].shape[0], 1, device=self.device, dtype=bool),
             (self.data[cascade_order[0]] == self.pads[cascade_order[0]])), dim=1)
+        if batch_size is None:
+            self.batches_per_epoch = 1
+        else:
+            # Round up, as the last batch might be smaller, but is still a batch
+            self.batches_per_epoch = -(-self.num_examples // batch_size)
 
 
     def __len__(self):
@@ -230,20 +239,36 @@ class AugmentedCascadeDataset():
         return self.start_tokens[target_is_viable], res, target[target_is_viable]
 
 
+    def get_next_batch(self) -> Tensor:
+        """
+        Advances the internal state to the next batch, and returns the indices of the current batch.    
+        If self.fix_batch_size is False, the last batch might be smaller than self.batch_size,
+        if self.fix_batch_size is True, the last smaller batch will be dropped.
+        Shuffles the data if the end of the dataset is reached.
+        Returns:
+            The indices of the current batch.
+        """
+        batch_start = self.next_batch_index * self.batch_size
+        batch_end = batch_start + self.batch_size
+        if batch_end >= self.num_examples:
+            self.this_shuffle_order = torch.randperm(self.num_examples, device=self.device)
+            self.next_batch_index = 0
+            # We have checked during the initialisation that batch_size <= num_examples
+            if self.fix_batch_size:
+                return self.get_next_batch()
+        else:
+            self.next_batch_index += 1
+        batch_selection = self.this_shuffle_order[batch_start:batch_end]
+        logging.debug("The current batch size is %i", len(batch_selection))
+        return batch_selection
+
+
     def get_augmented_data(self, no_batch: bool) -> Tuple[Tensor, List[Tensor], Tensor, Tensor]:
         """
         Returns the full sequences, using a randon augmentation for the augmented field.
         """
         if self.batch_size is not None and not no_batch:
-            batch_start = self.next_batch_index * self.batch_size
-            batch_end = batch_start + self.batch_size
-            batch_selection = self.this_shuffle_order[batch_start:batch_end]
-            logging.debug("The current batch size is %i", len(batch_selection))
-            if batch_end >= self.num_examples:
-                self.this_shuffle_order = torch.randperm(self.num_examples, device=self.device)
-                self.next_batch_index = 0
-            else:
-                self.next_batch_index += 1
+            batch_selection = self.get_next_batch()
         else:
             batch_selection = slice(None)
         res = []

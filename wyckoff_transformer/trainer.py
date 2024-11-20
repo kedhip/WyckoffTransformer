@@ -45,6 +45,7 @@ class WyckoffTrainer():
         optimisation_config: dict,
         device: torch.DeviceObjType,
         batch_size: Optional[int] = None,
+        val_batch_size: Optional[int] = None,
         run_path: Optional[Path] = None,
         target_name = None,
         kl_samples: Optional[int] = None,
@@ -83,8 +84,9 @@ class WyckoffTrainer():
                 raise NotImplementedError("NumUniqueTokens is not implemented without permutations")
             self.criterion = nn.MSELoss(reduction="none")
         elif target == TargetClass.Scalar:
+            # Assumes the batch size is the same for all batches
             self.criterion = nn.MSELoss(reduction='mean')
-            self.testing_criterion = nn.L1Loss(reduction='mean')  
+            self.testing_criterion = nn.L1Loss(reduction='mean')
         else:
             raise ValueError(f"Unknown target: {target}")
         
@@ -140,6 +142,7 @@ class WyckoffTrainer():
             num_classes=self.num_classes_dict,
             start_field=start_name,
             augmented_field=augmented_field,
+            batch_size=val_batch_size,
             dtype=self.dtype,
             start_dtype=start_dtype,
             device=device,
@@ -178,11 +181,7 @@ class WyckoffTrainer():
         self.target = target
         self.multiclass_next_token_with_order_permutation = multiclass_next_token_with_order_permutation
         self.evaluation_samples = evaluation_samples
-        if batch_size is None:
-            self.batches_per_epoch = 1
-        else:
-            # Round up, as the last batch might be smaller, but is still a batch
-            self.batches_per_epoch = -(-len(self.train_dataset) // batch_size)
+
 
     @classmethod
     def from_config(cls, config_dict: dict, device: torch.device, run_path: Optional[Path] = Path("runs")):
@@ -214,7 +213,7 @@ class WyckoffTrainer():
             optimisation_config=config.optimisation, device=device,
             run_path=run_path,
             start_dtype=start_dtype,
-            test_dataset=tensors["test"],
+            test_dataset=tensors["test"] if "test" in tensors else None,
             **config.model.WyckoffTrainer_args)
 
 
@@ -376,11 +375,12 @@ class WyckoffTrainer():
         testing: bool = False) -> Tensor:
         logging.debug("Known sequence length: %i", known_seq_len)
         logging.debug("Known cascade lenght: %i", known_cascade_len)
+        # Step 1: Get the data
         if self.multiclass_next_token_with_order_permutation:
             if self.target == TargetClass.Scalar:
                 raise ValueError("Scalar prediction is computed for the whole sequence, "
                                  "it doesn't make sense with multiclass_next_token_with_order_permutation")
-            if self.target == TargetClass.NextToken:
+            elif self.target == TargetClass.NextToken:
                 # Once we have sampled the first cascade field, the prediction target is no longer mutliclass
                 # However, we still need to permute the sequence so that the autoregression is
                 # permutation-invariant.
@@ -399,7 +399,8 @@ class WyckoffTrainer():
                 start_tokens, masked_data, target, mask = dataset.get_augmented_data(no_batch=no_batch)
             else:
                 start_tokens, masked_data, target = dataset.get_masked_cascade_data(known_seq_len, known_cascade_len)
-        if self.target == TargetClass.NextToken:    
+        # Step 2: Get the prediction
+        if self.target == TargetClass.NextToken:
             # No padding, as we have already discarded the padding
             prediction = self.model(start_tokens, masked_data, None, known_cascade_len)
         elif self.target == TargetClass.NumUniqueTokens:
@@ -407,6 +408,9 @@ class WyckoffTrainer():
             prediction = self.model(start_tokens, masked_data, None, None)
         elif self.target == TargetClass.Scalar:
             prediction = self.model(start_tokens, masked_data, mask, None).squeeze()
+        else:
+            raise ValueError(f"Unknown target: {self.target}")
+        # Step 3: Calculate the loss
         if testing:
             return self.testing_criterion(prediction, target)
         return self.criterion(prediction, target)
@@ -414,7 +418,7 @@ class WyckoffTrainer():
 
     def train_epoch(self):
         self.model.train()
-        for _ in range(self.batches_per_epoch):
+        for _ in range(self.train_dataset.batches_per_epoch):
             self.optimizer.zero_grad(set_to_none=True)
             if self.target == TargetClass.NextToken:
                 known_cascade_len = randint(0, self.cascade_target_count - 1)
@@ -458,7 +462,12 @@ class WyckoffTrainer():
         self.model.eval()
         if self.target == TargetClass.Scalar:
             known_seq_len = dataset.max_sequence_length - 1
-            return self.get_loss(dataset, known_seq_len, None, False, True)
+            loss = torch.zeros(1, device=self.device)
+            for _ in range(dataset.batches_per_epoch):
+                loss += self.get_loss(dataset, known_seq_len, None, False, True)
+            # Assumes that the batch size is the same for all batches
+            return loss / dataset.batches_per_epoch
+
         loss = torch.zeros(self.cascade_len, device=self.device)
         for _ in range(self.evaluation_samples):
             for known_seq_len in range(0, dataset.max_sequence_length):

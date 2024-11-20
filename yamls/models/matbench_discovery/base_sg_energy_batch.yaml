@@ -1,0 +1,64 @@
+model:
+  start_token: spacegroup_number
+  cascade:
+    order:
+      - elements
+      - site_symmetries
+      - sites_enumeration
+    is_target:
+      elements: true
+      site_symmetries: true
+      sites_enumeration: true
+    embedding_size:
+      elements: 16
+      site_symmetries: 16
+      sites_enumeration: 8
+  WyckoffTrainer_args:
+    multiclass_next_token_with_order_permutation: false
+    target: Scalar
+    target_name: formation_energy_per_atom
+    evaluation_samples: 1
+    batch_size: 500
+    val_batch_size: 50000
+  CascadeTransformer_args:
+    start_type: one_hot
+    perceptron_shape: pyramid
+    concat_token_counts: false
+    concat_token_presence: false
+    aggregate_after_encoder: true
+    mixer_layers: 1
+    token_aggregation: mean
+    include_start_in_aggregation: true
+    aggregation_inclsion: aggr
+    outputs: 1
+    num_fully_connected_layers: 3
+    learned_positional_encoding_max_size: 0
+    learned_positional_encoding_only_masked: true
+    TransformerEncoderLayer_args:
+      nhead: 4
+      dim_feedforward: 128
+      dropout: 0.2
+    TransformerEncoder_args:
+      num_layers: 3
+      # Nested tensors are broken in the current version of PyTorch
+      # https://github.com/pytorch/pytorch/issues/97111
+      # We also don't need them as we ensure that batches all have the same length in WychoffTrainer
+      enable_nested_tensor: false
+optimisation:
+  optimiser:
+    name: SGD
+    config:
+      lr: 0.02
+  scheduler:
+    name: ReduceLROnPlateau
+    config:
+      factor: 0.8
+      # note that scheduler is called every validation_period epochs
+      # TODO add proper val and enable the scheduler
+      patience: 1000000000000
+  validation_period: 100
+  early_stopping_patience_epochs: 10000
+  clip_grad_norm: 2.
+  epochs: 150000
+tokeniser:
+  name: sg_scalars

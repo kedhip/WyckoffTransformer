@@ -1,0 +1,16 @@
+# For the code to work, must be the same as the file name
+name: mp_20_sg_letters
+dtype: uint8
+# not only memory savings, but also debug assist!
+# if we forget to propely convert dtype somewhere ahead
+# torch will highly likely complain about it
+token_fields:
+  pure_categorical:
+    - wyckoff_letters
+    - elements
+token_sort:
+  - wyckoff_letters
+  - elements
+sequence_fields:
+  space_group:
+    - spacegroup_number
