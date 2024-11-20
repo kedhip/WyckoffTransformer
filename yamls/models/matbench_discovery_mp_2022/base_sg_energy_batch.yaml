@@ -48,7 +48,7 @@ optimisation:
   optimiser:
     name: SGD
     config:
-      lr: 0.05
+      lr: 0.2
   scheduler:
     name: ReduceLROnPlateau
     config:
@@ -58,6 +58,6 @@ optimisation:
   validation_period: 10
   early_stopping_patience_epochs: 1000
   clip_grad_norm: 2.
-  epochs: 20000
+  epochs: 50000
 tokeniser:
   name: sg_energy
