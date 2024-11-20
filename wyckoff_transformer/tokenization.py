@@ -341,9 +341,15 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                         [tokenisers[field].tokenise_sequence(
                             variant, original_max_len=original_max_len, dtype=dtype)
                             for variant in variants]).to_list()
+        # We can have long sequences, but still a limited number of tokens
+        if "pure_sequence_length_dtype" in config:
+            pure_sequence_length_dtype = getattr(torch, config.pure_sequence_length_dtype)
+        else:
+            pure_sequence_length_dtype = dtype
         # Assuming all the fields have the same length
         tensors[dataset_name]["pure_sequence_length"] = torch.tensor(
-            dataset[config.token_fields.pure_categorical[0]].map(len).to_list(), dtype=dtype)
+            dataset[config.token_fields.pure_categorical[0]].map(len).to_list(),
+            dtype=pure_sequence_length_dtype)
 
         if "token_sort" in config:
             if "augmented_token_fields" in config:

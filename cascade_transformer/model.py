@@ -275,6 +275,10 @@ class CascadeTransformer(nn.Module):
             aggregation = (
                 aggregation_input[:, aggregation_start_idx:] * (1 -padding_mask.float())[..., None]
             ).sum(dim=1) / (1 - padding_mask.float() + 1e-6).sum(dim=1)[..., None]
+        elif self.token_aggregation is None:
+            aggregation = []
+        else:
+            raise ValueError(f"Unknown token_aggregation {self.token_aggregation}")
 
     
         if self.aggregation_inclsion == "concat":

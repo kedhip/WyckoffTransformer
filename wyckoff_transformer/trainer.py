@@ -6,7 +6,6 @@ from pathlib import Path
 import gzip
 import json
 import pickle
-import logging
 from multiprocessing import Pool
 import numpy as np
 import torch
@@ -49,13 +48,15 @@ class WyckoffTrainer():
         optimisation_config: dict,
         device: torch.DeviceObjType,
         batch_size: Optional[int] = None,
+        train_batch_size: Optional[int] = None,
         val_batch_size: Optional[int] = None,
         test_batch_size: Optional[int] = None,
         run_path: Optional[Path] = None,
         target_name = None,
         kl_samples: Optional[int] = None,
         weights_path: Optional[Path] = None,
-        test_dataset: Optional[Dict[str, torch.tensor]] = None
+        test_dataset: Optional[Dict[str, torch.tensor]] = None,
+        compile_model: bool = False,
     ):
         """
         Args:
@@ -69,14 +70,21 @@ class WyckoffTrainer():
         """
         is_target_in_order = [cascade_is_target[field] for field in cascade_order]
         if not all(is_target_in_order[:-1]):
-            raise NotImplementedError("Only one not targret field is supported at the moment and it must be the last")
+            raise NotImplementedError("Only one not targret field is supported "
+                "at the moment and it must be the last")
         self.kl_samples = kl_samples
         self.cascade_target_count = sum(is_target_in_order)
         self.token_engineers = token_engineers
         self.cascade_is_target = cascade_is_target
         # Nothing else will work in foreseeable future
         self.dtype = torch.int64
-        self.batch_size = batch_size
+        if batch_size is not None:
+            logger.warning("batch_size is deprecated, use train_batch_size, val_batch_size, test_batch_size")
+            if train_batch_size is None:
+                train_batch_size = batch_size
+            elif train_batch_size != batch_size:
+                raise ValueError("batch_size and train_batch_size differ")
+
         self.run_path = run_path
         if isinstance(target, str):
             target = TargetClass[target]
@@ -96,7 +104,10 @@ class WyckoffTrainer():
             raise ValueError(f"Unknown target: {target}")
         
         self.model = model
+        # Transformer doesn't support fullgraph=True
         self.compiled_model = torch.compile(self.model, fullgraph=False)
+        if compile_model:
+            self.model = self.compiled_model
         self.tokenisers = tokenisers
         self.device = device
         self.augmented_field = augmented_field
@@ -116,20 +127,19 @@ class WyckoffTrainer():
             num_classes=self.num_classes_dict,
             start_field=start_name,
             augmented_field=augmented_field,
-            batch_size=batch_size,
+            batch_size=train_batch_size,
             dtype=self.dtype,
             start_dtype=start_dtype,
             device=self.device,
-            target_name=target_name
-            )
+            target_name=target_name)
         
         if "lr_per_sqrt_n_samples" in optimisation_config.optimiser:
             if "config" in optimisation_config.optimiser and "lr" in optimisation_config.optimiser.config:
                 raise ValueError("Cannot specify both lr and lr_per_sqrt_n_samples")
-            if batch_size is None:
+            if train_batch_size is None:
                 samples_per_step = len(self.train_dataset)
             else:
-                samples_per_step = batch_size
+                samples_per_step = train_batch_size
             optimisation_config.optimiser.update(
                 {"config": {"lr": optimisation_config.optimiser.lr_per_sqrt_n_samples * samples_per_step**0.5}})
                 
@@ -153,7 +163,7 @@ class WyckoffTrainer():
             device=device,
             target_name=target_name
             )
-        
+
         if test_dataset is None:
             self.test_dataset = None
         else:
@@ -183,7 +193,7 @@ class WyckoffTrainer():
             self.model.load_state_dict(torch.load(weights_path))
 
         self.validation_period = optimisation_config.validation_period
-        self.early_stopping_patience_epochs = optimisation_config.early_stopping_patience_epochs    
+        self.early_stopping_patience_epochs = optimisation_config.early_stopping_patience_epochs
         self.target = target
         self.multiclass_next_token_with_order_permutation = multiclass_next_token_with_order_permutation
         self.evaluation_samples = evaluation_samples
@@ -377,8 +387,11 @@ class WyckoffTrainer():
         dataset: AugmentedCascadeDataset,
         known_seq_len: int,
         known_cascade_len: int|None,
-        no_batch: bool,
+        no_batch: bool = False,
         testing: bool = False) -> Tensor:
+        """
+        Computes loss on the dataset. Advances the dataset to the next batch.
+        """
         logging.debug("Known sequence length: %i", known_seq_len)
         logging.debug("Known cascade lenght: %s", str(known_cascade_len))
         # Step 1: Get the data
@@ -425,7 +438,7 @@ class WyckoffTrainer():
 
     def train_epoch(self):
         self.model.train()
-        for _ in range(self.train_dataset.batches_per_epoch):
+        for _ in trange(self.train_dataset.batches_per_epoch, leave=False):
             self.optimizer.zero_grad(set_to_none=True)
             if self.target == TargetClass.NextToken:
                 known_cascade_len = randint(0, self.cascade_target_count - 1)
@@ -439,7 +452,7 @@ class WyckoffTrainer():
                 known_seq_len = self.train_dataset.max_sequence_length - 1
             else:
                 raise ValueError(f"Unknown target: {self.target}")
-            loss = self.get_loss(self.train_dataset, known_seq_len, known_cascade_len, False)
+            loss = self.get_loss(self.train_dataset, known_seq_len, known_cascade_len)
             if self.kl_samples is not None:
                 kl_loss = self.get_permutation_kl_compiled(self.kl_samples, self.train_dataset.max_sequence_length)
                 loss += kl_loss
@@ -456,6 +469,7 @@ class WyckoffTrainer():
             wandb.log({"loss.batch.train": loss,
                        "known_seq_len": known_seq_len,
                        "known_cascade_len": known_cascade_len})
+
 
     @torch.no_grad()
     def evaluate(self, dataset: AugmentedCascadeDataset) -> Tensor:
@@ -505,8 +519,8 @@ class WyckoffTrainer():
             self.train_epoch()
             if epoch % self.validation_period == 0 or epoch == self.epochs - 1:
                 raw_losses = {
-                    "val": self.evaluate(self.val_dataset),
-                    "train": self.evaluate(self.train_dataset)
+                    "train": self.evaluate(self.train_dataset),
+                    "val": self.evaluate(self.val_dataset)
                 }
                 if self.test_dataset is not None:
                     raw_losses['test'] = self.evaluate(self.test_dataset)
@@ -528,11 +542,12 @@ class WyckoffTrainer():
                     best_val_epoch = epoch
                     torch.save(self.model.state_dict(), best_model_params_path)
                     wandb.save(best_model_params_path, base_path=self.run_path, policy="live")
-                    print(f"Epoch {epoch}; loss_epoch.val {total_val_loss} saved to {best_model_params_path}")
+                    # \n due to tqdm leaving the cursor at the end of the line
+                    print(f"\nEpoch {epoch}; loss_epoch.val {total_val_loss.item():.4f} saved to {best_model_params_path}")
                     wandb.log({"loss.epoch.val_best": best_val_loss}, commit=False)
                 if epoch - best_val_epoch > self.early_stopping_patience_epochs:
-                    print(f"Early stopping at epoch {epoch} after more than {self.early_stopping_patience_epochs}"
-                           " epochs without improvement")
+                    print(f"Early stopping at epoch {epoch} after more than "
+                          f"{self.early_stopping_patience_epochs} epochs without improvement")
                     break
                 # Don't step the scheduler on the tail epoch, to presereve
                 # patience behaviour

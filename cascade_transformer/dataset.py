@@ -113,8 +113,7 @@ class AugmentedCascadeDataset():
         dtype: torch.dtype = torch.int64,
         start_dtype: torch.dtype = torch.int64,
         device: str = "cpu",
-        target_name = None
-        ):
+        target_name = None):
         """
         A class for contaning augmented cascade datasets.
         Cascade means that a dataset is a list of tensors, where each tensor is a different field, with
