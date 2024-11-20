@@ -50,6 +50,7 @@ class WyckoffTrainer():
         device: torch.DeviceObjType,
         batch_size: Optional[int] = None,
         val_batch_size: Optional[int] = None,
+        test_batch_size: Optional[int] = None,
         run_path: Optional[Path] = None,
         target_name = None,
         kl_samples: Optional[int] = None,
@@ -165,6 +166,7 @@ class WyckoffTrainer():
                 num_classes=self.num_classes_dict,
                 start_field=start_name,
                 augmented_field=augmented_field,
+                batch_size=test_batch_size,
                 dtype=self.dtype,
                 start_dtype=start_dtype,
                 device=device,
@@ -502,19 +504,23 @@ class WyckoffTrainer():
         for epoch in trange(self.epochs):
             self.train_epoch()
             if epoch % self.validation_period == 0 or epoch == self.epochs - 1:
-                val_loss_epoch = self.evaluate(self.val_dataset)
-                train_loss_epoch = self.evaluate(self.train_dataset)
+                raw_losses = {
+                    "val": self.evaluate(self.val_dataset),
+                    "train": self.evaluate(self.train_dataset)
+                }
+                if self.test_dataset is not None:
+                    raw_losses['test'] = self.evaluate(self.test_dataset)
+                loss_dict = {}
                 if self.target == TargetClass.Scalar:
-                    total_val_loss = val_loss_epoch
-                    val_loss_dict = {"mae": total_val_loss.item()}
-                    train_loss_dict = {"mae": train_loss_epoch.item()}
+                    total_val_loss = raw_losses['val']
+                    for name, loss in raw_losses.items():
+                        loss_dict[name] = {"mae": loss.item()}
                 else:
-                    val_loss_dict = {name: val_loss_epoch[i] for i, name in enumerate(self.cascade_order)}
-                    total_val_loss = val_loss_epoch.sum()
-                    val_loss_dict["total"] = total_val_loss.item()
-                    train_loss_dict = {name: train_loss_epoch[i] for i, name in enumerate(self.cascade_order)}
-                    train_loss_dict["total"] = train_loss_epoch.sum().item()
-                wandb.log({"loss.epoch": {"val": val_loss_dict, "train": train_loss_dict},
+                    total_val_loss = raw_losses['val'].sum()
+                    for name, loss in raw_losses.items():
+                        loss_dict[name] = {name: loss[i] for i, name in enumerate(self.cascade_order)}
+                        loss_dict[name]["total"] = loss.sum().item()
+                wandb.log({"loss.epoch": loss_dict,
                             "lr": self.optimizer.param_groups[0]['lr'],
                             "epoch": epoch}, commit=False)
                 if total_val_loss < best_val_loss:
@@ -533,14 +539,6 @@ class WyckoffTrainer():
                 if epoch % self.validation_period == 0:
                     self.scheduler.step(total_val_loss)
 
-        if self.test_dataset is not None:
-            test_loss = self.evaluate(self.test_dataset)
-            if self.target == TargetClass.Scalar:
-                test_loss_dict = {"mae": test_loss.item()}
-            else:
-                test_loss_dict = {name: test_loss[i] for i, name in enumerate(self.cascade_order)}
-                test_loss_dict["total"] = test_loss.sum().item()
-            wandb.run.summary["loss.test"] = test_loss_dict
         # Make sure we log the last evaluation results
         wandb.log({}, commit=True)
 
