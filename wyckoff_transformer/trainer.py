@@ -386,16 +386,17 @@ class WyckoffTrainer():
                 # permutation-invariant.
                 start_tokens, masked_data, target = dataset.get_masked_multiclass_cascade_data(
                     known_seq_len, known_cascade_len, multiclass_target=(known_cascade_len == 0),
-                    target_type=self.target)
+                    target_type=self.target, no_batch=no_batch)
             elif self.target == TargetClass.NumUniqueTokens:
                 start_tokens, masked_data, target = dataset.get_masked_multiclass_cascade_data(
-                    known_seq_len, known_cascade_len, multiclass_target=False, target_type=self.target)
+                    known_seq_len, known_cascade_len, multiclass_target=False, target_type=self.target,
+                    no_batch=no_batch)
                 logging.debug("Target: %s", target)
                 # Counts are integers, as they should be, but MSE needs a float
                 target = target.float()
         else:
             if self.target == TargetClass.Scalar:
-                start_tokens, masked_data, target, mask = dataset.get_augmented_data()
+                start_tokens, masked_data, target, mask = dataset.get_augmented_data(no_batch=no_batch)
             else:
                 start_tokens, masked_data, target = dataset.get_masked_cascade_data(known_seq_len, known_cascade_len)
         if self.target == TargetClass.NextToken:    

@@ -230,11 +230,11 @@ class AugmentedCascadeDataset():
         return self.start_tokens[target_is_viable], res, target[target_is_viable]
 
 
-    def get_augmented_data(self) -> Tuple[Tensor, List[Tensor], Tensor, Tensor]:
+    def get_augmented_data(self, no_batch: bool) -> Tuple[Tensor, List[Tensor], Tensor, Tensor]:
         """
         Returns the full sequences, using a randon augmentation for the augmented field.
         """
-        if self.batch_size is not None:
+        if self.batch_size is not None and not no_batch:
             batch_start = self.next_batch_index * self.batch_size
             batch_end = batch_start + self.batch_size
             batch_selection = self.this_shuffle_order[batch_start:batch_end]
