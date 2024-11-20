@@ -1,5 +1,6 @@
 from typing import Tuple, Dict, Optional
 from random import randint
+import logging
 from functools import partial
 from pathlib import Path
 import gzip
@@ -24,6 +25,9 @@ from wyckoff_transformer.tokenization import (
 from wyckoff_transformer.generator import WyckoffGenerator
 from wyckoff_transformer.evaluation import (
     evaluate_and_log, StatisticalEvaluator, smac_validity_from_counter)
+
+
+logger = logging.getLogger(__file__)
 
 
 class WyckoffTrainer():
@@ -374,13 +378,10 @@ class WyckoffTrainer():
         no_batch: bool,
         testing: bool = False) -> Tensor:
         logging.debug("Known sequence length: %i", known_seq_len)
-        logging.debug("Known cascade lenght: %i", known_cascade_len)
+        logging.debug("Known cascade lenght: %s", str(known_cascade_len))
         # Step 1: Get the data
         if self.multiclass_next_token_with_order_permutation:
-            if self.target == TargetClass.Scalar:
-                raise ValueError("Scalar prediction is computed for the whole sequence, "
-                                 "it doesn't make sense with multiclass_next_token_with_order_permutation")
-            elif self.target == TargetClass.NextToken:
+            if self.target == TargetClass.NextToken:
                 # Once we have sampled the first cascade field, the prediction target is no longer mutliclass
                 # However, we still need to permute the sequence so that the autoregression is
                 # permutation-invariant.
@@ -394,9 +395,12 @@ class WyckoffTrainer():
                 logging.debug("Target: %s", target)
                 # Counts are integers, as they should be, but MSE needs a float
                 target = target.float()
+            else:
+                raise ValueError(f"Target {self.target} is not supported by"
+                                  " multiclass_next_token_with_order_permutation")
         else:
             if self.target == TargetClass.Scalar:
-                start_tokens, masked_data, target, mask = dataset.get_augmented_data(no_batch=no_batch)
+                start_tokens, masked_data, target, padding_mask = dataset.get_augmented_data(no_batch=no_batch)
             else:
                 start_tokens, masked_data, target = dataset.get_masked_cascade_data(known_seq_len, known_cascade_len)
         # Step 2: Get the prediction
@@ -407,7 +411,8 @@ class WyckoffTrainer():
             # No padding, as we have already discarded the padding
             prediction = self.model(start_tokens, masked_data, None, None)
         elif self.target == TargetClass.Scalar:
-            prediction = self.model(start_tokens, masked_data, mask, None).squeeze()
+            logger.debug("Start tokens size: %s", start_tokens.size())
+            prediction = self.model(start_tokens, masked_data, padding_mask, None).squeeze()
         else:
             raise ValueError(f"Unknown target: {self.target}")
         # Step 3: Calculate the loss
