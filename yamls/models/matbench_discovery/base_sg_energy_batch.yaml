@@ -19,7 +19,7 @@ model:
     target_name: formation_energy_per_atom
     evaluation_samples: 1
     batch_size: 500
-    val_batch_size: 50000
+    val_batch_size: 10000
   CascadeTransformer_args:
     start_type: one_hot
     perceptron_shape: pyramid
@@ -56,9 +56,9 @@ optimisation:
       # note that scheduler is called every validation_period epochs
       # TODO add proper val and enable the scheduler
       patience: 1000000000000
-  validation_period: 100
+  validation_period: 10
   early_stopping_patience_epochs: 10000
   clip_grad_norm: 2.
-  epochs: 150000
+  epochs: 15000
 tokeniser:
   name: sg_scalars
