@@ -16,8 +16,6 @@ import omegaconf
 from pandarallel import pandarallel
 from pyxtal.symmetry import Group
 
-pandarallel.initialize()
-
 # Order is important here, as we can use it to sort the tokens
 ServiceToken = Enum('ServiceToken', ['MASK', 'STOP', 'PAD'])
 logger = logging.getLogger(__name__)
@@ -262,6 +260,7 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                         Tuple[Dict[str, Dict[str, torch.Tensor|List[List[torch.Tensor]]]], Dict[str, EnumeratingTokeniser]]:
     dtype = getattr(torch, config.dtype)
     include_stop = config.get("include_stop", True)
+    pandarallel.initialize()
     if tokenizer_path is None:
         tokenisers = {}
         max_tokens = torch.iinfo(dtype).max

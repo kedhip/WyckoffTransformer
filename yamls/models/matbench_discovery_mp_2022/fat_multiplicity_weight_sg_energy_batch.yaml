@@ -16,7 +16,7 @@ model:
     target: Scalar
     target_name: formation_energy_per_atom
     evaluation_samples: 1
-    train_batch_size: 500
+    train_batch_size: 1000
     val_batch_size: 1000
     test_batch_size: 1000
     compile_model: true
