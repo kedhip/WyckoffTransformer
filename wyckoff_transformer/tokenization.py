@@ -255,7 +255,8 @@ def argsort_multiple(*tensors: torch.Tensor, dim: int) -> torch.Tensor:
 
 def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                      config: omegaconf.OmegaConf,
-                     tokenizer_path: Optional[Path|str] = None) -> \
+                     tokenizer_path: Optional[Path|str] = None,
+                     n_jobs: int = None) -> \
                         Tuple[Dict[str, Dict[str, torch.Tensor|List[List[torch.Tensor]]]], Dict[str, EnumeratingTokeniser]]:
     dtype = getattr(torch, config.dtype)
     include_stop = config.get("include_stop", True)
@@ -326,7 +327,7 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                     raw_engineers[field].get_feature_tensor_from_series,
                     original_max_len=original_max_len,
                     dtype=dtype)
-                with Pool() as pool:
+                with Pool(n_jobs) as pool:
                     tensor_list = pool.map(
                         compute_feature_function, dataset.itertuples(index=False))
                 tensors[dataset_name][field] = torch.stack(tensor_list)

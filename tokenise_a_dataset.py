@@ -16,6 +16,7 @@ def main():
     parser.add_argument("config_file", type=Path, help="The tokeniser configuration file")
     parser.add_argument("--debug", action="store_true", help="Set the logging level to debug")
     parser.add_argument('--pilot', action='store_true', help="Run a pilot experiment")
+    parser.add_argument("--n-jobs", type=int, help="Number of jobs to use")
     tokenizer_source = parser.add_mutually_exclusive_group(required=True)
     tokenizer_source.add_argument("--tokenizer-path", type=Path, help="Load a pickled tokenizer")
     tokenizer_source.add_argument("--new-tokenizer", action="store_true",
@@ -34,7 +35,8 @@ def main():
     if args.pilot:
         datasets_pd = {name: dataset.sample(100) for name, dataset in datasets_pd.items()}
         print("Piloting with 100 samples")
-    tensors, tokenisers, token_engineers = tokenise_dataset(datasets_pd, config, args.tokenizer_path)
+    tensors, tokenisers, token_engineers = tokenise_dataset(
+        datasets_pd, config, args.tokenizer_path, n_jobs=args.n_jobs)
     if args.debug and "multiplicity" in token_engineers:
         index = 0
         multiplicities_from_tokens = token_engineers["multiplicity"].get_feature_from_token_batch(
