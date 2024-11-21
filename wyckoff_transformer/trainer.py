@@ -68,12 +68,17 @@ class WyckoffTrainer():
                 num_unique_tokens: predict the number of unique tokens in the cascade&sequence encountered so far.
                     Intended for debugging the ability of the model to count.
         """
-        is_target_in_order = [cascade_is_target[field] for field in cascade_order]
-        if not all(is_target_in_order[:-1]):
-            raise NotImplementedError("Only one not targret field is supported "
-                "at the moment and it must be the last")
+        if isinstance(target, str):
+            target = TargetClass[target]
+        if target != TargetClass.Scalar:
+            is_target_in_order = [cascade_is_target[field] for field in cascade_order]
+            if not all(is_target_in_order[:-1]):
+                raise NotImplementedError("Only one not targret field is supported "
+                    "at the moment and it must be the last")
+            self.cascade_target_count = sum(is_target_in_order)
+        else:
+            self.cascade_target_count = 0
         self.kl_samples = kl_samples
-        self.cascade_target_count = sum(is_target_in_order)
         self.token_engineers = token_engineers
         self.cascade_is_target = cascade_is_target
         # Nothing else will work in foreseeable future
@@ -86,8 +91,7 @@ class WyckoffTrainer():
                 raise ValueError("batch_size and train_batch_size differ")
 
         self.run_path = run_path
-        if isinstance(target, str):
-            target = TargetClass[target]
+
         if target == TargetClass.NextToken:
             # Sequences have difference lengths, so we need to make sure that
             # long sequences don't dominate the loss, so we don't average the loss
@@ -223,7 +227,7 @@ class WyckoffTrainer():
             raise ValueError(f"Unknown start type: {config.model.CascadeTransformer_args.start_type}")
         return cls(
             model, tensors["train"], tensors["val"], tokenisers, token_engineers, config.model.cascade.order,
-            config.model.cascade.is_target,
+            config.model.cascade.get("is_target", None),
             augmented_field,
             config.model.start_token,
             optimisation_config=config.optimisation, device=device,

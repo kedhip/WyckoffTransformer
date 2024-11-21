@@ -74,7 +74,8 @@ class EnumeratingTokeniser(dict):
     @classmethod
     def from_token_set(cls,
         all_tokens: Set|FrozenSet,
-        max_tokens: Optional[int] = None):
+        max_tokens: Optional[int] = None,
+        include_stop: bool = True):
         for special_token in ServiceToken:
             if special_token.name in all_tokens:
                 raise ValueError(f"Special token {special_token.name} is in the dataset")
@@ -84,6 +85,7 @@ class EnumeratingTokeniser(dict):
         instance.stop_token = instance[ServiceToken.STOP.name]
         instance.pad_token = instance[ServiceToken.PAD.name]
         instance.mask_token = instance[ServiceToken.MASK.name]
+        instance.include_stop = include_stop
         # Theoretically, we can check it in the beginnig, but
         # the performance hit is negligible
         if max_tokens is not None and len(instance) > max_tokens:
@@ -99,7 +101,9 @@ class EnumeratingTokeniser(dict):
                           **tensor_args) -> torch.Tensor:
         tokenised_sequence = [self[token] for token in sequence]
         padding = [self.pad_token] * (original_max_len - len(tokenised_sequence))
-        return torch.tensor(tokenised_sequence + [self.stop_token] + padding, **tensor_args)
+        if self.include_stop:
+            padding = [self.stop_token] + padding
+        return torch.tensor(tokenised_sequence + padding, **tensor_args)
     
 
     def tokenise_single(self, token, **tensor_args) -> torch.Tensor:
@@ -237,12 +241,13 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                      tokenizer_path: Optional[Path|str] = None) -> \
                         Tuple[Dict[str, Dict[str, torch.Tensor|List[List[torch.Tensor]]]], Dict[str, EnumeratingTokeniser]]:
     dtype = getattr(torch, config.dtype)
+    include_stop = config.get("include_stop", True)
     if tokenizer_path is None:
         tokenisers = {}
         max_tokens = torch.iinfo(dtype).max
         for token_field in config.token_fields.pure_categorical:
             all_tokens = frozenset(chain.from_iterable(chain.from_iterable(map(itemgetter(token_field), datasets_pd.values()))))
-            tokenisers[token_field] = EnumeratingTokeniser.from_token_set(all_tokens, max_tokens)
+            tokenisers[token_field] = EnumeratingTokeniser.from_token_set(all_tokens, max_tokens, include_stop=include_stop)
 
         if "pure_categorical" in config.sequence_fields:
             # Cell variable sequence_field defined in loopPylintW0640:cell-var-from-loop

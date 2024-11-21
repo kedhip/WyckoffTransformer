@@ -102,10 +102,14 @@ class CascadeTransformer(nn.Module):
 
         full_cascade = dict()
         for field in cascade_order:
+            if "is_target" in config.model.cascade:
+                is_target = config.model.cascade.is_target[field]
+            else:
+                is_target = False
             full_cascade[field] = (len(tokenisers[field]),
                                    config.model.cascade.embedding_size[field],
                                    tokenisers[field].pad_token,
-                                   config.model.cascade.is_target[field])
+                                   is_target)
         if config.model.CascadeTransformer_args.start_type == "categorial":
             n_start = len(tokenisers[config.model.start_token])
         elif config.model.CascadeTransformer_args.start_type == "one_hot":
@@ -255,12 +259,13 @@ class CascadeTransformer(nn.Module):
 
         transformer_output = self.transformer_encoder(data, src_key_padding_mask=padding_mask)
 
-        logging.debug("Transforer output size: %s", transformer_output.size())
+        logging.debug("Transformer output size: %s", transformer_output.size())
         if self.aggregate_after_encoder:
             aggregation_input = transformer_output
         else:
             aggregation_input = data
 
+        # TODO padding mask for other aggregation types
         aggregation_start_idx = int(not self.include_start_in_aggregation)
         if self.token_aggregation == "sum":
             aggregation = aggregation_input[:, aggregation_start_idx:-1].sum(dim=1)
@@ -273,8 +278,8 @@ class CascadeTransformer(nn.Module):
                 aggregation = aggregation_input[:, aggregation_start_idx:-1].max(dim=1).values
         elif self.token_aggregation == "mean":
             aggregation = (
-                aggregation_input[:, aggregation_start_idx:] * (1 - padding_mask.float())[..., None]
-            ).sum(dim=1) / (1 - padding_mask.float() + 1e-6).sum(dim=1)[..., None]
+                aggregation_input[:, aggregation_start_idx:] * (~padding_mask[:, aggregation_start_idx:])[..., None]
+            ).sum(dim=1) / (~padding_mask[:, aggregation_start_idx:]).sum(dim=1)[..., None]
         elif self.token_aggregation is None:
             aggregation = []
         else:
@@ -293,11 +298,13 @@ class CascadeTransformer(nn.Module):
             raise ValueError(f"Unknown aggregation_inclsion {self.aggregation_inclsion}")
 
         if self.concat_token_counts:
-            token_counts = batched_bincount(cascade[prediction_head], dim=1, max_value=self.cascade[prediction_head][0])
+            token_counts = batched_bincount(
+                cascade[prediction_head], dim=1, max_value=self.cascade[prediction_head][0])
             prediction_inputs.append(token_counts)
 
         if self.concat_token_presence:
-            token_counts = batched_bincount(cascade[prediction_head], dim=1, max_value=self.cascade[prediction_head][0], dtype=torch.bool)
+            token_counts = batched_bincount(
+                cascade[prediction_head], dim=1, max_value=self.cascade[prediction_head][0], dtype=torch.bool)
             prediction_inputs.append(token_counts)
         
         prediction_input = torch.cat(prediction_inputs, dim=1)

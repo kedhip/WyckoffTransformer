@@ -6,6 +6,7 @@ name: sg_energy
 # int16 fails with CUDA memory error
 dtype: int32
 # pure_sequence_length_dtype: int16
+include_stop: false
 token_fields:
   pure_categorical:
     - site_symmetries
