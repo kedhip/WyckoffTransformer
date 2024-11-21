@@ -332,7 +332,7 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                         compute_feature_function, dataset.itertuples(index=False))
                 tensors[dataset_name][field] = torch.stack(tensor_list)
                 logger.debug("Engineered field %s shape %s", field, tensors[dataset_name][field].shape)
-        
+   
         if "pure_categorical" in config.sequence_fields:
             for field in config.sequence_fields.pure_categorical:
                 tensors[dataset_name][field] = torch.stack(
@@ -400,7 +400,7 @@ def load_tensors_and_tokenisers(
     dataset: str,
     config_name: str,
     cache_path: Path = Path(__file__).parent.parent.resolve() / "cache"):
-    
+
     this_cache_path = cache_path / dataset
     with gzip.open(this_cache_path / 'tensors' / f'{config_name}.pkl.gz', "rb") as f:
         tensors = pickle.load(f)
