@@ -271,6 +271,7 @@ class CascadeTransformer(nn.Module):
             aggregation_input = data
 
         # TODO padding mask for other aggregation types
+        demoninator_eps = 1e-5
         aggregation_start_idx = int(not self.include_start_in_aggregation)
         if self.token_aggregation == "sum":
             aggregation = aggregation_input[:, aggregation_start_idx:-1].sum(dim=1)
@@ -282,14 +283,15 @@ class CascadeTransformer(nn.Module):
             else:
                 aggregation = aggregation_input[:, aggregation_start_idx:-1].max(dim=1).values
         elif self.token_aggregation == "mean":
+            # In case of a zero-lenght sequence, we avoid division by zero
             aggregation = (
                 aggregation_input[:, aggregation_start_idx:] * (~padding_mask[:, aggregation_start_idx:])[..., None]
-            ).sum(dim=1) / (~padding_mask[:, aggregation_start_idx:]).sum(dim=1)[..., None]
+            ).sum(dim=1) / (demoninator_eps + (~padding_mask[:, aggregation_start_idx:]).sum(dim=1)[..., None])
         elif self.token_aggregation == "weighted_mean":
             aggregation = (
                 aggregation_input[:, aggregation_start_idx:] *
                  (~padding_mask[:, aggregation_start_idx:]*cascade[self.aggregation_weight])[..., None]
-            ).sum(dim=1) / (~padding_mask[:, aggregation_start_idx:]*cascade[self.aggregation_weight]).sum(dim=1)[..., None]
+            ).sum(dim=1) / (demoninator_eps + (~padding_mask[:, aggregation_start_idx:]*cascade[self.aggregation_weight]).sum(dim=1)[..., None])
         elif self.token_aggregation is None:
             aggregation = []
         else:

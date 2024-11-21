@@ -92,6 +92,8 @@ def structure_to_sites(
     pyxtal_structure = pyxtal()
     try:
         pyxtal_structure.from_seed(structure, tol=tol)
+        if len(pyxtal_structure.atom_sites) == 0:
+            raise RuntimeError("pyXtal failure, no atom sites")
     except Exception:
         logger.exception("Failed to convert structure to symmetry sites, "
                          "trying with a smaller tolerance.")
@@ -209,13 +211,13 @@ def compute_symmetry_sites(
 
     with open(wychoffs_enumerated_by_ss_file, "rb") as f:
         wychoffs_enumerated_by_ss = pickle.load(f)[0]
-    
+
     structure_to_sites_with_args = partial(
                 structure_to_sites,
                 wychoffs_enumerated_by_ss=wychoffs_enumerated_by_ss,
                 wychoffs_augmentation=get_augmentation_dict(),
                 tol=symmetry_precision,
-                return_none_on_exception=True
+                return_none_on_exception=False
     )
     result = {}
     for dataset_name, dataset in datasets_pd.items():
