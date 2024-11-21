@@ -1,6 +1,7 @@
 from typing import Dict, Iterable, Set, FrozenSet, Optional, List, Tuple
 from copy import deepcopy
 import logging
+from multiprocessing import Pool
 from itertools import chain
 from operator import attrgetter, itemgetter
 from functools import partial
@@ -321,11 +322,14 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
 
         if "engineered" in config.token_fields:
             for field in config.token_fields.engineered:
-                tensors[dataset_name][field] = torch.stack(
-                    dataset.apply(partial(
-                        raw_engineers[field].get_feature_tensor_from_series,
-                        original_max_len=original_max_len,
-                        dtype=dtype), axis=1).to_list())
+                compute_feature_function = partial(
+                    raw_engineers[field].get_feature_tensor_from_series,
+                    original_max_len=original_max_len,
+                    dtype=dtype)
+                with Pool() as pool:
+                    tensor_list = pool.map(
+                        compute_feature_function, dataset.itertuples(index=False))
+                tensors[dataset_name][field] = torch.stack(tensor_list)
                 logger.debug("Engineered field %s shape %s", field, tensors[dataset_name][field].shape)
         
         if "pure_categorical" in config.sequence_fields:
