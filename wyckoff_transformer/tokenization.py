@@ -111,14 +111,14 @@ class EnumeratingTokeniser(dict):
 
 
 class FeatureEngineer():
-    @classmethod
-    def wp_symmetries(cls, space_groups, wp_letters):
-        symmetry_matrices = defaultdict(dict)
-        for group_number, these_wps in zip(space_groups, wp_letters):
-            group = Group(group_number)
-            for wp_letter in these_wps:
-                wp = group.get_wp_by_letter(wp_letter)
-                wp.get_site_symmetry()
+    #@classmethod
+    #def wp_symmetries(cls, space_groups, wp_letters):
+    #    symmetry_matrices = defaultdict(dict)
+     #   for group_number, these_wps in zip(space_groups, wp_letters):
+      #      group = Group(group_number)
+       #     for wp_letter in these_wps:
+        #        wp = group.get_wp_by_letter(wp_letter)
+         #       wp.get_site_symmetry()
                 #if key not in symmetry_matrices:
 
 
@@ -128,7 +128,8 @@ class FeatureEngineer():
             name: Optional[str] = None,
             stop_token: Optional[int] = None,
             pad_token: Optional[int] = None,
-            mask_token: Optional[int] = None):
+            mask_token: Optional[int] = None,
+            include_stop: bool = True):
         if isinstance(data, Series):
             if inputs is not None or name is not None:
                 raise ValueError("If data is a DataFrame, inputs and name should be None")
@@ -141,6 +142,7 @@ class FeatureEngineer():
         self.pad_token = pad_token
         self.mask_token = mask_token
         self.default_value = 0
+        self.include_stop = include_stop
 
     def get_feature_tensor_from_series(self,
         record: Series,
@@ -159,7 +161,9 @@ class FeatureEngineer():
         if self.db.name in record.index:
             assert record[self.db.name] == res
         padding = [self.pad_token] * (original_max_len - len(res))
-        return torch.tensor(res + [self.stop_token] + padding, **tensor_args)
+        if self.include_stop:
+            padding = [self.stop_token] + padding
+        return torch.tensor(res + padding, **tensor_args)
     
     def get_feature_from_token_batch(
         self,
@@ -202,7 +206,18 @@ class PassThroughTokeniser():
 def tokenise_engineer(
     engineer: FeatureEngineer,
     tokenisers: EnumeratingTokeniser):
+    
+    include_stop_all = []
+    for field in engineer.db.index.names:
+        if hasattr(tokenisers[field], "include_stop"):
+            include_stop_all.append(tokenisers[field].include_stop)
 
+    if all(include_stop_all):
+        include_stop = True
+    elif not any(include_stop_all):
+        include_stop = False
+    else:
+        raise ValueError("Inconsistent include_stop")
     tokenised_data = {}
     for index, value in engineer.db.items():
         try:
@@ -211,7 +226,8 @@ def tokenise_engineer(
             continue
         tokenised_data[new_index] = value
     return FeatureEngineer(tokenised_data, engineer.db.index.names, name=engineer.db.name,
-        stop_token=engineer.stop_token, pad_token=engineer.pad_token, mask_token=engineer.mask_token)
+        stop_token=engineer.stop_token, pad_token=engineer.pad_token, mask_token=engineer.mask_token,
+        include_stop=include_stop)
 
 
 def argsort_multiple(*tensors: torch.Tensor, dim: int) -> torch.Tensor:
@@ -234,7 +250,7 @@ def argsort_multiple(*tensors: torch.Tensor, dim: int) -> torch.Tensor:
         return torch.argsort(megaindex)
     else:
         raise NotImplementedError("Only one or two tensors are supported")
-    
+
 
 def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                      config: omegaconf.OmegaConf,
@@ -275,9 +291,10 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                 raw_engineer = pickle.load(f)
             raw_engineers[engineered_field_name] = raw_engineer
             # Now we need to convert the token values to token indices
+            # And adjust include_stop
             token_engineers[engineered_field_name] = tokenise_engineer(raw_engineer, tokenisers)
+            raw_engineers[engineered_field_name].include_stop = token_engineers[engineered_field_name].include_stop
             # The values haven't changed, only the keys, so we can reuse the stop, pad, and mask tokens
-
             tokenisers[engineered_field_name] = PassThroughTokeniser(
                 min(token_engineers[engineered_field_name].db.min().min(), raw_engineer.stop_token, raw_engineer.pad_token, raw_engineer.mask_token),
                 max(token_engineers[engineered_field_name].db.max().max(), raw_engineer.stop_token, raw_engineer.pad_token, raw_engineer.mask_token),
