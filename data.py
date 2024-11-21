@@ -93,9 +93,17 @@ def structure_to_sites(
     try:
         pyxtal_structure.from_seed(structure, tol=tol)
     except Exception:
-        if return_none_on_exception:
-            return {}
-        raise
+        logger.exception("Failed to convert structure to symmetry sites, "
+                         "trying with a smaller tolerance.")
+        try:
+            pyxtal_structure = pyxtal()
+            pyxtal_structure.from_seed(structure, tol=tol*0.8)
+        except Exception:
+            if return_none_on_exception:
+                logger.warning("Failed to convert structure to symmetry sites, "
+                               "returning None.")
+                return {}
+            raise
 
     elements = [Element(site.specie) for site in pyxtal_structure.atom_sites]
     # electronegativity = [element.X for element in elements]
@@ -196,7 +204,8 @@ def get_composition(structure: Structure) -> dict[Element, float]:
 def compute_symmetry_sites(
     datasets_pd: dict[str, pd.DataFrame],
     wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz",
-    n_jobs: Optional[int] = None) -> tuple[dict[str, pd.DataFrame], int]:
+    n_jobs: Optional[int] = None,
+    symmetry_precision: float = 0.1) -> tuple[dict[str, pd.DataFrame], int]:
 
     with open(wychoffs_enumerated_by_ss_file, "rb") as f:
         wychoffs_enumerated_by_ss = pickle.load(f)[0]
@@ -205,6 +214,7 @@ def compute_symmetry_sites(
                 structure_to_sites,
                 wychoffs_enumerated_by_ss=wychoffs_enumerated_by_ss,
                 wychoffs_augmentation=get_augmentation_dict(),
+                tol=symmetry_precision,
                 return_none_on_exception=True
     )
     result = {}
@@ -225,7 +235,8 @@ def read_all_MP_csv(
     mp_path: Path = Path(__file__).parent.resolve() / "cdvae"/"data"/"mp_20",
     wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz",
     file_format: str = "csv",
-    n_jobs: Optional[int] = None) -> tuple[dict[str, pd.DataFrame], int]:
+    n_jobs: Optional[int] = None,
+    symmetry_precision: float = 0.1) -> tuple[dict[str, pd.DataFrame], int]:
     """
     Reads all Materials Project CSV files and returns a dictionary of DataFrames.
 
@@ -233,6 +244,8 @@ def read_all_MP_csv(
         mp_path (Path, optional): The path to the Materials Project CSV files. Defaults to "cdvae/data/mp_20".
         wychoffs_enumerated_by_ss_file (Path, optional): The path to the Wyckoff positions enumerated by space group file. Defaults to "wychoffs_enumerated_by_ss.pkl.gz".
         file_format (str, optional): The file format. Defaults to "csv". Can be archived csv openable by pandas.
+        n_jobs (int, optional): The number of jobs to use. Defaults to None.
+        symmetry_precision (float, optional): The precision for the symmetry sites. Defaults to 0.1.
 
     Returns:
         dict: A dictionary with the following keys:
@@ -246,6 +259,7 @@ def read_all_MP_csv(
             datasets_pd[dataset_name] = read_MP(mp_path / f"{dataset_name}.{file_format}")
         except FileNotFoundError:
             logger.warning("Dataset %s not found.", dataset_name)
-    symmetry_datasets = compute_symmetry_sites(datasets_pd, wychoffs_enumerated_by_ss_file, n_jobs=n_jobs)
+    symmetry_datasets = compute_symmetry_sites(
+        datasets_pd, wychoffs_enumerated_by_ss_file, n_jobs=n_jobs, symmetry_precision=symmetry_precision)
     return symmetry_datasets
 
