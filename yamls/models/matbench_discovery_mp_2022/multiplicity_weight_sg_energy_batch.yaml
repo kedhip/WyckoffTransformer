@@ -54,7 +54,7 @@ optimisation:
     config:
       factor: 0.5
       # note that scheduler is called every validation_period epochs
-      patience: 5
+      patience: 20
   validation_period: 10
   early_stopping_patience_epochs: 1000
   clip_grad_norm: 2.

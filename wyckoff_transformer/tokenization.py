@@ -1,7 +1,6 @@
 from typing import Dict, Iterable, Set, FrozenSet, Optional, List, Tuple
 from copy import deepcopy
 import logging
-from multiprocessing import Pool
 from itertools import chain
 from operator import attrgetter, itemgetter
 from functools import partial
@@ -14,7 +13,10 @@ import numpy as np
 from pandas import DataFrame, Series, MultiIndex
 import torch
 import omegaconf
+from pandarallel import pandarallel
 from pyxtal.symmetry import Group
+
+pandarallel.initialize()
 
 # Order is important here, as we can use it to sort the tokens
 ServiceToken = Enum('ServiceToken', ['MASK', 'STOP', 'PAD'])
@@ -327,9 +329,8 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                     raw_engineers[field].get_feature_tensor_from_series,
                     original_max_len=original_max_len,
                     dtype=dtype)
-                with Pool(n_jobs) as pool:
-                    tensor_list = pool.map(
-                        compute_feature_function, dataset.itertuples(index=False))
+                tensor_list = dataset.parallel_apply(
+                    compute_feature_function, axis=1).to_list()
                 tensors[dataset_name][field] = torch.stack(tensor_list)
                 logger.debug("Engineered field %s shape %s", field, tensors[dataset_name][field].shape)
    

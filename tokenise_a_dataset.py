@@ -22,6 +22,9 @@ def main():
     tokenizer_source.add_argument("--new-tokenizer", action="store_true",
         help="Generate a new tokenizer, potentially overwriting files")
     args = parser.parse_args()
+    if args.n_jobs is not None:
+        raise NotImplementedError("n_jobs is not implemented yet"
+            "Pandarallel will consume what it likes")
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
     config = omegaconf.OmegaConf.load(args.config_file)
