@@ -5,6 +5,7 @@ from typing import Optional
 from functools import partial
 from collections import Counter
 from pathlib import Path
+import gzip
 import pickle
 import warnings
 import logging
@@ -13,6 +14,8 @@ import pandas as pd
 from pymatgen.io.cif import CifParser
 from pymatgen.core import Structure, Element
 from pyxtal import pyxtal
+
+from wyckoff_transformer.pyxtal_fix import SS_CORRECTIONS
 
 from preprocess_wychoffs import get_augmentation_dict
 
@@ -127,7 +130,12 @@ def structure_to_sites(
     wyckoffs = [site.wp for site in pyxtal_structure.atom_sites]
     for wp in wyckoffs:
         wp.get_site_symmetry()
-    site_symmetries = [wp.site_symm for wp in wyckoffs]
+    site_symmetries = []
+    for wp in wyckoffs:
+        try:
+            site_symmetries.append(SS_CORRECTIONS[pyxtal_structure.group.number][wp.letter])
+        except KeyError:
+            site_symmetries.append(wp.site_symm)
     site_enumeration = [wychoffs_enumerated_by_ss[pyxtal_structure.group.number][wp.letter] for wp in wyckoffs]
     multiplicity = [wp.multiplicity for wp in wyckoffs]
     dof = [wp.get_dof() for wp in wyckoffs]
@@ -224,7 +232,7 @@ def compute_symmetry_sites(
     n_jobs: Optional[int] = None,
     symmetry_precision: float = 0.1) -> tuple[dict[str, pd.DataFrame], int]:
 
-    with open(wychoffs_enumerated_by_ss_file, "rb") as f:
+    with gzip.open(wychoffs_enumerated_by_ss_file, "rb") as f:
         wychoffs_enumerated_by_ss = pickle.load(f)[0]
 
     structure_to_sites_with_args = partial(

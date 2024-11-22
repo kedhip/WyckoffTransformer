@@ -419,7 +419,7 @@ def get_wp_index() -> dict:
                 site_symm = SS_CORRECTIONS[group_number][wp.letter]
             except KeyError:
                 site_symm = wp.site_symm
-            wp_index[group_number][wp.site_symm][wp.letter] = (wp.multiplicity, wp.get_dof())
+            wp_index[group_number][site_symm][wp.letter] = (wp.multiplicity, wp.get_dof())
     return wp_index
 
 
