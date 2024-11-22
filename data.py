@@ -70,12 +70,43 @@ def pyxtal_notation_to_sites(
     return sites_dict
 
 
+def kick_pyxtal_until_it_works(
+    structure: Structure,
+    tol: float = 0.1,
+    attempts: int = 30) -> pyxtal:
+    """
+    Kicks pyxtal until it works. pyxtal is prone to fail with some structures
+    and tolerances for no apparent reason.
+
+    Args:
+        structure (Structure): The pymatgen structure.
+        tol (float, optional): The tolerance passed to pyxtal().from_seed.
+            Defaults to 0.1, as in Materials Project.
+        attempts (int, optional): The number of attempts. Defaults to 10.
+
+    Returns:
+        pyxtal: The pyxtal structure.
+    """
+    for attempt in range(attempts):
+        try:
+            pyxtal_structure = pyxtal()
+            pyxtal_structure.from_seed(structure, tol=tol)
+            if len(pyxtal_structure.atom_sites) == 0:
+                raise RuntimeError("pyXtal failure, no atom sites")
+            return pyxtal_structure
+        except Exception:
+            logger.exception("Attempt %i failed to convert structure %s to symmetry "
+                "sites with tolerance %s.", attempt, structure, tol)
+            tol *= 0.97381
+            logger.info("Trying again with tolerance %s.", tol)
+    raise RuntimeError("Failed to make pyxtal work.")
+
+
 def structure_to_sites(
     structure: Structure,
     wychoffs_enumerated_by_ss: dict,
     wychoffs_augmentation: dict = None,
-    tol: float = 0.1,
-    return_none_on_exception: bool = False) -> dict:
+    tol: float = 0.1) -> dict:
     """
     Converts a pymatgen structure to a dictionary of symmetry sites.
 
@@ -89,23 +120,7 @@ def structure_to_sites(
     Returns:
         dict
     """
-    pyxtal_structure = pyxtal()
-    try:
-        pyxtal_structure.from_seed(structure, tol=tol)
-        if len(pyxtal_structure.atom_sites) == 0:
-            raise RuntimeError("pyXtal failure, no atom sites")
-    except Exception:
-        logger.exception("Failed to convert structure to symmetry sites, "
-                         "trying with a smaller tolerance.")
-        try:
-            pyxtal_structure = pyxtal()
-            pyxtal_structure.from_seed(structure, tol=tol*0.8)
-        except Exception:
-            if return_none_on_exception:
-                logger.warning("Failed to convert structure to symmetry sites, "
-                               "returning None.")
-                return {}
-            raise
+    pyxtal_structure = kick_pyxtal_until_it_works(structure, tol=tol)
 
     elements = [Element(site.specie) for site in pyxtal_structure.atom_sites]
     # electronegativity = [element.X for element in elements]
@@ -216,9 +231,7 @@ def compute_symmetry_sites(
                 structure_to_sites,
                 wychoffs_enumerated_by_ss=wychoffs_enumerated_by_ss,
                 wychoffs_augmentation=get_augmentation_dict(),
-                tol=symmetry_precision,
-                return_none_on_exception=False
-    )
+                tol=symmetry_precision)
     result = {}
     for dataset_name, dataset in datasets_pd.items():
         with Pool(processes=n_jobs) as p:

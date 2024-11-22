@@ -16,6 +16,8 @@ import omegaconf
 from pandarallel import pandarallel
 from pyxtal.symmetry import Group
 
+from .pyxtal_fix import SS_CORRECTIONS
+
 # Order is important here, as we can use it to sort the tokens
 ServiceToken = Enum('ServiceToken', ['MASK', 'STOP', 'PAD'])
 logger = logging.getLogger(__name__)
@@ -112,17 +114,6 @@ class EnumeratingTokeniser(dict):
 
 
 class FeatureEngineer():
-    #@classmethod
-    #def wp_symmetries(cls, space_groups, wp_letters):
-    #    symmetry_matrices = defaultdict(dict)
-     #   for group_number, these_wps in zip(space_groups, wp_letters):
-      #      group = Group(group_number)
-       #     for wp_letter in these_wps:
-        #        wp = group.get_wp_by_letter(wp_letter)
-         #       wp.get_site_symmetry()
-                #if key not in symmetry_matrices:
-
-
     def __init__(self,
             data: Dict[Tuple, int]|Series,
             inputs: Optional[Tuple] = None,
@@ -145,7 +136,8 @@ class FeatureEngineer():
         self.default_value = 0
         self.include_stop = include_stop
 
-    def get_feature_tensor_from_series(self,
+    def get_feature_tensor_from_series(
+        self,
         record: Series,
         original_max_len: int,
         **tensor_args) -> torch.Tensor:
@@ -153,14 +145,20 @@ class FeatureEngineer():
         indexed_record = record.loc[self.db.index.names]
         # No need to write the general solution, for now we only need multiplicity
         # WARNING(kazeevn): only one structure is supported:
-        # the first input is sequence-level, the next two are token-level        
+        # the first input is sequence-level, the next two are token-level    
         this_db = self.db.loc[indexed_record.iloc[0]]
         # Beautiful, but slow
         res = this_db.loc[map(tuple, zip(*indexed_record.iloc[1:]))].to_list()
         # Since in our infinite wisdom we decided to compute multiplicity
         # two times, we might as well just check
         if self.db.name in record.index:
-            assert record[self.db.name] == res
+            if record[self.db.name] != res:
+                logger.error("Record")
+                logger.error(record)
+                logger.error("Mismatch in %s", self.db.name)
+                logger.error(record[self.db.name])
+                logger.error(res)
+                raise ValueError("Mismatch")
         padding = [self.pad_token] * (original_max_len - len(res))
         if self.include_stop:
             padding = [self.stop_token] + padding
@@ -417,6 +415,10 @@ def get_wp_index() -> dict:
         wp_index[group_number] = defaultdict(dict)
         for wp in group.Wyckoff_positions:
             wp.get_site_symmetry()
+            try:
+                site_symm = SS_CORRECTIONS[group_number][wp.letter]
+            except KeyError:
+                site_symm = wp.site_symm
             wp_index[group_number][wp.site_symm][wp.letter] = (wp.multiplicity, wp.get_dof())
     return wp_index
 
