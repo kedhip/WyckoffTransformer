@@ -2,13 +2,13 @@ model:
   start_token: spacegroup_number
   cascade:
     order:
-      - site_symmetries
       - elements
+      - site_symmetries
       - harmonic_site_symmetries
       - multiplicity
     embedding_size:
-      elements: 16
-      site_symmetries: 15
+      elements: 32
+      site_symmetries: 31
       multiplicity: null
       harmonic_site_symmetries:
         pass_through_vector: 12
@@ -17,7 +17,9 @@ model:
     target: Scalar
     target_name: formation_energy_per_atom
     evaluation_samples: 1
-    train_batch_size: 500
+    train_batch_size: 1000
+    val_batch_size: 1000
+    test_batch_size: 1000
     compile_model: true
   CascadeTransformer_args:
     start_type: one_hot
@@ -33,32 +35,30 @@ model:
     include_start_in_aggregation: false
     aggregation_inclsion: aggr
     outputs: 1
-    num_fully_connected_layers: 3
+    num_fully_connected_layers: 4
     learned_positional_encoding_max_size: 0
     learned_positional_encoding_only_masked: true
-    prediction_perceptron_dropout: 0.01
-    emebdding_dropout: 0.01    
     TransformerEncoderLayer_args:
       nhead: 4
       dim_feedforward: 128
       dropout: 0.2
     TransformerEncoder_args:
-      num_layers: 3
+      num_layers: 4
       enable_nested_tensor: true
 optimisation:
   optimiser:
     name: Adam
     config:
-      lr: 0.001
+      lr: 0.002
   scheduler:
     name: ReduceLROnPlateau
     config:
-      factor: 0.5
+      factor: 0.6
       # note that scheduler is called every validation_period epochs
       patience: 20
   validation_period: 10
   early_stopping_patience_epochs: 1000
-  clip_grad_norm: 2.
+  clip_grad_norm: 5.
   epochs: 50000
 tokeniser:
-  name: sg_multiplicity_letter_energy_band_gap_harmonic
+  name: sg_multiplicity_letter_energy_harmonic
