@@ -135,6 +135,15 @@ class FeatureEngineer():
         self.mask_token = mask_token
         self.default_value = 0
         self.include_stop = include_stop
+        if self.db.dtype == 'O':
+            all_feature_shapes = self.db.apply(np.shape)
+            unqiue_shapes = all_feature_shapes.unique()
+            if len(unqiue_shapes) != 1:
+                raise ValueError("Inconsistent shapes")
+            self.feature_shape = unqiue_shapes[0]
+        # Scalar
+        else:
+            self.feature_shape = tuple()
 
     def get_feature_tensor_from_series(
         self,
@@ -143,7 +152,6 @@ class FeatureEngineer():
         **tensor_args) -> torch.Tensor:
 
         indexed_record = record.loc[self.db.index.names]
-        # No need to write the general solution, for now we only need multiplicity
         # WARNING(kazeevn): only one structure is supported:
         # the first input is sequence-level, the next two are token-level    
         this_db = self.db.loc[indexed_record.iloc[0]]
@@ -162,7 +170,10 @@ class FeatureEngineer():
         padding = [self.pad_token] * (original_max_len - len(res))
         if self.include_stop:
             padding = [self.stop_token] + padding
-        return torch.tensor(res + padding, **tensor_args)
+        sequence = res + padding
+        if self.feature_shape:
+            sequence = np.array(sequence)
+        return torch.tensor(sequence, **tensor_args)
     
     def get_feature_from_token_batch(
         self,
@@ -180,23 +191,21 @@ class DummyItemGetter():
 
 
 class PassThroughTokeniser():
-    def __init__(self, min_value:int, max_value:int,
+    def __init__(self,
+        values_count: int,
         stop_token: Optional[int] = None,
         pad_token: Optional[int] = None,
         mask_token: Optional[int] = None):
-        """
-        min_value and max_value should include the service tokens
-        """
+        # Values count includes the service tokens
 
-        self.min_value = min_value
-        self.max_value = max_value
+        self.values_count = values_count
         self.stop_token = stop_token
         self.pad_token = pad_token
         self.mask_token = mask_token
         self.to_token = DummyItemGetter()
     
     def __len__(self):
-        return self.max_value - self.min_value + 1
+        return self.values_count
 
     def __getitem__(self, token):
         return token
@@ -297,8 +306,7 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
             raw_engineers[engineered_field_name].include_stop = token_engineers[engineered_field_name].include_stop
             # The values haven't changed, only the keys, so we can reuse the stop, pad, and mask tokens
             tokenisers[engineered_field_name] = PassThroughTokeniser(
-                min(token_engineers[engineered_field_name].db.min().min(), raw_engineer.stop_token, raw_engineer.pad_token, raw_engineer.mask_token),
-                max(token_engineers[engineered_field_name].db.max().max(), raw_engineer.stop_token, raw_engineer.pad_token, raw_engineer.mask_token),
+                len(token_engineers[engineered_field_name].db),
                 stop_token = raw_engineer.stop_token,
                 pad_token = raw_engineer.pad_token,
                 mask_token = raw_engineer.mask_token)
@@ -321,11 +329,15 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                     dtype=dtype)).to_list())
 
         if "engineered" in config.token_fields:
-            for field in config.token_fields.engineered:
+            for field, field_config in config.token_fields.engineered.items():
+                if "dtype" in field_config:
+                    field_dtype = getattr(torch, field_config.dtype)
+                else:
+                    field_dtype = dtype
                 compute_feature_function = partial(
                     raw_engineers[field].get_feature_tensor_from_series,
                     original_max_len=original_max_len,
-                    dtype=dtype)
+                    dtype=field_dtype)
                 tensor_list = dataset.parallel_apply(
                     compute_feature_function, axis=1).to_list()
                 tensors[dataset_name][field] = torch.stack(tensor_list)

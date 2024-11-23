@@ -65,6 +65,7 @@ def enumerate_wychoffs_by_ss(
         np.array([0, 0, 0]),
         np.array([1, 1, 1]),
     )
+    signature_by_sg_ss_enum = {}
     for spacegroup_number in range(1, N_3D_SPACEGROUPS + 1):
         group = Group(spacegroup_number)
         ss_counts = Counter()
@@ -87,6 +88,7 @@ def enumerate_wychoffs_by_ss(
             multiplicity_from_ss_enum[(spacegroup_number, site_symm, ss_counts[site_symm])] = wp.multiplicity
             max_multiplicity = max(max_multiplicity, wp.multiplicity)
             ss_counts[site_symm] += 1
+        #signature_by_sg_ss_enum[spacegroup_number] = defaultdict(dict)
         for ss, opres_by_enum in opres_by_ss_enum.items():
             print(f"Spacegroup {spacegroup_number}, wp {ss} {letter_from_ss_enum[spacegroup_number][ss]}")
             # Step 1: find the position closest to the origin
@@ -100,6 +102,10 @@ def enumerate_wychoffs_by_ss(
             signatures = signatures.reshape(
                 spherical_harmonics_degree + 1, len(opres_by_enum), len(reference_vectors))
             assert np.unique(signatures, axis=1).shape == signatures.shape
+            for enum in opres_by_enum.keys():
+                signature_by_sg_ss_enum[(spacegroup_number, ss, enum)] = \
+                    np.concatenate([signatures[:, enum, :].real.ravel(), signatures[:, enum, :].imag.ravel()])
+                
     if output_file.suffix == ".gz":
         opener = gzip.open
     else:
@@ -115,7 +121,18 @@ def enumerate_wychoffs_by_ss(
         stop_token=max_multiplicity + 1, mask_token=max_multiplicity + 2, pad_token=0)
     with gzip.open(engineered_path / "multiplicity.pkl.gz", "wb") as f:
         pickle.dump(multiplicity_engineer, f)
-    
+    harmonic_size = 2 * (spherical_harmonics_degree + 1) * len(reference_vectors)
+    harmonic_engineer = FeatureEngineer(
+        signature_by_sg_ss_enum, ("spacegroup_number", "site_symmetries", "sites_enumeration"),
+        name="harmonic",
+        # This requires some thouhgt. PAD = 0, OK
+        pad_token=np.zeros(harmonic_size),
+        # STOP does not necessarily need to be different from PAD, so OK
+        stop_token=np.zeros(harmonic_size),
+        # Usually, the models are not supposed to see MASK, STOP, and PAD togeher
+        mask_token=np.ones(harmonic_size))
+    with gzip.open(engineered_path / "harmonic_site_symmetries.pkl.gz", "wb") as f:
+        pickle.dump(harmonic_engineer, f)
 
 def get_augmentation_dict():
     ascii_range = tuple(string.ascii_letters)

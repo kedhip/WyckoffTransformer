@@ -9,10 +9,13 @@ from omegaconf import OmegaConf
 
 from cascade_transformer.dataset import batched_bincount
 
+logger = logging.getLogger(__name__)
+
 
 class CascadeEmbedding(nn.Module):
     def __init__(self,
                  cascade,
+                 dropout: Optional[float] = None,
                  **kwargs):
         """
         Arguments:
@@ -22,20 +25,28 @@ class CascadeEmbedding(nn.Module):
         """
         super().__init__()
         self.embeddings = torch.nn.ModuleList()
+        self.dropout = dropout
         self.total_embedding_dim = 0
         for n, d, pad, _ in cascade:
             if d is None:
                 self.embeddings.append(None)
                 self.total_embedding_dim += 1
+            elif isinstance(d, Iterable):
+                self.embeddings.append(None)
+                self.total_embedding_dim += d["pass_through_vector"]
             else:
+                print(f"Adding embedding for {n} values, dim {d}")
                 self.embeddings.append(nn.Embedding(n, d, padding_idx=pad, **kwargs))
                 self.total_embedding_dim += d
+        if dropout is not None:
+            self.dropout_layer = nn.Dropout(dropout)
+        logging.debug("Total embedding dim: %i", self.total_embedding_dim)
 
 
     def forward(self, x: List[Tensor]) -> Tensor:
         """
         Arguments:
-            x: Tensor of shape ``[batch_size, seq_len, len(cascade)]``
+            x: List of tensors of shape ``[batch_size, seq_len, len(cascade)]``
 
         Returns:
             Tensor of shape ``[batch_size, seq_len, self.total_embedding_dim]``
@@ -43,13 +54,24 @@ class CascadeEmbedding(nn.Module):
         list_of_embeddings = []
         for tensor, emb in zip(x, self.embeddings):
             if emb is None:
-                list_of_embeddings.append(tensor.unsqueeze(-1))
+                if tensor.dim() == 2:
+                    shaped_tensor = tensor.unsqueeze(2)
+                else:
+                    shaped_tensor = tensor.flatten(start_dim=2)
+                list_of_embeddings.append(shaped_tensor)
             else:
                 list_of_embeddings.append(emb(tensor))
-        return torch.cat(list_of_embeddings, dim=2)
+        full_embedding = torch.cat(list_of_embeddings, dim=2)
+        if self.dropout:
+            return self.dropout_layer(full_embedding)
+        return full_embedding
 
 
-def get_perceptron(input_dim: int, output_dim:int, num_layers:int) -> torch.nn.Module:
+def get_perceptron(
+    input_dim: int,
+    output_dim:int,
+    num_layers:int,
+    dropout: Optional[float] = None) -> torch.nn.Module:
     """
     Returns a perceptron with num_layers layers, with ReLU activation.
     If num_layers is 1, returns a single linear layer.
@@ -61,6 +83,8 @@ def get_perceptron(input_dim: int, output_dim:int, num_layers:int) -> torch.nn.M
         this_sequence = []
         for _ in range(num_layers - 1):
             this_sequence.append(nn.Linear(input_dim, input_dim))
+            if dropout is not None:
+                this_sequence.append(nn.Dropout(dropout))
             this_sequence.append(nn.ReLU())
         this_sequence.append(nn.Linear(input_dim, output_dim))
     return nn.Sequential(*this_sequence)
@@ -147,7 +171,9 @@ class CascadeTransformer(nn.Module):
                  TransformerEncoderLayer_args: dict,
                  TransformerEncoder_args: dict,
                  compile_perceptrons: bool = True,
-                 aggregation_weight: Optional[int] = None):
+                 aggregation_weight: Optional[int] = None,
+                 emebdding_dropout: Optional[float] = None,
+                 prediction_perceptron_dropout: Optional[float] = None):
         """
         Expects tokens in the following format:
         START_k -> [] -> STOP -> PAD
@@ -171,7 +197,7 @@ class CascadeTransformer(nn.Module):
             aggregation_weight: casacade index of the field to be used as aggregation weight.
         """
         super().__init__()
-        self.embedding = CascadeEmbedding(cascade)
+        self.embedding = CascadeEmbedding(cascade, dropout=emebdding_dropout)
         self.d_model = self.embedding.total_embedding_dim
         self.encoder_layers = TransformerEncoderLayer(self.d_model, batch_first=True, **TransformerEncoderLayer_args)
         self.transformer_encoder = TransformerEncoder(self.encoder_layers, **TransformerEncoder_args)
@@ -233,11 +259,15 @@ class CascadeTransformer(nn.Module):
                         this_head_size += output_size
                     if concat_token_presence:
                         this_head_size += output_size
-                    self.prediction_heads.append(percepron_generator(this_head_size, output_size, num_fully_connected_layers))
+                    self.prediction_heads.append(percepron_generator(
+                        this_head_size, output_size, num_fully_connected_layers,
+                        dropout=prediction_perceptron_dropout))
                 else:
                     self.prediction_heads.append(None)
         else:
-            self.the_prediction_head = percepron_generator(prediction_head_size, outputs, num_fully_connected_layers)
+            self.the_prediction_head = percepron_generator(
+                prediction_head_size, outputs, num_fully_connected_layers,
+                dropout=prediction_perceptron_dropout)
 
 
     def forward(self,

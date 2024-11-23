@@ -490,12 +490,14 @@ class WyckoffTrainer():
             The average loss on the dataset.
         """
         self.model.eval()
+        if dataset.batch_size is not None and not dataset.fix_batch_size:
+            raise NotImplementedError("Only fixed batch size is supported")
         if self.target == TargetClass.Scalar:
             known_seq_len = dataset.max_sequence_length - 1
             loss = torch.zeros(1, device=self.device)
             for _ in range(dataset.batches_per_epoch):
                 loss += self.get_loss(dataset, known_seq_len, None, False, True)
-            # Assumes that the batch size is the same for all batches
+            # Above we check that the batch size is the same for all batches
             return loss / dataset.batches_per_epoch
 
         loss = torch.zeros(self.cascade_len, device=self.device)

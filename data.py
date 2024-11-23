@@ -10,6 +10,7 @@ import pickle
 import warnings
 import logging
 from multiprocessing import Pool
+import numpy as np
 import pandas as pd
 from pymatgen.io.cif import CifParser
 from pymatgen.core import Structure, Element
@@ -90,18 +91,22 @@ def kick_pyxtal_until_it_works(
     Returns:
         pyxtal: The pyxtal structure.
     """
-    for attempt in range(attempts):
+    n_down_multipliers = attempts // 2
+    tolerances = np.empty(attempts)
+    tolerances[::2] = np.logspace(0, 2, attempts - n_down_multipliers)
+    tolerances[1::2]= np.logspace(-0.01, -6, n_down_multipliers)
+
+    for attempt, tolerance in enumerate(tolerances):
         try:
             pyxtal_structure = pyxtal()
-            pyxtal_structure.from_seed(structure, tol=tol)
+            pyxtal_structure.from_seed(structure, tol=tol*tolerance)
             if len(pyxtal_structure.atom_sites) == 0:
                 raise RuntimeError("pyXtal failure, no atom sites")
             return pyxtal_structure
-        except Exception:
-            logger.exception("Attempt %i failed to convert structure %s to symmetry "
+        except:
+            logger.exception(
+                "Attempt %i failed to convert structure %s to symmetry "
                 "sites with tolerance %s.", attempt, structure, tol)
-            tol *= 0.97381
-            logger.info("Trying again with tolerance %s.", tol)
     raise RuntimeError("Failed to make pyxtal work.")
 
 
