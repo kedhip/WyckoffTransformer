@@ -35,7 +35,7 @@ class CascadeEmbedding(nn.Module):
                 self.embeddings.append(None)
                 self.total_embedding_dim += d["pass_through_vector"]
             else:
-                print(f"Adding embedding for {n} values, dim {d}")
+                logger.debug("Adding embedding for %i values, dim %i", n, d)
                 self.embeddings.append(nn.Embedding(n, d, padding_idx=pad, **kwargs))
                 self.total_embedding_dim += d
         if dropout is not None:
