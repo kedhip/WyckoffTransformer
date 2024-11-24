@@ -478,7 +478,7 @@ def load_tensors_and_tokenisers(
 
     this_cache_path = cache_path / dataset
     try:
-        tensors = pickle.load(this_cache_path / 'tensors' / f'{config_name}.pt')
+        tensors = torch.load(this_cache_path / 'tensors' / f'{config_name}.pt', weights_only=True)
     except FileNotFoundError:
         logger.warning("Tensors not found, trying to load obsolete .pkl.gz")
         with gzip.open(this_cache_path / 'tensors' / f'{config_name}.pkl.gz', "rb") as f:
