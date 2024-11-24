@@ -526,7 +526,7 @@ class WyckoffTrainer():
         wandb.define_metric("known_seq_len", hidden=True)
         wandb.define_metric("known_cascade_len", hidden=True)
 
-        for epoch in trange(self.epochs):
+        for epoch in (train_tqdm := trange(self.epochs)):
             self.train_epoch()
             if epoch % self.validation_period == 0 or epoch == self.epochs - 1:
                 raw_losses = {
@@ -553,8 +553,9 @@ class WyckoffTrainer():
                     best_val_epoch = epoch
                     torch.save(self.model.state_dict(), best_model_params_path)
                     wandb.save(best_model_params_path, base_path=self.run_path, policy="live")
-                    # \n due to tqdm leaving the cursor at the end of the line
-                    print(f"\nEpoch {epoch}; loss_epoch.val {total_val_loss.item():.4f} saved to {best_model_params_path}")
+                    train_tqdm.set_description(
+                        f"Epoch {epoch}; loss_epoch.val {total_val_loss.item():.4f} "
+                        f"saved to {best_model_params_path}")
                     wandb.log({"loss.epoch.val_best": best_val_loss}, commit=False)
                 if epoch - best_val_epoch > self.early_stopping_patience_epochs:
                     print(f"Early stopping at epoch {epoch} after more than "
