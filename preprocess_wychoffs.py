@@ -134,15 +134,40 @@ def enumerate_wychoffs_by_ss(
         mask_token=np.ones(harmonic_size))
     with gzip.open(engineered_path / "harmonic_site_symmetries.pkl.gz", "wb") as f:
         pickle.dump(harmonic_engineer, f)
+    enum_to_cluster, cluster_to_enum = clasterize_harmonics(harmonic_engineer)
+    # Here we actually know the tokens - as this is their birthplace
+    max_cluster_id = enum_to_cluster.max()
+    enum_to_cluster_engineer = FeatureEngineer(
+        enum_to_cluster,
+        mask_token=max_cluster_id + 1,
+        stop_token=max_cluster_id + 2,
+        pad_token=max_cluster_id + 3)
+    with gzip.open(engineered_path / "harmonic_cluster.pkl.gz", "wb") as f:
+        pickle.dump(enum_to_cluster_engineer, f)
+    # We don't know yet the tokenization of enums, so we'll need to fill in the tokens later
+    cluster_to_enum_engineer = FeatureEngineer(
+        cluster_to_enum, mask_token=None, stop_token=None, pad_token=None)
+    with gzip.open(engineered_path / "sites_enumeration.pkl.gz", "wb") as f:
+        pickle.dump(cluster_to_enum_engineer, f)
 
 
 def assign_to_clusters(
-    distances: pd.DataFrame,
-):
-    """
-    distances[sites_enumeration]
-    """
-    pass
+    distances: pd.DataFrame):
+
+    remaining_distances = distances.copy().droplevel((0, 1), axis=0)
+    assert (remaining_distances.index == np.arange(remaining_distances.shape[0])).all()
+    assert (remaining_distances.columns == np.arange(remaining_distances.shape[1])).all()
+    mapping = np.empty(distances.shape[0], dtype=int)
+    
+    while not remaining_distances.empty:
+        row, col = np.unravel_index(np.argmin(remaining_distances.values), remaining_distances.shape)
+        row_label = remaining_distances.index[row]
+        col_label = remaining_distances.columns[col]
+        # enum -> cluster
+        mapping[row_label] = col_label
+        remaining_distances = remaining_distances.drop(row_label, axis=0).drop(col_label, axis=1)
+    inverse = pd.Series(distances.index.get_level_values(2), index=mapping)
+    return pd.Series(mapping, index=distances.index.get_level_values(2))
 
 
 def clasterize_harmonics(
@@ -159,8 +184,14 @@ def clasterize_harmonics(
     cluster_distances = clusters.transform(np.array(harmonic_engineer.db.to_list()))
     cluster_db = pd.DataFrame(cluster_distances, index=harmonic_engineer.db.index)
     # Clusters are global, but enumeration is local per spacegroup and site symmetry
-    return cluster_db
-
+    enum_to_cluster = cluster_db.groupby(
+        level=["spacegroup_number", "site_symmetries"]).apply(assign_to_clusters).sort_index()
+    enum_to_cluster.name = "harmonic_cluster"
+    inverse_index = pd.MultiIndex.from_arrays(
+        [enum_to_cluster.index.get_level_values(0), enum_to_cluster.index.get_level_values(1), enum_to_cluster.values],
+        names=[enum_to_cluster.index.names[0], enum_to_cluster.index.names[1], enum_to_cluster.name])
+    cluster_to_enum = pd.Series(enum_to_cluster.index.get_level_values(2), index=inverse_index, name="sites_enumeration")
+    return enum_to_cluster, cluster_to_enum
 
 
 def get_augmentation_dict():

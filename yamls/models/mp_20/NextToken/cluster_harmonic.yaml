@@ -2,39 +2,43 @@ model:
   start_token: spacegroup_number
   cascade:
     order:
-      - site_symmetries
       - elements
+      - site_symmetries
+      - harmonic_cluster
       - harmonic_site_symmetries
-      - multiplicity
+    is_target:
+      elements: true
+      # Warning: watch augmentation!
+      harmonic_cluster: true
+      site_symmetries: true
+      harmonic_site_symmetries: false
     embedding_size:
       elements: 16
-      site_symmetries: 15
-      multiplicity: null
+      site_symmetries: 16
+      harmonic_cluster: 0
       harmonic_site_symmetries:
         pass_through_vector: 12
   WyckoffTrainer_args:
-    multiclass_next_token_with_order_permutation: false
-    target: Scalar
-    target_name: formation_energy_per_atom
-    evaluation_samples: 1
-    train_batch_size: 500
-    test_batch_size: 2000
-    val_batch_size: 2000
-    compile_model: true
+    multiclass_next_token_with_order_permutation: true
+    target: NextToken
+    evaluation_samples: 100
+    train_batch_size: null
+    compile_model: false
   CascadeTransformer_args:
     start_type: one_hot
     perceptron_shape: pyramid
     compile_perceptrons: false
     concat_token_counts: false
+    # TODO enable
     concat_token_presence: false
-    aggregate_after_encoder: true
+    aggregate_after_encoder: false
     mixer_layers: 1
-    token_aggregation: weighted_mean
+    token_aggregation: null
     # multiplicity
-    aggregation_weight: 3
+    # aggregation_weight: 3
     include_start_in_aggregation: false
-    aggregation_inclsion: aggr
-    outputs: 1
+    aggregation_inclsion: null
+    outputs: token_scores
     num_fully_connected_layers: 3
     learned_positional_encoding_max_size: 0
     learned_positional_encoding_only_masked: true
@@ -46,21 +50,23 @@ model:
       dropout: 0.2
     TransformerEncoder_args:
       num_layers: 3
-      enable_nested_tensor: true
+      enable_nested_tensor: false
 optimisation:
   optimiser:
-    name: Adam
+    name: SGD
     config:
-      lr: 0.001
+      lr: 0.2
   scheduler:
     name: ReduceLROnPlateau
     config:
-      factor: 0.5
+      factor: 0.8
       # note that scheduler is called every validation_period epochs
       patience: 20
-  validation_period: 5
-  early_stopping_patience_epochs: 500
+  validation_period: 1000
+  early_stopping_patience_epochs: 100000
   clip_grad_norm: 2.
-  epochs: 50000
+  epochs: 1000000
 tokeniser:
-  name: no_stop/int16/augmented_harmony
+  name: with_stop/harmonic_cluster
+evaluation:
+  n_structures_to_generate: 0

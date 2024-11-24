@@ -33,6 +33,3 @@ token_fields:
 sequence_fields:
   space_group:
     - spacegroup_number
-  no_processing:
-    - formation_energy_per_atom
-    - band_gap
