@@ -218,6 +218,8 @@ class CascadeTransformer(nn.Module):
         super().__init__()
         self.embedding = CascadeEmbedding(cascade, dropout=emebdding_dropout)
         self.d_model = self.embedding.total_embedding_dim
+        if "nhead" in TransformerEncoderLayer_args:
+            self.d_model += TransformerEncoderLayer_args["nhead"] - self.d_model % TransformerEncoderLayer_args["nhead"]
         self.encoder_layers = TransformerEncoderLayer(self.d_model, batch_first=True, **TransformerEncoderLayer_args)
         self.transformer_encoder = TransformerEncoder(self.encoder_layers, **TransformerEncoder_args)
         self.start_type = start_type
@@ -247,10 +249,10 @@ class CascadeTransformer(nn.Module):
             # before we can use multuple attention heads.
             # Actually, a fully-connected layer is an overparametrisation
             # but it's easier to implement. Completely redundant if nhead == 1.
-            self.mixer = nn.Linear(self.d_model, self.d_model, bias=False)
+            self.mixer = nn.Linear(self.embedding.total_embedding_dim, self.d_model, bias=False)
         else:
             # Hypthesis: since we concatenate embeddings, the mixer is a possible place to add non-linearity.
-            self.mixer = percepron_generator(self.d_model, self.d_model, mixer_layers)
+            self.mixer = percepron_generator(self.embedding.total_embedding_dim, self.d_model, mixer_layers)
         # Note that in the normal usage, we want to condition the cascade element prediction
         # on the previous element, so care should be taken as to which head to call.
         self.token_aggregation = token_aggregation
