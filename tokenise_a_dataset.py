@@ -51,11 +51,11 @@ def main():
     tokenizer_root_path = Path(__file__).parent.resolve() / "yamls" / "tokenisers"
     tokenizer_full_name = args.config_file.resolve().relative_to(tokenizer_root_path).with_suffix('')
     cache_tensors_path = cache_path / 'tensors' / tokenizer_full_name.with_suffix('.pt')
-    cache_tensors_path.mkdir(parents=True, exist_ok=True)
+    cache_tensors_path.parent.mkdir(parents=True, exist_ok=True)
     torch.save(tensors, cache_tensors_path)
     # In the future we might want to save the tokenisers in json, so that they can be distributed
     cache_tokenisers_path = cache_path / 'tokenisers' / tokenizer_full_name.with_suffix('.pkl.gz')
-    cache_tokenisers_path.mkdir(parents=True, exist_ok=True)
+    cache_tokenisers_path.parent.mkdir(parents=True, exist_ok=True)
     with gzip.open(cache_tokenisers_path, "wb") as f:
         pickle.dump(tokenisers, f)
         pickle.dump(token_engineers, f)
