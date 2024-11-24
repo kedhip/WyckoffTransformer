@@ -546,8 +546,8 @@ class WyckoffTrainer():
                         loss_dict[name] = {name: loss[i] for i, name in enumerate(self.cascade_order)}
                         loss_dict[name]["total"] = loss.sum().item()
                 wandb.log({"loss.epoch": loss_dict,
-                            "lr": self.optimizer.param_groups[0]['lr'],
-                            "epoch": epoch}, commit=False)
+                           "lr": self.optimizer.param_groups[0]['lr'],
+                           "epoch": epoch}, commit=False)
                 if total_val_loss < best_val_loss:
                     best_val_loss = total_val_loss
                     best_val_epoch = epoch
@@ -561,7 +561,7 @@ class WyckoffTrainer():
                     print(f"Early stopping at epoch {epoch} after more than "
                           f"{self.early_stopping_patience_epochs} epochs without improvement")
                     break
-                # Don't step the scheduler on the tail epoch, to presereve
+                # Don't step the scheduler on the tail epoch to presereve
                 # patience behaviour
                 if epoch % self.validation_period == 0:
                     self.scheduler.step(total_val_loss)
