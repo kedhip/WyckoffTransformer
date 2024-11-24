@@ -77,6 +77,7 @@ def pyxtal_notation_to_sites(
 def kick_pyxtal_until_it_works(
     structure: Structure,
     tol: float = 0.1,
+    a_tol: float = 5.,
     attempts: int = 30) -> pyxtal:
     """
     Kicks pyxtal until it works. pyxtal is prone to fail with some structures
@@ -99,7 +100,7 @@ def kick_pyxtal_until_it_works(
     for attempt, tolerance in enumerate(tolerances):
         try:
             pyxtal_structure = pyxtal()
-            pyxtal_structure.from_seed(structure, tol=tol*tolerance)
+            pyxtal_structure.from_seed(structure, tol=tol*tolerance, a_tol=a_tol)
             if len(pyxtal_structure.atom_sites) == 0:
                 raise RuntimeError("pyXtal failure, no atom sites")
             return pyxtal_structure
@@ -114,7 +115,8 @@ def structure_to_sites(
     structure: Structure,
     wychoffs_enumerated_by_ss: dict,
     wychoffs_augmentation: dict = None,
-    tol: float = 0.1) -> dict:
+    tol: float = 0.1,
+    a_tol: float = 5.) -> dict:
     """
     Converts a pymatgen structure to a dictionary of symmetry sites.
 
@@ -128,7 +130,7 @@ def structure_to_sites(
     Returns:
         dict
     """
-    pyxtal_structure = kick_pyxtal_until_it_works(structure, tol=tol)
+    pyxtal_structure = kick_pyxtal_until_it_works(structure, tol=tol, a_tol=a_tol)
 
     elements = [Element(site.specie) for site in pyxtal_structure.atom_sites]
     # electronegativity = [element.X for element in elements]
@@ -235,7 +237,8 @@ def compute_symmetry_sites(
     datasets_pd: dict[str, pd.DataFrame],
     wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz",
     n_jobs: Optional[int] = None,
-    symmetry_precision: float = 0.1) -> tuple[dict[str, pd.DataFrame], int]:
+    symmetry_precision: float = 0.1,
+    symmetry_a_tol: float = 5.) -> tuple[dict[str, pd.DataFrame], int]:
 
     with gzip.open(wychoffs_enumerated_by_ss_file, "rb") as f:
         wychoffs_enumerated_by_ss = pickle.load(f)[0]
@@ -244,7 +247,8 @@ def compute_symmetry_sites(
                 structure_to_sites,
                 wychoffs_enumerated_by_ss=wychoffs_enumerated_by_ss,
                 wychoffs_augmentation=get_augmentation_dict(),
-                tol=symmetry_precision)
+                tol=symmetry_precision,
+                a_tol=symmetry_a_tol)
     result = {}
     for dataset_name, dataset in datasets_pd.items():
         with Pool(processes=n_jobs) as p:
@@ -264,7 +268,8 @@ def read_all_MP_csv(
     wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz",
     file_format: str = "csv",
     n_jobs: Optional[int] = None,
-    symmetry_precision: float = 0.1) -> tuple[dict[str, pd.DataFrame], int]:
+    symmetry_precision: float = 0.1,
+    symmetry_a_tol) -> tuple[dict[str, pd.DataFrame], int]:
     """
     Reads all Materials Project CSV files and returns a dictionary of DataFrames.
 
@@ -288,6 +293,7 @@ def read_all_MP_csv(
         except FileNotFoundError:
             logger.warning("Dataset %s not found.", dataset_name)
     symmetry_datasets = compute_symmetry_sites(
-        datasets_pd, wychoffs_enumerated_by_ss_file, n_jobs=n_jobs, symmetry_precision=symmetry_precision)
+        datasets_pd, wychoffs_enumerated_by_ss_file, n_jobs=n_jobs,
+        symmetry_precision=symmetry_precision, symmetry_a_tol=symmetry_a_tol)
     return symmetry_datasets
 

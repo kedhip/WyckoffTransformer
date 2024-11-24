@@ -145,6 +145,21 @@ class FeatureEngineer():
         else:
             self.feature_shape = tuple()
 
+
+    def pad_and_stop(self,
+        sequence,
+        original_max_len: int,
+        **tensor_args) -> torch.Tensor:
+
+        padding = [self.pad_token] * (original_max_len - len(sequence))
+        if self.include_stop:
+            padding = [self.stop_token] + padding
+        padded_sequence = sequence + padding
+        if self.feature_shape:
+            padded_sequence = np.array(padded_sequence)
+        return torch.tensor(padded_sequence, **tensor_args)
+
+
     def get_feature_tensor_from_series(
         self,
         record: Series,
@@ -167,14 +182,41 @@ class FeatureEngineer():
                 logger.error(record[self.db.name])
                 logger.error(res)
                 raise ValueError("Mismatch")
-        padding = [self.pad_token] * (original_max_len - len(res))
-        if self.include_stop:
-            padding = [self.stop_token] + padding
-        sequence = res + padding
-        if self.feature_shape:
-            sequence = np.array(sequence)
-        return torch.tensor(sequence, **tensor_args)
-    
+        return self.pad_and_stop(res, original_max_len, **tensor_args)
+
+
+    def get_feature_from_augmented_series(
+        self,
+        record: Series,
+        augmented_field_orginal_name: str,
+        original_max_len: int,
+        **tensor_args) -> torch.Tensor:
+        """
+        Args:
+            record: The record to process
+            augmented_field_orginal_name: The original name of the field containing the augmented variants
+                e. g. "sites_enumeration"
+            original_max_len: The maximum length of the sequence
+            **tensor_args: Additional arguments for the torch.tensor
+        Returns:
+            A list of tensors with the augmented features processed by the engineer
+        """
+        # We need to unravel the augmented field
+        augmented_field = f"{augmented_field_orginal_name}_augmented"
+        augmentation_variants = record.at[augmented_field]
+        # WARNING(kazeevn): only one structure is supported:
+        # The first input is sequence-level, the next two are token-level
+        this_db = self.db.xs(record.at[self.db.index.names[0]], level=0)
+        assert len(self.db.index.names) == 3
+        assert self.db.index.names[2] == augmented_field_orginal_name
+        queries = [list(map(tuple, zip(record.at[self.db.index.names[1]], variant))) for variant in augmentation_variants]
+        padding_function = partial(
+            self.pad_and_stop,
+            original_max_len=original_max_len,
+            **tensor_args)
+        return [this_db.loc[query].map(padding_function).to_list() for query in queries]
+
+
     def get_feature_from_token_batch(
         self,
         level_0: torch.Tensor,
@@ -267,7 +309,11 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                         Tuple[Dict[str, Dict[str, torch.Tensor|List[List[torch.Tensor]]]], Dict[str, EnumeratingTokeniser]]:
     dtype = getattr(torch, config.dtype)
     include_stop = config.get("include_stop", True)
-    pandarallel.initialize()
+    if n_jobs is not None:
+        pandarallel.initialize(nb_workers=n_jobs)
+    else:
+        # Preserve the NB_PHYSICAL_CORES default
+        pandarallel.initialize()
     if tokenizer_path is None:
         tokenisers = {}
         max_tokens = torch.iinfo(dtype).max
@@ -280,7 +326,7 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
             for sequence_field in config.sequence_fields.pure_categorical:
                 all_tokens = frozenset(chain.from_iterable(map(lambda df: frozenset(df[sequence_field].tolist()), datasets_pd.values())))
                 tokenisers[sequence_field] = EnumeratingTokeniser.from_token_set(all_tokens, max_tokens)
-        
+
         if "space_group" in config.sequence_fields:
             for sequence_field in config.sequence_fields.space_group:
                 all_space_groups = frozenset(chain.from_iterable(map(itemgetter(sequence_field), datasets_pd.values())))
@@ -378,6 +424,20 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                         [tokenisers[field].tokenise_sequence(
                             variant, original_max_len=original_max_len, dtype=dtype)
                             for variant in variants]).to_list()
+        
+        for field, field_config in config.token_fields.get("augmented_engineered", {}).items():
+            augmented_field = f"{field}_augmented"
+            if "dtype" in config.token_fields.engineered[field]:
+                field_dtype = getattr(torch, config.token_fields.engineered[field].dtype)
+            else:
+                field_dtype = dtype
+            tensors[dataset_name][augmented_field] = dataset.parallel_apply(
+                partial(
+                    raw_engineers[field].get_feature_from_augmented_series,
+                    augmented_field_orginal_name=field_config.augmented_input,
+                    original_max_len=original_max_len,
+                    dtype=field_dtype), axis=1).to_list()
+
         # We can have long sequences, but still a limited number of tokens
         if "pure_sequence_length_dtype" in config:
             pure_sequence_length_dtype = getattr(torch, config.pure_sequence_length_dtype)
