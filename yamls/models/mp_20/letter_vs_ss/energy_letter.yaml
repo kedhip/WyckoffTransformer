@@ -7,7 +7,7 @@ model:
       - multiplicity
     embedding_size:
       elements: 16
-      wyckoff_letters: 23
+      wyckoff_letters: 27
       multiplicity: null
   WyckoffTrainer_args:
     multiclass_next_token_with_order_permutation: false
