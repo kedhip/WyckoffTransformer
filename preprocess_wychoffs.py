@@ -125,7 +125,7 @@ def enumerate_wychoffs_by_ss(
     harmonic_size = 2 * (spherical_harmonics_degree + 1) * len(reference_vectors)
     harmonic_engineer = FeatureEngineer(
         signature_by_sg_ss_enum, ("spacegroup_number", "site_symmetries", "sites_enumeration"),
-        name="harmonic",
+        name="harmonic_site_symmetries",
         # This requires some thouhgt. PAD = 0, OK
         pad_token=np.zeros(harmonic_size),
         # STOP does not necessarily need to be different from PAD, so OK

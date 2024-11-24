@@ -214,7 +214,7 @@ class FeatureEngineer():
             self.pad_and_stop,
             original_max_len=original_max_len,
             **tensor_args)
-        return [this_db.loc[query].map(padding_function).to_list() for query in queries]
+        return [padding_function(this_db.loc[query].to_list()) for query in queries]
 
 
     def get_feature_from_token_batch(
@@ -477,8 +477,12 @@ def load_tensors_and_tokenisers(
     cache_path: Path = Path(__file__).parent.parent.resolve() / "cache"):
 
     this_cache_path = cache_path / dataset
-    with gzip.open(this_cache_path / 'tensors' / f'{config_name}.pkl.gz', "rb") as f:
-        tensors = pickle.load(f)
+    try:
+        tensors = pickle.load(this_cache_path / 'tensors' / f'{config_name}.pt')
+    except FileNotFoundError:
+        logger.warning("Tensors not found, trying to load obsolete .pkl.gz")
+        with gzip.open(this_cache_path / 'tensors' / f'{config_name}.pkl.gz', "rb") as f:
+            tensors = pickle.load(f)
     with gzip.open(this_cache_path / 'tokenisers' / f'{config_name}.pkl.gz', "rb") as f:
         tokenisers = pickle.load(f)
         token_engineers = pickle.load(f)

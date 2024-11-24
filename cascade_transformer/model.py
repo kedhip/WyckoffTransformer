@@ -292,6 +292,9 @@ class CascadeTransformer(nn.Module):
                 else:
                     self.prediction_heads.append(None)
         else:
+            if concat_token_counts or concat_token_presence:
+                raise ValueError("concat_token_counts and concat_token_presence are only"
+                                 " supported for outputs=token_scores")
             self.the_prediction_head = percepron_generator(
                 prediction_head_size, outputs, num_fully_connected_layers,
                 dropout=prediction_perceptron_dropout)
@@ -366,7 +369,7 @@ class CascadeTransformer(nn.Module):
         else:
             raise ValueError(f"Unknown aggregation_inclsion {self.aggregation_inclsion}")
 
-        if cascade[prediction_head].size(1) == 1:
+        if prediction_head is not None and cascade[prediction_head].size(1) == 1:
             if self.concat_token_counts:
                 token_counts = batched_bincount(
                     cascade[prediction_head], dim=1, max_value=self.cascade[prediction_head][0])
