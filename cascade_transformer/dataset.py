@@ -179,8 +179,9 @@ class AugmentedCascadeDataset():
             for augmented_field in augmented_fields:
                 these_augmentations = torch.cat([torch.cat(x, dim=0) for x in data[f"{augmented_field}_augmented"]],
                         dim=0).type(dtype)
-                self.augmentation_data_store[cascade_order.index(augmented_field)] = these_augmentations.expand(
-                    self.augmentation_variants.size(0), *[-1]*(these_augmentations.dim())).to(device)
+                self.augmentation_data_store[cascade_order.index(augmented_field)] = \
+                    these_augmentations.expand(
+                        self.augmentation_variants.size(0), *these_augmentations.size()).to(device)
         self.start_tokens = data[start_field].type(start_dtype).to(device)
         if "pure_sequence_length" in data:
             self.pure_sequences_lengths = data["pure_sequence_length"].type(dtype).to(device)
