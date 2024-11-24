@@ -637,7 +637,9 @@ def train_from_config(config_dict: dict, device: torch.device, run_path: Optiona
         pickle.dump(trainer.token_engineers, f)
     wandb.save(this_run_path / "token_engineers.pkl.gz", base_path=this_run_path, policy="now")
     config = OmegaConf.create(config_dict)
-    if config.model.WyckoffTrainer_args.target == "NextToken":
+    if config.model.WyckoffTrainer_args.target == "NextToken" and \
+        config.evaluation.get("n_structures_to_generate", 0) > 0:
+
         print("Training complete, loading the best model")
         trainer.model.load_state_dict(torch.load(trainer.run_path / "best_model_params.pt", weights_only=True))
         data_cache_path = Path(__file__).parent.parent.resolve() / "cache" / config.dataset / "data.pkl.gz"

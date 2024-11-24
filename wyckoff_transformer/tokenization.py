@@ -402,7 +402,12 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
 
         if "no_processing" in config.sequence_fields:
             for field in config.sequence_fields.no_processing:
-                tensors[dataset_name][field] = torch.Tensor(dataset[field].array)
+                try:
+                    tensors[dataset_name][field] = torch.Tensor(dataset[field].array)
+                except KeyError as e:
+                    logger.warning("Field %s not found in the dataset", field)
+                    logger.warning(e)
+
 
         if "counters" in config.sequence_fields:
             # Counter fields are processed into two tensors: tokenised values, and the counts
@@ -424,7 +429,7 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                         [tokenisers[field].tokenise_sequence(
                             variant, original_max_len=original_max_len, dtype=dtype)
                             for variant in variants]).to_list()
-        
+
         for field, field_config in config.token_fields.get("augmented_engineered", {}).items():
             augmented_field = f"{field}_augmented"
             if "dtype" in config.token_fields.engineered[field]:

@@ -14,8 +14,9 @@ def main():
     with open(args.tempalte, 'rt', encoding="ascii") as f:
         template = f.read()
     config_hierarchy = args.config.resolve().relative_to(args.config_root)
-    script_location = Path(__file__).parent.resolve() / "train" / config_hierarchy.with_suffix(".sh")
     crp_script = template.format(config=args.config, dataset=args.dataset)
+    script_location = Path(__file__).parent.resolve() / "train" / config_hierarchy.with_suffix(".sh")
+    script_location.parent.mkdir(parents=True, exist_ok=True)
     with open(script_location, 'wt', encoding="ascii") as f:
         f.write(crp_script)
     print(f"Created script at {script_location}")

@@ -4,15 +4,16 @@ from pathlib import Path
 import pickle
 import gzip
 import numpy as np
+import pandas as pd
 from pyxtal import Group
+from sklearn.cluster import KMeans
+from scipy.special import sph_harm
 
 from wyckoff_transformer.tokenization import FeatureEngineer
 from wyckoff_transformer.pyxtal_fix import SS_CORRECTIONS
 
 N_3D_SPACEGROUPS = 230
 
-
-from scipy.special import sph_harm
 
 def convolve_vectors_with_spherical_harmonics(vectors_batch, degree):
     """
@@ -133,6 +134,34 @@ def enumerate_wychoffs_by_ss(
         mask_token=np.ones(harmonic_size))
     with gzip.open(engineered_path / "harmonic_site_symmetries.pkl.gz", "wb") as f:
         pickle.dump(harmonic_engineer, f)
+
+
+def assign_to_clusters(
+    distances: pd.DataFrame,
+):
+    """
+    distances[sites_enumeration]
+    """
+    pass
+
+
+def clasterize_harmonics(
+    harmonic_engineer: FeatureEngineer,
+    random_state: int = 42):
+    """
+    Harmoic fetures are nice and float, but when we predict the next token, we need
+    to predict a set of distinct values. Morever, we need to predict the probability
+    as enumeration can genuinly take several values, especially in the beginning.
+    """
+    n_enums = len(harmonic_engineer.db.index.get_level_values("sites_enumeration").unique())
+    clusters = KMeans(n_clusters=n_enums, random_state=random_state).fit(
+        harmonic_engineer.db.to_list())
+    cluster_distances = clusters.transform(np.array(harmonic_engineer.db.to_list()))
+    cluster_db = pd.DataFrame(cluster_distances, index=harmonic_engineer.db.index)
+    # Clusters are global, but enumeration is local per spacegroup and site symmetry
+    return cluster_db
+
+
 
 def get_augmentation_dict():
     ascii_range = tuple(string.ascii_letters)
