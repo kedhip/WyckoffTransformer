@@ -1,0 +1,38 @@
+# For the code to work, must be the same as the file name
+name: no_stop/augmented_harmony
+# uint8 doesn't fit pure_sequence_length
+# uint16 fails with
+# AttributeError: type object 'torch.storage.UntypedStorage' has no attribute 'dtype'. Did you mean: 'type'?
+# int16 fails with CUDA memory error
+dtype: uint8
+# pure_sequence_length_dtype: int16
+include_stop: false
+token_fields:
+  pure_categorical:
+    - wyckoff_letters
+    - site_symmetries
+    - elements
+    - sites_enumeration
+  engineered:
+    multiplicity:
+      type: map
+      inputs:
+      - spacegroup_number
+      - site_symmetries
+      - sites_enumeration
+    harmonic_site_symmetries:
+      dtype: float32
+      type: map
+      inputs:
+      - spacegroup_number
+      - site_symmetries
+      - sites_enumeration
+  augmented_engineered:
+    harmonic_site_symmetries:
+      augmented_input: sites_enumeration
+sequence_fields:
+  space_group:
+    - spacegroup_number
+  no_processing:
+    - formation_energy_per_atom
+    - band_gap

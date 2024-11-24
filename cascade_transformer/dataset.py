@@ -212,7 +212,7 @@ class AugmentedCascadeDataset():
 
 
     # Compilation is safe since the function only ever uses the same data
-    #@torch.compile(fullgraph=True)
+    @torch.compile(fullgraph=True)
     @torch.no_grad()
     def get_augmentation(self) -> dict[int, Tensor]:
         if self.augmentation_data_store is None:
