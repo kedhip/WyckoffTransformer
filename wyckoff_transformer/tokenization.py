@@ -478,7 +478,7 @@ def load_tensors_and_tokenisers(
 
     this_cache_path = cache_path / dataset
     try:
-        tensors = torch.load(this_cache_path / 'tensors' / f'{config_name}.pt', weights_only=True)
+        tensors = torch.load(this_cache_path / 'tensors' / f'{config_name}.pt', weights_only=False)
     except FileNotFoundError:
         logger.warning("Tensors not found, trying to load obsolete .pkl.gz")
         with gzip.open(this_cache_path / 'tensors' / f'{config_name}.pkl.gz', "rb") as f:

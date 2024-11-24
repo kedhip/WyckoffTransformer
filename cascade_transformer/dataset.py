@@ -95,6 +95,19 @@ def batched_bincount(x, dim, max_value, dtype=None):
     return target
 
 
+def gather_var_dim(
+    input_: torch.Tensor,
+    dim: int,
+    index: torch.Tensor) -> torch.Tensor:
+
+    if input_.dim() == 2:
+        return input_.gather(dim, index)
+    if input_.dim() == 3:
+        expanded_index = index.unsqueeze(2).expand(-1, -1, input_.size(2))
+        return input_.gather(dim, expanded_index)
+    raise NotImplementedError("Only 2D and 3D tensors are supported")
+
+
 TargetClass = Enum("TargetClass", ['NextToken', 'NumUniqueTokens', 'Scalar'])
 
 class AugmentedCascadeDataset():
@@ -107,7 +120,7 @@ class AugmentedCascadeDataset():
         stops: dict[str, int|Tensor],
         num_classes: dict[str, int],
         start_field: str,
-        augmented_field: str,
+        augmented_fields: List[str]|None,
         batch_size: Optional[int] = None,
         fix_batch_size: bool = True,
         dtype: torch.dtype = torch.int64,
@@ -126,7 +139,8 @@ class AugmentedCascadeDataset():
             cascade_order: A tuple of field names, in the order they should be passed to the model.
             masks: A dictionary of mask values for each field
             start_field: The name of the field that should be used as the start token.
-            augmented_field: The name of the field that should be augmented.
+            augmented_fields: The names of the fields that should be augmented. They are sampled at the
+                same indices.
             batch_size: The batch size of the dataset. It is applied before cutting the PAD targets,
                 and there will be the end of the dataset, so the actual batches might be smaller.
             dtype: The dtype of the tensors.
@@ -143,26 +157,30 @@ class AugmentedCascadeDataset():
         self.fix_batch_size = fix_batch_size
         self.cascade_order = cascade_order
         self.cascade_index_from_field = {name: i for i, name in enumerate(cascade_order)}
-        self.augmented_field = augmented_field
-        self.data = {name: data[name].type(dtype).to(device) for name in cascade_order if name != augmented_field}
+        self.augmented_fields = augmented_fields
+        self.data = {name: data[name].type(dtype).to(device) for name in cascade_order if name not in augmented_fields}
         self.max_sequence_length = next(iter(self.data.values())).size(1)
         self.masks = {name: torch.tensor(masks[name], dtype=dtype, device=device) for name in cascade_order}
         self.pads = {name: torch.tensor(pads[name], dtype=dtype, device=device) for name in cascade_order}
         self.stops = {name: torch.tensor(stops[name], dtype=dtype, device=device) for name in cascade_order}
         self.num_classes = tuple((num_classes[name] for name in cascade_order))
-        if augmented_field is None:
-            self.augmented_field_index = None
-        else:
+        self.augmentation_data_store = {}
+        if augmented_fields is not None:
             # Ideally, we would like a nested tensor, but it doesn't support indexing we need
             # So we use a custom data store, and indices to it
-            self.augmented_field_index = cascade_order.index(augmented_field)
-            self.augmentation_variants = torch.tensor(
-                list(map(len, data[f"{augmented_field}_augmented"])), dtype=dtype, device=device)
+            #self.augmented_field_indices = [cascade_order.index(augmented_field) for augmented_field in augmented_fields]
+            all_augmentation_variants = [torch.tensor(
+                list(map(len, data[f"{augmented_field}_augmented"])), dtype=dtype, device=device) for augmented_field in augmented_fields]
+            assert all(((all_augmentation_variants[0] ==  this_variant).all() for this_variant in all_augmentation_variants))
+            self.augmentation_variants = all_augmentation_variants[0]
             self.augmentation_start_indices = (torch.cumsum(self.augmentation_variants, dim=0) -
                 self.augmentation_variants) * self.max_sequence_length
             # It will be used in torch.gather
-            self.augmentation_data_store = torch.cat([torch.cat(x, dim=0) for x in data[f"{augmented_field}_augmented"]],
-                dim=0).type(dtype).to(device).unsqueeze(0).expand(self.augmentation_variants.size(0), -1)
+            for augmented_field in augmented_fields:
+                these_augmentations = torch.cat([torch.cat(x, dim=0) for x in data[f"{augmented_field}_augmented"]],
+                        dim=0).type(dtype)
+                self.augmentation_data_store[cascade_order.index(augmented_field)] = these_augmentations.expand(
+                    self.augmentation_variants.size(0), *[-1]*(these_augmentations.dim())).to(device)
         self.start_tokens = data[start_field].type(start_dtype).to(device)
         if "pure_sequence_length" in data:
             self.pure_sequences_lengths = data["pure_sequence_length"].type(dtype).to(device)
@@ -194,13 +212,18 @@ class AugmentedCascadeDataset():
 
 
     # Compilation is safe since the function only ever uses the same data
-    @torch.compile(fullgraph=True)
-    def get_augmentation(self):
+    #@torch.compile(fullgraph=True)
+    @torch.no_grad()
+    def get_augmentation(self) -> dict[int, Tensor]:
+        if self.augmentation_data_store is None:
+            return {}
         augnementation_selection = randint_tensor(self.augmentation_variants)
         selection_start = augnementation_selection*self.max_sequence_length + self.augmentation_start_indices
         selection_indices = selection_start.unsqueeze(1) + torch.arange(
             self.max_sequence_length, device=selection_start.device, dtype=selection_start.dtype)
-        return torch.gather(self.augmentation_data_store, 1, selection_indices)
+
+        return {cascade_index: gather_var_dim(store, 1, selection_indices) for
+                cascade_index, store in self.augmentation_data_store.items()}
 
 
     def get_masked_cascade_data(
@@ -213,10 +236,9 @@ class AugmentedCascadeDataset():
         # assert known_seq_len < data.shape[1]
         # assert known_seq_len >= 0
 
-        if self.augmented_field_index is not None:
-            augmented_data = self.get_augmentation()
-        if known_cascade_len == self.augmented_field_index:
-            target = augmented_data[:, known_seq_len]
+        augmented_data = self.get_augmentation()
+        if known_cascade_len in augmented_data:
+            target = augmented_data[known_cascade_len][:, known_seq_len]
         else:
             target = self.data[self.cascade_order[known_cascade_len]][:, known_seq_len]
         target_is_viable = (target != self.pads[self.cascade_order[known_cascade_len]])
@@ -225,8 +247,8 @@ class AugmentedCascadeDataset():
         # It would be slightly more efficient to predict it using only the previous data
         res = []
         for cascade_index, name in enumerate(self.cascade_order):
-            if name == self.augmented_field:
-                cascade_vector = augmented_data[target_is_viable]
+            if cascade_index in augmented_data:
+                cascade_vector = augmented_data[cascade_index][target_is_viable]
             else:
                 cascade_vector = self.data[name][target_is_viable]
             if cascade_index < known_cascade_len:
@@ -270,10 +292,12 @@ class AugmentedCascadeDataset():
             batch_selection = self.get_next_batch()
         else:
             batch_selection = slice(None)
+        
+        augmented_data = self.get_augmentation()
         res = []
-        for name in self.cascade_order:
-            if name == self.augmented_field:
-                cascade_vector = self.get_augmentation()
+        for index, name in enumerate(self.cascade_order):
+            if index in augmented_data:
+                cascade_vector = augmented_data[index]
             else:
                 cascade_vector = self.data[name]
             res.append(cascade_vector[batch_selection])
@@ -287,7 +311,7 @@ class AugmentedCascadeDataset():
         target_type: TargetClass,
         multiclass_target: bool,
         no_batch: bool = False,
-        augmented_data: Optional[Tensor] = None,
+        # augmented_data: Optional[Tensor] = None,
         full_permutation: Optional[Tensor] = None,
         apply_permutation: bool = True,
         truncate_invalid_targets: bool = True,
@@ -302,8 +326,7 @@ class AugmentedCascadeDataset():
         
         logger.debug("Known sequence length %i", known_seq_len)
         logger.debug("Known cascade length %i", known_cascade_len)
-        if self.augmented_field_index is not None and augmented_data is None:
-            augmented_data = self.get_augmentation()
+        augmented_data = self.get_augmentation()
 
         if self.batch_size is not None and not no_batch:
             if not truncate_invalid_targets:
@@ -355,16 +378,12 @@ class AugmentedCascadeDataset():
         cascade_targets = []
         for cascade_index, name in enumerate(self.cascade_order):
             logger.debug("Processing cascade #%i aka %s", cascade_index, name)
-            if name == self.augmented_field:
-                cascade_vector = augmented_data[batch_target_is_viable]
+            if cascade_index in augmented_data:
+                cascade_vector = augmented_data[cascade_index][batch_target_is_viable]
             else:
                 cascade_vector = self.data[name][batch_target_is_viable]
             if apply_permutation:
-                if cascade_vector.dim() == 2:
-                    permuted_cascade_vector = cascade_vector.gather(1, permutation)
-                else:
-                    expanded_permutation = permutation.unsqueeze(2).expand_as(cascade_vector)
-                    permuted_cascade_vector = cascade_vector.gather(1, expanded_permutation)
+                permuted_cascade_vector = gather_var_dim(cascade_vector, 1, permutation)
             else:
                 permuted_cascade_vector = cascade_vector
             # logger.debug("Permuted cascade size (%i, %i)", *permuted_cascade_vector.size())

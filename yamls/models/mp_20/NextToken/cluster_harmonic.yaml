@@ -18,6 +18,10 @@ model:
       harmonic_cluster: 0
       harmonic_site_symmetries:
         pass_through_vector: 12
+    # Augmented fields are sampled at corresponding indices
+    augmented:
+      - harmonic_cluster
+      - harmonic_site_symmetries
   WyckoffTrainer_args:
     multiclass_next_token_with_order_permutation: true
     target: NextToken
@@ -67,6 +71,6 @@ optimisation:
   clip_grad_norm: 2.
   epochs: 1000000
 tokeniser:
-  name: with_stop/harmonic_cluster
+  name: with_stop/augmented/harmonic_cluster
 evaluation:
   n_structures_to_generate: 0
