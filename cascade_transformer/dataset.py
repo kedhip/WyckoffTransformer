@@ -146,6 +146,8 @@ class AugmentedCascadeDataset():
             dtype: The dtype of the tensors.
             device: The device of the tensors.
         """
+        if augmented_fields is None:
+            augmented_fields = []
         self.device = device
         self.batch_size = batch_size
         self.num_examples = len(data[cascade_order[0]])
@@ -165,9 +167,8 @@ class AugmentedCascadeDataset():
         self.stops = {name: torch.tensor(stops[name], dtype=dtype, device=device) for name in cascade_order}
         self.num_classes = tuple((num_classes[name] for name in cascade_order))
         
-        if augmented_fields is None:
-            self.augmentation_data_store = None
-        else:
+        self.augmentation_data_store = {}
+        if augmented_fields:
             # Ideally, we would like a nested tensor, but it doesn't support indexing we need
             # So we use a custom data store, and indices to it
             #self.augmented_field_indices = [cascade_order.index(augmented_field) for augmented_field in augmented_fields]
@@ -178,7 +179,6 @@ class AugmentedCascadeDataset():
             self.augmentation_start_indices = (torch.cumsum(self.augmentation_variants, dim=0) -
                 self.augmentation_variants) * self.max_sequence_length
             # It will be used in torch.gather
-            self.augmentation_data_store = {}
             for augmented_field in augmented_fields:
                 these_augmentations = torch.cat([torch.cat(x, dim=0) for x in data[f"{augmented_field}_augmented"]],
                         dim=0).type(dtype).to(device)
@@ -219,7 +219,7 @@ class AugmentedCascadeDataset():
     @torch.compile(fullgraph=True)
     @torch.no_grad()
     def get_augmentation(self) -> dict[int, Tensor]:
-        if self.augmentation_data_store is None:
+        if not self.augmentation_data_store:
             return {}
         augnementation_selection = randint_tensor(self.augmentation_variants)
         selection_start = augnementation_selection*self.max_sequence_length + self.augmentation_start_indices
