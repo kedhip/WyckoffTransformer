@@ -208,7 +208,7 @@ class LetterDictToSitesConverter:
     def __init__(self, 
         wyckoffs_db_file = Path(__file__).parent.parent / "cache" / "wychoffs_enumerated_by_ss.pkl.gz",
         multiplicity_engineer_file = Path(__file__).parent.parent / "cache" / "engineers" / "multiplicity.pkl.gz"):
-            with open(wyckoffs_db_file, "rb") as f:
+            with gzip.open(wyckoffs_db_file, "rb") as f:
                 self.wychoffs_enumerated_by_ss, _, self.ss_from_letter = pickle.load(f)
             with gzip.open(multiplicity_engineer_file, "rb") as f:
                 self.multiplicity_engineer = pickle.load(f)
@@ -489,7 +489,7 @@ class GeneratedDataset():
         if "site_symmetries" not in self.data.columns:
             # We have read the pyXtal format
             wyckoffs_db_file = Path(__file__).parent.parent / "cache" / "wychoffs_enumerated_by_ss.pkl.gz"
-            with open(wyckoffs_db_file, "rb") as f:
+            with gzip.open(wyckoffs_db_file, "rb") as f:
                 wychoffs_enumerated_by_ss, _, ss_from_letter = pickle.load(f)
             augmentation_dict = get_augmentation_dict()
             wyckoff_converted = partial(
