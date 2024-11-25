@@ -7,8 +7,8 @@ model:
       - harmonic_site_symmetries
       - multiplicity
     embedding_size:
-      elements: 20
-      site_symmetries: 19
+      elements: 24
+      site_symmetries: 23
       multiplicity: null
       harmonic_site_symmetries:
         pass_through_vector: 12
@@ -41,15 +41,15 @@ model:
     num_fully_connected_layers: 3
     learned_positional_encoding_max_size: 0
     learned_positional_encoding_only_masked: true
-    prediction_perceptron_dropout: 0.01
-    emebdding_dropout: 0.01    
+    prediction_perceptron_dropout: 0.
+    emebdding_dropout: 0.02 
     TransformerEncoderLayer_args:
-      nhead: 4
+      nhead: 1
       dim_feedforward: 256
-      dropout: 0.2
+      dropout: 0.1
     TransformerEncoder_args:
-      num_layers: 3
-      enable_nested_tensor: true
+      num_layers: 2
+      enable_nested_tensor: false
 optimisation:
   optimiser:
     name: Adam

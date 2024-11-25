@@ -47,6 +47,7 @@ class WyckoffTrainer():
         multiclass_next_token_with_order_permutation: bool,
         optimisation_config: dict,
         device: torch.DeviceObjType,
+        augmented_storage_device: Optional[torch.DeviceObjType] = None,
         batch_size: Optional[int] = None,
         train_batch_size: Optional[int] = None,
         val_batch_size: Optional[int] = None,
@@ -135,6 +136,7 @@ class WyckoffTrainer():
             dtype=self.dtype,
             start_dtype=start_dtype,
             device=self.device,
+            augmented_storage_device=augmented_storage_device,
             target_name=target_name)
         
         if "lr_per_sqrt_n_samples" in optimisation_config.optimiser:
@@ -165,6 +167,7 @@ class WyckoffTrainer():
             dtype=self.dtype,
             start_dtype=start_dtype,
             device=device,
+            augmented_storage_device=augmented_storage_device,
             target_name=target_name
             )
 
@@ -184,6 +187,7 @@ class WyckoffTrainer():
                 dtype=self.dtype,
                 start_dtype=start_dtype,
                 device=device,
+                augmented_storage_device=augmented_storage_device,
                 target_name=target_name
             )
 
@@ -489,12 +493,13 @@ class WyckoffTrainer():
         if dataset.batch_size is not None and not dataset.fix_batch_size:
             raise NotImplementedError("Only fixed batch size is supported")
         if self.target == TargetClass.Scalar:
-            known_seq_len = dataset.max_sequence_length - 1
             loss = torch.zeros(1, device=self.device)
-            for _ in range(dataset.batches_per_epoch):
-                loss += self.get_loss(dataset, known_seq_len, None, False, True)
+            # Augmentation
+            for sample_ids in range(self.evaluation_samples):
+                for batch_idx in range(dataset.batches_per_epoch):
+                    loss += self.get_loss(dataset, None, None, False, True)
             # Above we check that the batch size is the same for all batches
-            return loss / dataset.batches_per_epoch
+            return loss / self.evaluation_samples / dataset.batches_per_epoch
 
         loss = torch.zeros(self.cascade_len, device=self.device)
         for _ in range(self.evaluation_samples):

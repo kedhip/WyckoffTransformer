@@ -126,6 +126,7 @@ class AugmentedCascadeDataset():
         dtype: torch.dtype = torch.int64,
         start_dtype: torch.dtype = torch.int64,
         device: str = "cpu",
+        augmented_storage_device: Optional[str] = None,
         target_name = None):
         """
         A class for contaning augmented cascade datasets.
@@ -148,13 +149,17 @@ class AugmentedCascadeDataset():
         """
         if augmented_fields is None:
             augmented_fields = []
-        self.device = device
+        self.device = torch.device(device)
+        if augmented_storage_device is None:
+            self.augmented_storage_device = self.device
+        else:
+            self.augmented_storage_device = torch.device(augmented_storage_device)
         self.batch_size = batch_size
         self.num_examples = len(data[cascade_order[0]])
         if batch_size is not None:
             if batch_size > self.num_examples:
                 raise ValueError("Batch size is larger than the dataset")
-            self.this_shuffle_order = torch.randperm(self.num_examples, device=device)
+            self.this_shuffle_order = torch.randperm(self.num_examples, device=self.augmented_storage_device)
             self.next_batch_index = 0
         self.fix_batch_size = fix_batch_size
         self.cascade_order = cascade_order
@@ -173,7 +178,8 @@ class AugmentedCascadeDataset():
             # So we use a custom data store, and indices to it
             #self.augmented_field_indices = [cascade_order.index(augmented_field) for augmented_field in augmented_fields]
             all_augmentation_variants = [torch.tensor(
-                list(map(len, data[f"{augmented_field}_augmented"])), dtype=dtype, device=device) for augmented_field in augmented_fields]
+                list(map(len, data[f"{augmented_field}_augmented"])),
+                dtype=dtype, device=self.augmented_storage_device) for augmented_field in augmented_fields]
             assert all(((all_augmentation_variants[0] ==  this_variant).all() for this_variant in all_augmentation_variants))
             self.augmentation_variants = all_augmentation_variants[0]
             self.augmentation_start_indices = (torch.cumsum(self.augmentation_variants, dim=0) -
@@ -181,7 +187,7 @@ class AugmentedCascadeDataset():
             # It will be used in torch.gather
             for augmented_field in augmented_fields:
                 these_augmentations = torch.cat([torch.cat(x, dim=0) for x in data[f"{augmented_field}_augmented"]],
-                        dim=0).type(dtype).to(device)
+                        dim=0).type(dtype).pin_memory().to(self.augmented_storage_device)
                 self.augmentation_data_store[cascade_order.index(augmented_field)] = \
                     these_augmentations.expand(
                         self.augmentation_variants.size(0), *these_augmentations.size())
@@ -218,15 +224,16 @@ class AugmentedCascadeDataset():
     # Compilation is safe since the function only ever uses the same data
     @torch.compile(fullgraph=True)
     @torch.no_grad()
-    def get_augmentation(self) -> dict[int, Tensor]:
+    def get_augmentation(
+        self, batch_selection = slice(None)) -> dict[int, Tensor]:
         if not self.augmentation_data_store:
             return {}
-        augnementation_selection = randint_tensor(self.augmentation_variants)
-        selection_start = augnementation_selection*self.max_sequence_length + self.augmentation_start_indices
+        augnementation_selection = randint_tensor(self.augmentation_variants[batch_selection])
+        selection_start = augnementation_selection*self.max_sequence_length + self.augmentation_start_indices[batch_selection]
         selection_indices = selection_start.unsqueeze(1) + torch.arange(
-            self.max_sequence_length, device=selection_start.device, dtype=selection_start.dtype)
+            self.max_sequence_length, device=self.augmented_storage_device, dtype=selection_start.dtype)
 
-        return {cascade_index: gather_var_dim(store, 1, selection_indices) for
+        return {cascade_index: gather_var_dim(store, 1, selection_indices).to(self.device) for
                 cascade_index, store in self.augmentation_data_store.items()}
 
 
@@ -276,7 +283,8 @@ class AugmentedCascadeDataset():
         batch_start = self.next_batch_index * self.batch_size
         batch_end = batch_start + self.batch_size
         if batch_end >= self.num_examples:
-            self.this_shuffle_order = torch.randperm(self.num_examples, device=self.device)
+            self.this_shuffle_order = torch.randperm(
+                self.num_examples, device=self.augmented_storage_device, pin_memory=True)
             self.next_batch_index = 0
             # We have checked during the initialisation that batch_size <= num_examples
             if self.fix_batch_size:
@@ -296,15 +304,15 @@ class AugmentedCascadeDataset():
             batch_selection = self.get_next_batch()
         else:
             batch_selection = slice(None)
-        
-        augmented_data = self.get_augmentation()
+
+        augmented_data = self.get_augmentation(batch_selection)
         res = []
         for index, name in enumerate(self.cascade_order):
             if index in augmented_data:
                 cascade_vector = augmented_data[index]
             else:
-                cascade_vector = self.data[name]
-            res.append(cascade_vector[batch_selection])
+                cascade_vector = self.data[name][batch_selection]
+            res.append(cascade_vector)
         return self.start_tokens[batch_selection], res, self.target[batch_selection], self.padding_mask[batch_selection]
 
 
