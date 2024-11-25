@@ -284,7 +284,8 @@ class AugmentedCascadeDataset():
         batch_end = batch_start + self.batch_size
         if batch_end >= self.num_examples:
             self.this_shuffle_order = torch.randperm(
-                self.num_examples, device=self.augmented_storage_device, pin_memory=True)
+                self.num_examples, device=self.augmented_storage_device,
+                pin_memory=self.augmented_storage_device.type == "cpu")
             self.next_batch_index = 0
             # We have checked during the initialisation that batch_size <= num_examples
             if self.fix_batch_size:
