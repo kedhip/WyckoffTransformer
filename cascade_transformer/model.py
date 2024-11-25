@@ -98,14 +98,13 @@ def get_perceptron(
 
     if num_layers == 1:
         return nn.Linear(input_dim, output_dim)
-    else:
-        this_sequence = []
-        for _ in range(num_layers - 1):
-            this_sequence.append(nn.Linear(input_dim, input_dim))
-            if dropout is not None:
-                this_sequence.append(nn.Dropout(dropout))
-            this_sequence.append(nn.ReLU())
-        this_sequence.append(nn.Linear(input_dim, output_dim))
+    this_sequence = []
+    for layer_idx in range(num_layers - 1):
+        this_sequence.append(nn.Linear(input_dim, input_dim))
+        if dropout is not None:
+            this_sequence.append(nn.Dropout(dropout))
+        this_sequence.append(nn.ReLU())
+    this_sequence.append(nn.Linear(input_dim, output_dim))
     return nn.Sequential(*this_sequence)
 
 
@@ -121,15 +120,14 @@ def get_pyramid_perceptron(
 
     if num_layers == 1:
         return nn.Linear(input_dim, output_dim)
-    else:
-        this_sequence = []
-        layer_sizes = np.linspace(input_dim, output_dim, num_layers + 1, dtype=int)
-        for input_layer_size, output_layer_size in zip(layer_sizes[:-1], layer_sizes[1:]):
-            this_sequence.append(nn.Linear(input_layer_size, output_layer_size))
+    this_sequence = []
+    layer_sizes = np.linspace(input_dim, output_dim, num_layers + 1, dtype=int)
+    for layer_idx, (input_layer_size, output_layer_size) in enumerate(zip(layer_sizes[:-1], layer_sizes[1:])):
+        this_sequence.append(nn.Linear(input_layer_size, output_layer_size))
+        if layer_idx < num_layers - 1:
             if dropout is not None:
                 this_sequence.append(nn.Dropout(dropout))
-            if len(this_sequence) < num_layers * 2 - 1:
-                this_sequence.append(nn.ReLU())
+            this_sequence.append(nn.ReLU())
     return nn.Sequential(*this_sequence)
 
 
@@ -218,6 +216,9 @@ class CascadeTransformer(nn.Module):
         super().__init__()
         self.embedding = CascadeEmbedding(cascade, dropout=emebdding_dropout)
         self.d_model = self.embedding.total_embedding_dim
+        if "nhead" in TransformerEncoderLayer_args and self.d_model % TransformerEncoderLayer_args["nhead"]:
+            logger.warning("d_model is not divisible by nhead, padding to the next multiple")
+            self.d_model += TransformerEncoderLayer_args["nhead"] - self.d_model % TransformerEncoderLayer_args["nhead"]
         self.encoder_layers = TransformerEncoderLayer(self.d_model, batch_first=True, **TransformerEncoderLayer_args)
         self.transformer_encoder = TransformerEncoder(self.encoder_layers, **TransformerEncoder_args)
         self.start_type = start_type
@@ -247,10 +248,10 @@ class CascadeTransformer(nn.Module):
             # before we can use multuple attention heads.
             # Actually, a fully-connected layer is an overparametrisation
             # but it's easier to implement. Completely redundant if nhead == 1.
-            self.mixer = nn.Linear(self.d_model, self.d_model, bias=False)
+            self.mixer = nn.Linear(self.embedding.total_embedding_dim, self.d_model, bias=False)
         else:
             # Hypthesis: since we concatenate embeddings, the mixer is a possible place to add non-linearity.
-            self.mixer = percepron_generator(self.d_model, self.d_model, mixer_layers)
+            self.mixer = percepron_generator(self.embedding.total_embedding_dim, self.d_model, mixer_layers)
         # Note that in the normal usage, we want to condition the cascade element prediction
         # on the previous element, so care should be taken as to which head to call.
         self.token_aggregation = token_aggregation
@@ -321,7 +322,8 @@ class CascadeTransformer(nn.Module):
                 cascade_embedding += positional_encoding.unsqueeze(0)
 
         data = torch.cat([self.start_embedding(start).unsqueeze(1), cascade_embedding], dim=1)
-
+        logger.debug("Data size: %s", data.size())
+        logger.debug("Padding mask size: %s", padding_mask.size())
         transformer_output = self.transformer_encoder(data, src_key_padding_mask=padding_mask)
 
         logging.debug("Transformer output size: %s", transformer_output.size())

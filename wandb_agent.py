@@ -14,8 +14,6 @@ def agent_function(device, run_path):
     final_config = OmegaConf.merge(base_config, dict(wandb.config))
     tokeniser_config_path = Path(__file__).parent.resolve() / "yamls" / "tokenisers" / f"{final_config.tokeniser.name}.yaml"
     tokeniser_config = OmegaConf.load(tokeniser_config_path)
-    if len(tokeniser_config.augmented_token_fields) > 1:
-        raise ValueError("Only one augmented field is supported")
     final_config['tokeniser'] = tokeniser_config
     train_from_config(final_config, device, run_path=run_path)
 

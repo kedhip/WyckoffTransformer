@@ -190,7 +190,6 @@ perov_5:
         structures:
           path: Dropbox/perov_5/WyckoffTransformer/CrySPR/CHGNet_fix/Tformer_perov5_structures
           storage_type: NongWei
-  # There is something wrong with the data
   DiffCSP:
     structures:
       path: Dropbox/perov_5/DiffCSP/eval_gen.pt
@@ -225,6 +224,11 @@ carbon_24:
     wyckoffs:
       path: Dropbox/carbon_24/WyckoffTransformer/ICLR_carbon_24.json.gz
       storage_type: pyxtal_json
+    CrySPR:
+      CHGNet_fix:
+        structures:
+          path: Dropbox/carbon_24/WyckoffTransformer/CrySPR/CHGNet_fix/WyFormer_carbon24_CHGNET.tar.gz
+          storage_type: NongWei
   split:
     train:
       structures:

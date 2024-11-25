@@ -29,6 +29,10 @@ def main():
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
     config = omegaconf.OmegaConf.load(args.config_file)
+    tokenizer_root_path = Path(__file__).parent.resolve() / "yamls" / "tokenisers"
+    tokenizer_full_name = args.config_file.resolve().relative_to(tokenizer_root_path).with_suffix('')
+    if config.name != str(tokenizer_full_name):
+        raise ValueError(f"Config inside file {config.name} does not match the file name {tokenizer_full_name}")
     cache_path = Path(__file__).parent.resolve() / "cache" / args.dataset
     cache_path.mkdir(parents=True, exist_ok=True)
     with gzip.open(cache_path / 'data.pkl.gz', "rb") as f:
@@ -48,8 +52,6 @@ def main():
             [tensors["val"]["site_symmetries"][:, index].tolist(), tensors["val"]["sites_enumeration"][:, index].tolist()])
         assert (multiplicities_from_tokens == datasets_pd["val"]["multiplicity"].map(itemgetter(index))).all()
         logger.debug("Multiplicities from tokens match the original dataset")
-    tokenizer_root_path = Path(__file__).parent.resolve() / "yamls" / "tokenisers"
-    tokenizer_full_name = args.config_file.resolve().relative_to(tokenizer_root_path).with_suffix('')
     cache_tensors_path = cache_path / 'tensors' / tokenizer_full_name.with_suffix('.pt')
     cache_tensors_path.parent.mkdir(parents=True, exist_ok=True)
     torch.save(tensors, cache_tensors_path)

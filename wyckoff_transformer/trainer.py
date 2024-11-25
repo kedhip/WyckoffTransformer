@@ -1,4 +1,4 @@
-from typing import Tuple, Dict, Optional
+from typing import Tuple, Dict, Optional, List
 from random import randint
 import logging
 from functools import partial
@@ -39,7 +39,7 @@ class WyckoffTrainer():
         token_engineers: dict,
         cascade_order: Tuple[str],
         cascade_is_target: Dict[str, bool],
-        augmented_field: str|None,
+        augmented_fields: List[str]|None,
         start_name: str,
         start_dtype: torch.dtype,
         target: TargetClass|str,
@@ -47,6 +47,7 @@ class WyckoffTrainer():
         multiclass_next_token_with_order_permutation: bool,
         optimisation_config: dict,
         device: torch.DeviceObjType,
+        augmented_storage_device: Optional[torch.DeviceObjType] = None,
         batch_size: Optional[int] = None,
         train_batch_size: Optional[int] = None,
         val_batch_size: Optional[int] = None,
@@ -114,7 +115,7 @@ class WyckoffTrainer():
             self.model = self.compiled_model
         self.tokenisers = tokenisers
         self.device = device
-        self.augmented_field = augmented_field
+        self.augmented_fields = augmented_fields
 
         self.masks_dict = {field: tokenisers[field].mask_token for field in cascade_order}
         self.pad_dict = {field: tokenisers[field].pad_token for field in cascade_order}
@@ -130,11 +131,12 @@ class WyckoffTrainer():
             stops=self.stops_dict,
             num_classes=self.num_classes_dict,
             start_field=start_name,
-            augmented_field=augmented_field,
+            augmented_fields=augmented_fields,
             batch_size=train_batch_size,
             dtype=self.dtype,
             start_dtype=start_dtype,
             device=self.device,
+            augmented_storage_device=augmented_storage_device,
             target_name=target_name)
         
         if "lr_per_sqrt_n_samples" in optimisation_config.optimiser:
@@ -160,11 +162,12 @@ class WyckoffTrainer():
             stops=self.stops_dict,
             num_classes=self.num_classes_dict,
             start_field=start_name,
-            augmented_field=augmented_field,
+            augmented_fields=augmented_fields,
             batch_size=val_batch_size,
             dtype=self.dtype,
             start_dtype=start_dtype,
             device=device,
+            augmented_storage_device=augmented_storage_device,
             target_name=target_name
             )
 
@@ -179,11 +182,12 @@ class WyckoffTrainer():
                 stops=self.stops_dict,
                 num_classes=self.num_classes_dict,
                 start_field=start_name,
-                augmented_field=augmented_field,
+                augmented_fields=augmented_fields,
                 batch_size=test_batch_size,
                 dtype=self.dtype,
                 start_dtype=start_dtype,
                 device=device,
+                augmented_storage_device=augmented_storage_device,
                 target_name=target_name
             )
 
@@ -214,10 +218,6 @@ class WyckoffTrainer():
         # Our hihgly dynamic concat-heavy workflow doesn't benefit much from compilation
         # torch._dynamo.config.cache_size_limit = 128
         # model = torch.compile(model, dynamic=True)
-        if "augmented_token_fields" in config.tokeniser and len(config.tokeniser.augmented_token_fields) == 1:
-            augmented_field = config.tokeniser.augmented_token_fields[0]
-        else:
-            augmented_field = None
         if config.model.CascadeTransformer_args.start_type == "categorial":
             start_dtype = torch.int64
         # one-hots are encoded by a linear layer
@@ -228,7 +228,7 @@ class WyckoffTrainer():
         return cls(
             model, tensors["train"], tensors["val"], tokenisers, token_engineers, config.model.cascade.order,
             config.model.cascade.get("is_target", None),
-            augmented_field,
+            config.model.cascade.get("augmented", None),
             config.model.start_token,
             optimisation_config=config.optimisation, device=device,
             run_path=run_path,
@@ -367,7 +367,7 @@ class WyckoffTrainer():
             stops=self.stops_dict,
             num_classes=self.num_classes_dict,
             start_field=self.start_name,
-            augmented_field=None,
+            augmented_fields=None,
             dtype=torch.long,
             start_dtype=torch.float,
             device=self.device)
@@ -377,7 +377,7 @@ class WyckoffTrainer():
             for known_cascade_len, cascade_name in enumerate(self.cascade_order):
                 start, this_data, target, batch_target_is_viable = generated_dataset.get_masked_multiclass_cascade_data(
                                 known_seq_len, known_cascade_len, TargetClass.NextToken, multiclass_target=False,
-                                augmented_data=None, full_permutation=full_permutation,
+                                full_permutation=full_permutation,
                                 apply_permutation=False, return_chosen_indices=True)
                 logits = self.model(start, this_data, None, known_cascade_len)
                 log_probas = torch.nn.functional.log_softmax(logits, dim=1)
@@ -493,12 +493,13 @@ class WyckoffTrainer():
         if dataset.batch_size is not None and not dataset.fix_batch_size:
             raise NotImplementedError("Only fixed batch size is supported")
         if self.target == TargetClass.Scalar:
-            known_seq_len = dataset.max_sequence_length - 1
             loss = torch.zeros(1, device=self.device)
-            for _ in range(dataset.batches_per_epoch):
-                loss += self.get_loss(dataset, known_seq_len, None, False, True)
+            # Augmentation
+            for sample_ids in range(self.evaluation_samples):
+                for batch_idx in range(dataset.batches_per_epoch):
+                    loss += self.get_loss(dataset, None, None, False, True)
             # Above we check that the batch size is the same for all batches
-            return loss / dataset.batches_per_epoch
+            return loss / self.evaluation_samples / dataset.batches_per_epoch
 
         loss = torch.zeros(self.cascade_len, device=self.device)
         for _ in range(self.evaluation_samples):
