@@ -154,6 +154,7 @@ class AugmentedCascadeDataset():
             self.augmented_storage_device = self.device
         else:
             self.augmented_storage_device = torch.device(augmented_storage_device)
+        self.pin_memory = (self.augmented_storage_device.type == "cpu" and self.device.type != "cpu")
         self.batch_size = batch_size
         self.num_examples = len(data[cascade_order[0]])
         if batch_size is not None:
@@ -187,7 +188,9 @@ class AugmentedCascadeDataset():
             # It will be used in torch.gather
             for augmented_field in augmented_fields:
                 these_augmentations = torch.cat([torch.cat(x, dim=0) for x in data[f"{augmented_field}_augmented"]],
-                        dim=0).type(dtype).pin_memory().to(self.augmented_storage_device)
+                        dim=0).type(dtype).to(self.augmented_storage_device)
+                if self.pin_memory:
+                    these_augmentations = these_augmentations.pin_memory()
                 self.augmentation_data_store[cascade_order.index(augmented_field)] = \
                     these_augmentations.expand(
                         self.augmentation_variants.size(0), *these_augmentations.size())
@@ -285,7 +288,7 @@ class AugmentedCascadeDataset():
         if batch_end >= self.num_examples:
             self.this_shuffle_order = torch.randperm(
                 self.num_examples, device=self.augmented_storage_device,
-                pin_memory=self.augmented_storage_device.type == "cpu")
+                pin_memory=self.pin_memory)
             self.next_batch_index = 0
             # We have checked during the initialisation that batch_size <= num_examples
             if self.fix_batch_size:
