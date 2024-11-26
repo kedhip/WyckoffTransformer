@@ -103,7 +103,7 @@ def record_to_pyxtal(record: Dict) -> Dict:
 
 
 def load_diffcsp_dataset(dataset: Path) -> List[Structure]:
-    data = torch.load(dataset, map_location='cpu')
+    data = torch.load(dataset, map_location='cpu', weights_only=False)
     crystals_list = get_crystals_list(
         data['frac_coords'], data['atom_types'], data['lengths'], data['angles'], data['num_atoms'])
     with Pool() as pool:

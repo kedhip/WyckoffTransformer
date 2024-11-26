@@ -1,6 +1,7 @@
 import hydra
 import omegaconf
 import torch
+import warnings
 import pandas as pd
 from omegaconf import ValueNode
 from torch.utils.data import Dataset
@@ -82,11 +83,22 @@ class TensorCrystDataset(Dataset):
         self.graph_method = graph_method
         self.lattice_scale_method = lattice_scale_method
 
-        self.cached_data = preprocess_tensors(
-            crystal_array_list,
-            niggli=self.niggli,
-            primitive=self.primitive,
-            graph_method=self.graph_method)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="CrystalNN: cannot locate an appropriate radius, "
+                        "covalent or atomic radii will be used, this can lead "
+                        "to non-optimal results.",
+                category=UserWarning,
+                module="pymatgen.analysis.local_env."
+            )
+            print("Suppressed atomic radius warnings.")
+
+            self.cached_data = preprocess_tensors(
+                crystal_array_list,
+                niggli=self.niggli,
+                primitive=self.primitive,
+                graph_method=self.graph_method)
 
         add_scaled_lattice_prop(self.cached_data, lattice_scale_method)
         self.lattice_scaler = None

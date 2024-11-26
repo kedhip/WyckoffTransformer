@@ -126,7 +126,7 @@ def smact_validity_optimised(
         return True
     if include_alloys and element_set.issubset(smact.metals):
         return True
-  
+
     try:
         space = smact.element_dictionary(elem_symbols)
     except NameError:
@@ -265,12 +265,16 @@ def load_model(model_path, load_data=False, testing=True):
 
     return model, test_loader, cfg
 
-def prop_model_eval(eval_model_name, crystal_array_list, device="cpu"):
+
+def prop_model_eval(
+    eval_model_name,
+    crystal_array_list,
+    device: torch.device = torch.device("cpu")):
 
     model_path = get_model_path(eval_model_name)
 
     model, _, _ = load_model(model_path)
-    model = model.to(device)
+    model.to(device)
     cfg = load_config(model_path)
 
     dataset = TensorCrystDataset(
@@ -285,7 +289,6 @@ def prop_model_eval(eval_model_name, crystal_array_list, device="cpu"):
         shuffle=False,
         batch_size=256,
         num_workers=0,
-        pin_memory=True,
         worker_init_fn=worker_init_fn)
 
     model.eval()
@@ -293,7 +296,7 @@ def prop_model_eval(eval_model_name, crystal_array_list, device="cpu"):
     all_preds = []
 
     for batch in loader:
-        preds = model(batch.to(device))
+        preds = model(batch)
         model.scaler.match_device(preds)
         scaled_preds = model.scaler.inverse_transform(preds)
         all_preds.append(scaled_preds.detach().cpu().numpy())

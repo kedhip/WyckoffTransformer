@@ -106,7 +106,7 @@ def enumerate_wychoffs_by_ss(
             for enum in opres_by_enum.keys():
                 signature_by_sg_ss_enum[(spacegroup_number, ss, enum)] = \
                     np.concatenate([signatures[:, enum, :].real.ravel(), signatures[:, enum, :].imag.ravel()])
-                
+
     if output_file.suffix == ".gz":
         opener = gzip.open
     else:

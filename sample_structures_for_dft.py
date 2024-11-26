@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Optional
 from argparse import ArgumentParser
 from pathlib import Path
 import pandas as pd
@@ -50,15 +50,17 @@ def write_novel_structures(
     save_path_root: Path,
     novel_save_count: int,
     novelty_filter: NoveltyFilter,
+    filter_by_elements: Optional[bool] = False,
     random_seed: int = 42,
     truncation_heuristic: int = 15) -> None:
 
-    representative_element_filter = TopElements()
     dataset_head = dataset.sample(
         min(novel_save_count*truncation_heuristic, len(dataset)),
         random_state=random_seed)
-    dataset_head = dataset_head[
-        dataset_head.structure.apply(representative_element_filter.check_represented_composition)]
+    if filter_by_elements:
+        representative_element_filter = TopElements()
+        dataset_head = dataset_head[
+            dataset_head.structure.apply(representative_element_filter.check_represented_composition)]
     unique = filter_by_unique_structure(dataset_head)
     novel = novelty_filter.get_novel(unique)
     if len(novel) < novel_save_count:
@@ -66,6 +68,7 @@ def write_novel_structures(
                           "Try increasing the dataset size or increasing truncation_heuristic in case"
                           "novelty is low.")
     novel_cif = novel.structure.iloc[:novel_save_count].apply(to_cif)
+    print(novel.group.value_counts())
     site_counts = novel.structure.iloc[:novel_save_count].apply(lambda s: len(s.to_primitive().sites))
     print(f"Novel_{novel_save_count} primitive site counts: "
           f"{site_counts.mean():.1f} ± {site_counts.std():.1f}; max: {site_counts.max():.1f}")
@@ -78,35 +81,35 @@ def write_novel_structures(
 
 def main():
     parser = ArgumentParser(description="Sample CIFs for novel generated structurees.")
+    parser.add_argument("--filter-by-elements", action="store_true",
+                        help="Filter structures by top 30 elements in MP-20.")
     parser.add_argument("--novel_save_count", type=int, default=105,
                         help="Number of novel structures to save.")
     parser.add_argument("--random-seed", type=int, default=42, help="Random seed for shuffling.")
-    # parser.add_argument("--top-m-elements", type=int, default=30, help="Only take structures with top m elements from MP-20.")
     args = parser.parse_args()
     mp_20_transofrmations = [
-        ("WyckoffTransformer", "CrySPR", "CHGNet_fix"),
-        ("WyckoffTransformer", "DiffCSP++"),
+     #   ("WyckoffTransformer", "CrySPR", "CHGNet_fix"),
+     #   ("WyckoffTransformer", "DiffCSP++"),
         ("CrystalFormer",),
-        ("DiffCSP++",),
-        ("DiffCSP", ),
-        ("FlowMM", ),
+     #   ("DiffCSP++",),
+     #   ("DiffCSP", ),
+     #   ("FlowMM", ),
     ]
     all_datasets = load_all_from_config(datasets=mp_20_transofrmations, dataset_name="mp_20")
-    wycryst_transformations = ("WyCryst", "CrySPR", "CHGNet_fix")
-    all_datasets[wycryst_transformations] = GeneratedDataset.from_cache(wycryst_transformations, "mp_20_biternary")
+    #wycryst_transformations = ("WyCryst", "CrySPR", "CHGNet_fix")
+    #all_datasets[wycryst_transformations] = GeneratedDataset.from_cache(wycryst_transformations, "mp_20_biternary")
     novelty_reference = pd.concat([
         GeneratedDataset.from_cache(('split', 'train'), "mp_20").data,
         GeneratedDataset.from_cache(('split', 'val'), "mp_20").data], axis=0, verify_integrity=True)
     novelty_filter = NoveltyFilter(novelty_reference)
 
-    novel_save_count = 105
-    novel_save_path = Path(__file__).parent.joinpath("generated", "Dropbox", f"novel_sampled_{novel_save_count}")
+    novel_save_path = Path(__file__).parent.joinpath("generated", "Dropbox", f"novel_{args.novel_save_count}_fix")
     novel_save_path.mkdir(parents=True, exist_ok=True)
 
     for transformations in tqdm(all_datasets.keys()):
         this_data = all_datasets[transformations].data
-        write_novel_structures(transformations, this_data, novel_save_path, novel_save_count, novelty_filter,
-                                 random_seed=args.random_seed)
+        write_novel_structures(transformations, this_data, novel_save_path, args.novel_save_count, novelty_filter,
+                               filter_by_elements=args.filter_by_elements, random_seed=args.random_seed)
 
 
 if __name__ == "__main__":

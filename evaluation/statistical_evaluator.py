@@ -1,10 +1,11 @@
-from typing import Optional, Tuple, Iterable, Dict
+from typing import Optional, Tuple, Iterable, Dict, List
 from collections import Counter
 import logging
 from scipy.stats import kstest, chi2_contingency, wasserstein_distance, chisquare
 from operator import attrgetter
 import pandas as pd
 import numpy as np
+import random
 from pymatgen.core import Element
 
 from wyckoff_transformer.evaluation import DoFCounter, count_unique
@@ -32,8 +33,6 @@ def normalise_counter(counter: Counter) -> Counter:
 class StatisticalEvaluator():
     def __init__(self,
                  test_dataset: pd.DataFrame,
-                 sg_aggregation_threshold: Optional[float] = None,
-                 element_aggregation_threshold: Optional[float] = None,
                  cdvae_eval_model_name: str = "mp20"):
         """
         Args:
@@ -125,7 +124,7 @@ class StatisticalEvaluator():
         else:
             dofs = generated_structures.apply(self.dof_counter.get_total_dof, axis=1)
         return kstest(self.test_dof, dofs)
-    
+
     def get_dof_emd(self, generated_structures: pd.DataFrame) -> float:
         """
         Computes the EMD between the degrees of freedom in the generated structures and the test dataset.
@@ -200,17 +199,39 @@ class StatisticalEvaluator():
             generated_structures.loc[generated_structures.structural_validity, 'cdvae_e']
         )
 
-    def get_coverage(self, generated_crystalls: Iterable[Crystal]) -> Dict[str, float]:
+    def get_coverage(
+        self,
+        generated_crystals: List[Crystal],
+        target_sample_size: Optional[int|str] = None,
+        random_seed: Optional[int] = 42) -> Dict[str, float]:
         """
-        Computes the COV metrics from CDVAE paper.
+        Computes the COV metrics from CDVAE paper. They depend on the number of samples
+        in the test and generated datasets.
+
         Args:
             generated_structures: an iterable of CDVAE Crystal objects.
         Returns:
             Dictionary with the COV metrics.
         """
+        valid_crystals = [crystal for crystal in generated_crystals if crystal.comp_fp is not None]
+        if len(valid_crystals) < len(generated_crystals):
+            logger.warning("Ignoring %i generated samples without composition fingerprints.",
+                len(generated_crystals) - len(valid_crystals))
+        if target_sample_size is not None:
+            if target_sample_size < len(valid_crystals):
+                logger.info("Using only %i samples out of %i generated samples.",
+                    target_sample_size, len(valid_crystals))
+                sampler = random.Random(random_seed)
+                valid_crystals = sampler.sample(valid_crystals, target_sample_size)
+            elif target_sample_size > len(valid_crystals):
+                logger.warning("Requested sample size %i is larger than the number of generated samples %i.",
+                               target_sample_size, len(valid_crystals))
+                sampler = np.random.default_rng(random_seed)
+                valid_crystals = sampler.choice(valid_crystals, target_sample_size, replace=True)
+
         cutoff_dict = COV_Cutoffs[self.cdvae_eval_model_name]
         cov_metrics_dict = compute_cov(
-            self.test_dataset.cdvae_crystal, generated_crystalls,
+            self.test_dataset.cdvae_crystal, valid_crystals,
             struc_cutoff=cutoff_dict['struc'],
             comp_cutoff=cutoff_dict['comp'])
         return cov_metrics_dict

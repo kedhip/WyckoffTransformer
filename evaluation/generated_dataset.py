@@ -38,7 +38,8 @@ StructureStorage = Enum("StructureStorage", [
     "CDVAE_csv_cif",
     "PymatgenJson",
     "EhullCSVCIF",
-    "FlowMM"
+    "FlowMM",
+    "DFT_CSV_CIF"
     ])
 
 WyckoffStorage = Enum("WyckoffStorage", [
@@ -48,6 +49,12 @@ WyckoffStorage = Enum("WyckoffStorage", [
     "letters_json",
     "site_symmetry_json"
     ])
+
+DATASET_TO_CDVAE = {
+    "mp_20_biternary": "mp20",
+    "mp_20": "mp20",
+    "perov_5": "perovskite",
+    "carbon_24": "carbon"}
 
 DATA_KEYS = frozenset(("structures", "wyckoffs", "e_hull"))
 
@@ -360,6 +367,17 @@ def load_letters_json(path: Path):
     return pd.DataFrame.from_records(converted_data, index=range(len(converted_data)))
 
 
+def load_csv_cif_dft(path: Path, index_prefix: str):
+    data = pd.read_csv(path, index_col=0)
+    data.index.set_names("dft_index", inplace=True)
+    needed_indices = [x.startswith(index_prefix) for x in data.index]
+    data = data[needed_indices]
+    data['true_index'] = [int(x.split("-")[1]) for x in data.index]
+    data.set_index("true_index", inplace=True)
+    data['structure'] = data.cif.apply(read_cif)
+    return data
+
+
 class GeneratedDataset():
     @classmethod
     def from_cache(
@@ -389,7 +407,11 @@ class GeneratedDataset():
         for level in transformations:
             data_config = data_config[level]
         if "structures" in data_config:
-            result.load_structures(root_path / data_config.structures.path, data_config.structures.storage_type)
+            result.load_structures(
+                root_path / data_config.structures.path,
+                data_config.structures.storage_type,
+                data_config.structures.get("storage_key", None)
+                )
         if "wyckoffs" in data_config:
             result.load_wyckoffs(
                 root_path / data_config.wyckoffs.path,
@@ -402,12 +424,17 @@ class GeneratedDataset():
     def __init__(self,
             dataset_name: str,
             cache_location: Path):
-        
+
         self.dataset_name = dataset_name
         self.cache_location = cache_location
+        self.cdvae_dataset = DATASET_TO_CDVAE[dataset_name]
         self.data = pd.DataFrame()
 
-    def load_structures(self, path: Path|str, storage_type: StructureStorage|str):
+    def load_structures(
+        self,
+        path: Path|str,
+        storage_type: StructureStorage|str,
+        storage_key: Optional[str] = None):
         # If structures are defined, wyckoffs must be obtained with pyxtal.from_seed(structures)
         # If structures are not defined, wyckoffs can be read externally
         if "wyckoffs" in self.data.columns:
@@ -432,6 +459,8 @@ class GeneratedDataset():
             self.data = load_Raymond(path)
         elif storage_type == StructureStorage.CDVAE_csv_cif:
             self.data = read_MP(path)
+        elif storage_type == StructureStorage.DFT_CSV_CIF:
+            self.data = load_csv_cif_dft(path, storage_key)
         else:
             raise ValueError("Unknown storage type")
         if self.data.index.duplicated().any():
@@ -543,13 +572,12 @@ class GeneratedDataset():
 
     def compute_cdvae_e(self,
         sample_size: Optional[int] = None,
-        device: torch.device = torch.device("cpu"),
-        eval_model_name: str = "mp20"):
+        device: torch.device = torch.device("cpu")):
 
         sample_rows = self.data.index[:sample_size]
         sample = self.data.loc[sample_rows, "cdvae_crystal"].map(attrgetter("dict"))
         try:
-            energies = prop_model_eval(eval_model_name, sample, device=device)
+            energies = prop_model_eval(self.cdvae_dataset, sample, device=device)
         except IndexError:
             # Rare atom types
             energies = np.nan
