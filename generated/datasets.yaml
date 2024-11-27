@@ -127,6 +127,14 @@ mp_20:
     structures:
       path: Dropbox/mp_20/UN-DiffCSP++/mp_20_train_pyxtal_s42.structures.json.gz
       storage_type: PymatgenJson
+  UN-DiffCSP++43:
+    structures:
+      path: Dropbox/mp_20/UN-DiffCSP++/mp_20_train_pyxtal_s42.structures.json.gz
+      storage_type: PymatgenJson
+  UN-WyckoffTransformer:
+    wyckoffs:
+      path: Dropbox/mp_20/UN-WyckoffTransformer/wyckoffs.json.gz
+      storage_type: pyxtal_json
   FlowMM:
     structures:
       path: FlowMM
@@ -314,3 +322,21 @@ carbon_24:
         path: ../cache/carbon_24/data.pkl.gz
         storage_type: WTCache
         cache_key: val
+mpts_52:
+  split:
+    train:
+      structures:
+        path: ../data/mpts_52/train.csv.gz
+        storage_type: CDVAE_csv_cif
+    val:
+      structures:
+        path: ../data/mpts_52/val.csv.gz
+        storage_type: CDVAE_csv_cif
+    test:
+      structures:
+        path: ../data/mpts_52/test.csv.gz
+        storage_type: CDVAE_csv_cif
+  WyckoffTransformer:
+    wyckoffs:
+      path: Dropbox/mpts_52/WyckoffTransformer/v6_base_sg_enums.json.gz
+      storage_type: pyxtal_json

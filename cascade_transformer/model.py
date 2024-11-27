@@ -323,7 +323,7 @@ class CascadeTransformer(nn.Module):
 
         data = torch.cat([self.start_embedding(start).unsqueeze(1), cascade_embedding], dim=1)
         logger.debug("Data size: %s", data.size())
-        logger.debug("Padding mask size: %s", padding_mask.size())
+        logger.debug("Padding mask size: %s", padding_mask.size() if padding_mask is not None else "None")
         transformer_output = self.transformer_encoder(data, src_key_padding_mask=padding_mask)
 
         logging.debug("Transformer output size: %s", transformer_output.size())

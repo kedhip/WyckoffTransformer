@@ -216,8 +216,11 @@ class AugmentedCascadeDataset():
         if batch_size is None:
             self.batches_per_epoch = 1
         else:
-            # Round up, as the last batch might be smaller, but is still a batch
-            self.batches_per_epoch = -(-self.num_examples // batch_size)
+            if self.fix_batch_size:
+                self.batches_per_epoch = self.num_examples // batch_size
+            else:
+                # Round up, as the last batch might be smaller, but is still a batch
+                self.batches_per_epoch = -(-self.num_examples // batch_size)
 
 
     def __len__(self):

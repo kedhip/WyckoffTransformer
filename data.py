@@ -9,12 +9,12 @@ import gzip
 import pickle
 import warnings
 import logging
-from multiprocessing import Pool
 import numpy as np
 import pandas as pd
 from pymatgen.io.cif import CifParser
 from pymatgen.core import Structure, Element
 from pyxtal import pyxtal
+from multiprocessing import Pool
 
 from wyckoff_transformer.pyxtal_fix import SS_CORRECTIONS
 
@@ -116,7 +116,8 @@ def structure_to_sites(
     wychoffs_enumerated_by_ss: dict,
     wychoffs_augmentation: dict = None,
     tol: float = 0.1,
-    a_tol: float = 5.) -> dict:
+    a_tol: float = 5.,
+    max_wp: Optional[int] = None) -> dict:
     """
     Converts a pymatgen structure to a dictionary of symmetry sites.
 
@@ -132,17 +133,23 @@ def structure_to_sites(
     """
     pyxtal_structure = kick_pyxtal_until_it_works(structure, tol=tol, a_tol=a_tol)
 
-    elements = [Element(site.specie) for site in pyxtal_structure.atom_sites]
-    # electronegativity = [element.X for element in elements]
-    wyckoffs = [site.wp for site in pyxtal_structure.atom_sites]
-    for wp in wyckoffs:
-        wp.get_site_symmetry()
+    if max_wp is None:
+        # Maybe soring will be a good idea, but we want to preserve backwards compatibility
+        atom_sites = pyxtal_structure.atom_sites
+    else:
+        # Maybe we should drop the structures...
+        atom_sites = sorted(pyxtal_structure.atom_sites, key=lambda x: x.wp.letter)[:max_wp]
+    elements = []
+    wyckoffs = []
     site_symmetries = []
-    for wp in wyckoffs:
+    for site in atom_sites:
+        site.wp.get_site_symmetry()
+        wyckoffs.append(site.wp)
+        elements.append(Element(site.specie))
         try:
-            site_symmetries.append(SS_CORRECTIONS[pyxtal_structure.group.number][wp.letter])
+            site_symmetries.append(SS_CORRECTIONS[pyxtal_structure.group.number][site.wp.letter])
         except KeyError:
-            site_symmetries.append(wp.site_symm)
+            site_symmetries.append(site.wp.site_symm)
     site_enumeration = [wychoffs_enumerated_by_ss[pyxtal_structure.group.number][wp.letter] for wp in wyckoffs]
     multiplicity = [wp.multiplicity for wp in wyckoffs]
     dof = [wp.get_dof() for wp in wyckoffs]
@@ -187,6 +194,7 @@ def read_MP(MP_csv: Path|str, n_jobs: Optional[int] = None):
         pd.DataFrame: The DataFrame with structures.
     """
     MP_df = pd.read_csv(MP_csv, index_col=0)
+    print("Parsing CIFs...")
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore",
@@ -197,7 +205,7 @@ def read_MP(MP_csv: Path|str, n_jobs: Optional[int] = None):
             module="pymatgen.io.cif"
         )
         print("Suppressed CIF rounding warnings.")
-        with Pool(processes=n_jobs) as pool:
+        with Pool(n_jobs) as pool:
             MP_df["structure"] = pool.map(read_cif, MP_df["cif"])
     MP_df.drop(columns=["cif"], inplace=True)
     return MP_df
@@ -238,7 +246,8 @@ def compute_symmetry_sites(
     wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz",
     n_jobs: Optional[int] = None,
     symmetry_precision: float = 0.1,
-    symmetry_a_tol: float = 5.) -> tuple[dict[str, pd.DataFrame], int]:
+    symmetry_a_tol: float = 5.,
+    max_wp: Optional[int] = None) -> dict[str, pd.DataFrame]:
 
     with gzip.open(wychoffs_enumerated_by_ss_file, "rb") as f:
         wychoffs_enumerated_by_ss = pickle.load(f)[0]
@@ -248,11 +257,12 @@ def compute_symmetry_sites(
                 wychoffs_enumerated_by_ss=wychoffs_enumerated_by_ss,
                 wychoffs_augmentation=get_augmentation_dict(),
                 tol=symmetry_precision,
-                a_tol=symmetry_a_tol)
+                a_tol=symmetry_a_tol,
+                max_wp=max_wp)
     result = {}
     for dataset_name, dataset in datasets_pd.items():
-        with Pool(processes=n_jobs) as p:
-            symmetry_list = p.map(structure_to_sites_with_args, dataset['structure'])    
+        with Pool(n_jobs) as pool:
+            symmetry_list = pool.map(structure_to_sites_with_args, dataset.loc[:, "structure"])
         symmetry_dataset = pd.DataFrame.from_records(symmetry_list).set_index(dataset.index)
         symmetry_dataset["composition"] = symmetry_dataset.apply(get_composition_from_symmetry_sites, axis=1)
         if "formation_energy_per_atom" in dataset.columns:
@@ -269,7 +279,8 @@ def read_all_MP_csv(
     file_format: str = "csv",
     n_jobs: Optional[int] = None,
     symmetry_precision: float = 0.1,
-    symmetry_a_tol: float = 5.) -> tuple[dict[str, pd.DataFrame], int]:
+    symmetry_a_tol: float = 5.,
+    max_wp: Optional[int] = None) -> tuple[dict[str, pd.DataFrame], int]:
     """
     Reads all Materials Project CSV files and returns a dictionary of DataFrames.
 
@@ -287,13 +298,15 @@ def read_all_MP_csv(
             - val: DataFrame with validation data
     """
     datasets_pd = {}
+    print("Reading datasets...")
     for dataset_name in ("train", "test", "val"):
         try:
             datasets_pd[dataset_name] = read_MP(mp_path / f"{dataset_name}.{file_format}")
         except FileNotFoundError:
             logger.warning("Dataset %s not found.", dataset_name)
+    print("Computing symmetry sites...")
     symmetry_datasets = compute_symmetry_sites(
         datasets_pd, wychoffs_enumerated_by_ss_file, n_jobs=n_jobs,
-        symmetry_precision=symmetry_precision, symmetry_a_tol=symmetry_a_tol)
+        symmetry_precision=symmetry_precision, symmetry_a_tol=symmetry_a_tol, max_wp=max_wp)
     return symmetry_datasets
 

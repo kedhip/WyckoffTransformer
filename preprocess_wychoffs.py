@@ -89,7 +89,6 @@ def enumerate_wychoffs_by_ss(
             multiplicity_from_ss_enum[(spacegroup_number, site_symm, ss_counts[site_symm])] = wp.multiplicity
             max_multiplicity = max(max_multiplicity, wp.multiplicity)
             ss_counts[site_symm] += 1
-        #signature_by_sg_ss_enum[spacegroup_number] = defaultdict(dict)
         for ss, opres_by_enum in opres_by_ss_enum.items():
             print(f"Spacegroup {spacegroup_number}, wp {ss} {letter_from_ss_enum[spacegroup_number][ss]}")
             # Step 1: find the position closest to the origin

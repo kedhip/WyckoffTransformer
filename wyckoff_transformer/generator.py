@@ -199,9 +199,13 @@ class WyckoffGenerator():
         # everything to be a mask
         generated = []
         for field in self.cascade_order:
-            if self.masks[field].dim() == 0:
+            if isinstance(self.masks[field], int) or self.masks[field].dim() == 0:
+                if isinstance(self.masks[field], int):
+                    dtype = torch.int64
+                else:
+                    dtype = self.masks[field].dtype
                 generated.append(torch.full((batch_size, self.max_sequence_len), self.masks[field],
-                                            dtype=self.masks[field].dtype, device=start.device))
+                                            dtype=dtype, device=start.device))
             else:
                 generated.append(torch.tile(self.masks[field].unsqueeze(0), (batch_size, self.max_sequence_len)))   
 

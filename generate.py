@@ -54,6 +54,7 @@ def main():
     model.load_state_dict(
         torch.load(Path("runs", args.wandb_run, "best_model_params.pt"),
                    map_location=args.device, weights_only=False))
+    # print(sum(p.numel() for p in model.parameters() if p.requires_grad))
     # We need to grab any tensor from the train dataset
     max_sequence_len = tensors["train"][config.model.cascade.order[0]].size(1)
 

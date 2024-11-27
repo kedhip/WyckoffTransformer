@@ -5,7 +5,7 @@ metric:
 parameters:
   base_config:
     distribution: constant
-    value: mp_20/formation_energy_per_site/augmented/harmonic_dropout
+    value: mp_20/band_gap/augmented/harmonic_dropout
   dataset:
     distribution: constant
     value: mp_20
@@ -22,6 +22,10 @@ parameters:
                 values: [8, 16, 32, 64, 128]
       CascadeTransformer_args:
         parameters:
+          token_aggregation:
+            values:
+              - weighted_mean
+              - mean
           prediction_perceptron_dropout: 
             values: [0, 0.01, 0.02, 0.03, 0.05]
           emebdding_dropout:
