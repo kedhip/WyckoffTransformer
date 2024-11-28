@@ -256,7 +256,7 @@ class CascadeTransformer(nn.Module):
         # on the previous element, so care should be taken as to which head to call.
         self.token_aggregation = token_aggregation
         if aggregation_weight is not None and token_aggregation != "weighted_mean":
-            raise ValueError("aggregation_weight is only supported for token_aggregation=weighted_mean")
+            logger.warning("aggregation_weight is only supported for token_aggregation=weighted_mean")
         self.aggregation_weight = aggregation_weight
         if aggregation_inclsion == "None":
             self.aggregation_inclsion = None
