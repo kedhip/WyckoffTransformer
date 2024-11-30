@@ -173,8 +173,6 @@ class CascadeTransformer(nn.Module):
                  start_type: str,    
                  n_start: int|None,
                  cascade: Tuple[Tuple[int, int|None, int], ...],
-                 learned_positional_encoding_max_size: Optional[int],
-                 learned_positional_encoding_only_masked: bool,
                  token_aggregation: str|None,
                  aggregate_after_encoder: bool,
                  include_start_in_aggregation: bool,
@@ -187,6 +185,8 @@ class CascadeTransformer(nn.Module):
                  perceptron_shape: str,
                  TransformerEncoderLayer_args: dict,
                  TransformerEncoder_args: dict,
+                 learned_positional_encoding_max_size: Optional[int] = None,
+                 learned_positional_encoding_only_masked: Optional[bool] = None,
                  compile_perceptrons: bool = True,
                  aggregation_weight: Optional[int] = None,
                  emebdding_dropout: Optional[float] = None,
@@ -239,7 +239,7 @@ class CascadeTransformer(nn.Module):
                 return torch.compile(percepron_generator_raw(*args, **kwargs), fullgraph=True)
         else:
             percepron_generator = percepron_generator_raw
-        if learned_positional_encoding_max_size != 0:
+        if learned_positional_encoding_max_size:
             self.positions_embedding = nn.Embedding(
                 learned_positional_encoding_max_size,
                 self.d_model)
@@ -311,7 +311,7 @@ class CascadeTransformer(nn.Module):
         logging.debug("Cascade reported embedding dim: %i", self.embedding.total_embedding_dim)
         logging.debug("Cascade embedding size: (%i, %i, %i)", *cascade_embedding.size())
         cascade_embedding = self.mixer(cascade_embedding)
-        if self.learned_positional_encoding_max_size != 0:
+        if self.learned_positional_encoding_max_size:
             if self.learned_positional_encoding_only_masked:
                 positional_encoding = self.positions_embedding(
                     torch.tensor([cascade_embedding.size(1) - 1], device=start.device, dtype=start.dtype))
