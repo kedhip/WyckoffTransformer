@@ -166,6 +166,8 @@ class FeatureEngineer():
         **tensor_args) -> torch.Tensor:
 
         indexed_record = record.loc[self.db.index.names]
+        logger.debug("Indexed record")
+        logger.debug(indexed_record)
         # WARNING(kazeevn): only one structure is supported:
         # the first input is sequence-level, the next two are token-level    
         this_db = self.db.loc[indexed_record.iloc[0]]
@@ -375,6 +377,7 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
 
         if "engineered" in config.token_fields:
             for field, field_config in config.token_fields.engineered.items():
+                logger.debug("Processing engineered field %s", field)
                 if "dtype" in field_config:
                     field_dtype = getattr(torch, field_config.dtype)
                 else:
