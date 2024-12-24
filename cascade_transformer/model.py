@@ -314,10 +314,10 @@ class CascadeTransformer(nn.Module):
         if self.learned_positional_encoding_max_size:
             if self.learned_positional_encoding_only_masked:
                 positional_encoding = self.positions_embedding(
-                    torch.tensor([cascade_embedding.size(1) - 1], device=start.device, dtype=start.dtype))
+                    torch.tensor([cascade_embedding.size(1) - 1], device=start.device, dtype=torch.int64))
                 cascade_embedding[:, -1] += positional_encoding
             else:
-                sequence_range = torch.arange(0, cascade_embedding.size(1), device=start.device, dtype=start.dtype)
+                sequence_range = torch.arange(0, cascade_embedding.size(1), device=start.device, dtype=torch.int64)
                 positional_encoding = self.positions_embedding(sequence_range)
                 cascade_embedding += positional_encoding.unsqueeze(0)
 
