@@ -511,7 +511,7 @@ def get_letter_from_ss_enum_idx(
     a tiny-tiny little bit faster.
     """
     preprocessed_wyckhoffs_cache_path = Path(__file__).parent.parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz"
-    with open(preprocessed_wyckhoffs_cache_path, "rb") as f:
+    with gzip.open(preprocessed_wyckhoffs_cache_path, "rb") as f:
         letter_from_ss_enum = pickle.load(f)[1]
     letter_from_ss_enum_idx = defaultdict(dict)
     for space_group, ss_enum_dict in letter_from_ss_enum.items():

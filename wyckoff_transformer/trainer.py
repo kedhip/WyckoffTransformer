@@ -599,7 +599,7 @@ class WyckoffTrainer():
         else:
             letter_from_ss_enum_idx = None
         preprocessed_wyckhoffs_cache_path = Path(__file__).parent.parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz"
-        with open(preprocessed_wyckhoffs_cache_path, "rb") as f:
+        with gzip.open(preprocessed_wyckhoffs_cache_path, "rb") as f:
             ss_from_letter = pickle.load(f)[2]
         to_pyxtal = partial(tensor_to_pyxtal,
                             tokenisers=self.tokenisers,
@@ -664,7 +664,11 @@ def train_from_config(config_dict: dict, device: torch.device, run_path: Optiona
         wandb.run.summary["smact_validity"] = {"test": test_smact_validity}
         wandb.run.summary["formal_validity"] = {}
         wandb.run.summary["wp"] = {}
+        print("No calibration:")
         trainer.generate_evaluate_and_log_wp(
-            "no_calibration", calibrate=False, n_structures=config.evaluation.n_structures_to_generate, evaluator=evaluator)
+            "no_calibration", calibrate=False, n_structures=config.evaluation.n_structures_to_generate,
+            evaluator=evaluator)
+        print("Temperature calibration:")
         trainer.generate_evaluate_and_log_wp(
-            "temperature_calibration", calibrate=True, n_structures=config.evaluation.n_structures_to_generate, evaluator=evaluator)
+            "temperature_calibration", calibrate=True, n_structures=config.evaluation.n_structures_to_generate,
+            evaluator=evaluator)
