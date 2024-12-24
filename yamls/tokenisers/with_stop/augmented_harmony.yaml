@@ -1,5 +1,5 @@
 # For the code to work, must be the same as the file name
-name: augmented_harmony
+name: with_stop/augmented_harmony
 # uint8 doesn't fit pure_sequence_length
 # uint16 fails with
 # AttributeError: type object 'torch.storage.UntypedStorage' has no attribute 'dtype'. Did you mean: 'type'?
