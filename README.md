@@ -32,17 +32,17 @@ python tokenise_a_dataset.py <dataset-name> <path-to-tokenizer-yaml> --new-token
 ```
 Tokenizer configs are stored in `yamls/tokenisers`. The tokeniser is saved to `cache/<dataset-names>/tokenisers/**.pkl.gz`, preserving the folder structure of the config.
 
-Alternatively, you can use the cached tokeniser. This is important is a model that was trained on a dataset is to be applied to a different dataset.
+Alternatively, you can use the cached tokeniser. This is important when a model that was trained on one dataset is  applied to a different dataset.
 ```bash
-python tokenise_a_dataset.py <dataset-name> <path-to-tokenizer-yaml> --tokenizer-path ache/<dataset-names>/tokenisers/<tokenizer-name>.pkl.gz
+python tokenise_a_dataset.py <dataset-name> <path-to-tokenizer-yaml> --tokenizer-path cache/<dataset-names>/tokenisers/<tokenizer-name>.pkl.gz
 ```
 # Training
 ```bash
 python train.py <path-to-model-yaml> <dataset-name> <device>
 ```
-1. If running on CRP, add --torch-num-thread ${ROLOS_AVAILABLE_CPU%.*}
-2. Adding `--pilot` will run the model for a small number of epochs.
 The model weights are saved to `runs/<run-id>`, and to WanDB, along with the tokenizer.
+1. If running on CRP, add `--torch-num-thread ${ROLOS_AVAILABLE_CPU%.*}`
+2. Adding `--pilot` will run the model for a small number of epochs.
 3. Model configs contain the tokenizer name.
 
 # Experiments
@@ -58,9 +58,6 @@ Found by a hyperparameter search aka WanDB sweep:
 ### AFLOW & 3DSC
 TODO (Ignat)
 
-# WanDB sweeps
-TODO (Nikita)
-
 # matbench-discovery
 ## Data
 As orginally desgined, models in matbench-discovery train on MPTrj and predict WBM.
@@ -70,10 +67,13 @@ We experimented with different training datasets:
 symmetry changes only slighly during relaxation, meaning that after preprocessing the data a large number of
 structures with the same Wyckoff representation have the same energy; [analysis](research_notebooks/mptrj_duplicates.ipynb).
 
-If you modify the training data, be extremely careful that the target is _formation energy per atom_ and it's computed with same reference energis as WBM. Train / val split is entirely our choice, and can be modified freely.
+If you modify the training data, be extremely careful that the target is _formation energy per atom_ and it's computed with same reference energies as WBM. Train / val split is entirely our choice, and can be modified freely.
 
 The different symlinks in `data` allow to define variants of the datasets to be processed with different tolerances. The tolerance is set in the `cache_a_dataset.py` script and _is not done automatically_.
 
 Tolerance didn't (2024) have a significant impact. Hence, for further experiments, just `mp_2022` seems to be a reasonable choice.
 ## Models
-[WanDB](https://wandb.ai/symmetry-advantage/WyckoffTransformer?nw=wrbkiq2xgjk) is a good place to find some models and their performance.
+[This WanDB workspace](https://wandb.ai/symmetry-advantage/WyckoffTransformer?nw=wrbkiq2xgjk) is a good place to find some models and their performance.
+
+# WanDB sweeps
+TODO (Nikita)
