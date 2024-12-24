@@ -105,6 +105,7 @@ def enumerate_wychoffs_by_ss(
         opener = gzip.open
     else:
         opener = open
+    output_file.parent.mkdir(exist_ok=True)
     with opener(output_file, "wb") as f:
         pickle.dump((dict(enum_from_ss_letter), dict(letter_from_ss_enum),
             dict(ss_from_letter)), f)
