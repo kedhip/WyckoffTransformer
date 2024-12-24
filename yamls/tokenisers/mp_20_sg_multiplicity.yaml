@@ -1,6 +1,5 @@
 # For the code to work, must be the same as the file name
 name: mp_20_sg_multiplicity
-deterministic: false
 # tokens will be just numbered in a random order, withot a guarantee of reproducibility
 dtype: uint8
 # not only memory savings, but also debug assist!
