@@ -187,7 +187,7 @@ class CascadeTransformer(nn.Module):
                  TransformerEncoder_args: dict,
                  learned_positional_encoding_max_size: Optional[int] = None,
                  learned_positional_encoding_only_masked: Optional[bool] = None,
-                 compile_perceptrons: bool = False,
+                 compile_perceptrons: bool = True,
                  aggregation_weight: Optional[int] = None,
                  emebdding_dropout: Optional[float] = None,
                  prediction_perceptron_dropout: Optional[float] = None):
@@ -371,7 +371,7 @@ class CascadeTransformer(nn.Module):
         else:
             raise ValueError(f"Unknown aggregation_inclsion {self.aggregation_inclsion}")
 
-        if prediction_head is not None and cascade[prediction_head].size(1) == 1:
+        if prediction_head is not None and cascade[prediction_head].dim() == 2:
             if self.concat_token_counts:
                 token_counts = batched_bincount(
                     cascade[prediction_head], dim=1, max_value=self.cascade[prediction_head][0])
@@ -381,10 +381,11 @@ class CascadeTransformer(nn.Module):
                     cascade[prediction_head], dim=1, max_value=self.cascade[prediction_head][0], dtype=torch.bool)
                 prediction_inputs.append(token_counts)
         else:
-            logger.debug("Not concatenating token counts and presence, because the input is not categorial")
-        
-        prediction_input = torch.cat(prediction_inputs, dim=1)
+            logger.debug("Not concatenating token counts and presence, "
+                         "because the input is not categorial")
 
+        prediction_input = torch.cat(prediction_inputs, dim=1)
+        logger.debug("Prediction input size: %s", prediction_input.size())
         if prediction_head is None:
             return self.the_prediction_head(prediction_input)
         return self.prediction_heads[prediction_head](prediction_input)
