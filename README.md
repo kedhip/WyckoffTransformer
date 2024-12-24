@@ -14,7 +14,8 @@ python preprocess_wychoffs.py
 Next token prediction:
 ```bash
 python cache_a_dataset.py mp_20
-python tokenise_a_dataset.py mp_20 TODO
+python tokenise_a_dataset.py mp_20 yamls/tokenisers/mp_20_sg_multiplicity.yaml --new-tokenizer
+python train.py yamls/models/NextToken/v6/base_sg.yaml mp_20 cuda --pilot
 ```
 # Training Data Preprocessing
 The available datasets correspond to the folders in `data` and `cdvae/data`. Dataset idetifiers are the folder names, they are used throught the project. Note that some of the folders are symlinks. For data to be used for training, we need to do two preprocessing steps:
@@ -42,6 +43,7 @@ python train.py <path-to-model-yaml> <dataset-name> <device>
 1. If running on CRP, add --torch-num-thread ${ROLOS_AVAILABLE_CPU%.*}
 2. Adding `--pilot` will run the model for a small number of epochs.
 The model weights are saved to `runs/<run-id>`, and to WanDB, along with the tokenizer.
+3. Model configs contain the tokenizer name.
 
 # Experiments
 ## Models - next token
@@ -56,36 +58,22 @@ Found by a hyperparameter search aka WanDB sweep:
 ### AFLOW & 3DSC
 TODO (Ignat)
 
-## Get the cached preprocessed data and model weights
-TODO
-## Energy and band gap prediction
-```bash
-python train.py yamls/models/base_sg_energy.yaml mp_20 cuda:0 --pilot
-```
-
-# ICLR 2025 model training
-## Next token
-```bash
-python train.py 
-```
-## Energy and band gap prediction
-```bash
-python train.py yamls/models/base_sg_energy.yaml mp_20 cuda:0 
-python train.py yamls/models/base_sg_band_gap.yaml mp_20 cuda:0 
-```
-
-# ICLR 2025 data preprocessing
-If you just want to reproduce the ML parts, you should
-download the cached data from the cloud. Redoing tokenization
-is not deterministic.
-```bash
-python cache_a_dataset.py mp_20
-python cache_a_dataset.py wbm
-python tokenise_a_dataset.py mp_20 yamls/tokenisers/mp_20_sg_multiplicity_scalars.yaml --new-tokenizer
-```
-
 # WanDB sweeps
 TODO (Nikita)
 
 # matbench-discovery
-A big WIP.
+## Data
+As orginally desgined, models in matbench-discovery train on MPTrj and predict WBM.
+We experimented with different training datasets:
+1. `mp_2022` is MP 2022 – relaxed structures from Materials Project. Downloaded by this [notebook](scripts/data_preprocesssing/mp_2022.ipynb).
+2. `mp_trj_full` is MPTrj – the full dataset, including both relaxed and unrelaxed structures. Downloaded by this  [notbook](scripts/data_preprocesssing/mptrj_extract_all.ipynb). Note that
+symmetry changes only slighly during relaxation, meaning that after preprocessing the data a large number of
+structures with the same Wyckoff representation have the same energy; [analysis](research_notebooks/mptrj_duplicates.ipynb).
+
+If you modify the training data, be extremely careful that the target is _formation energy per atom_ and it's computed with same reference energis as WBM. Train / val split is entirely our choice, and can be modified freely.
+
+The different symlinks in `data` allow to define variants of the datasets to be processed with different tolerances. The tolerance is set in the `cache_a_dataset.py` script and _is not done automatically_.
+
+Tolerance didn't (2024) have a significant impact. Hence, for further experiments, just `mp_2022` seems to be a reasonable choice.
+## Models
+[WanDB](https://wandb.ai/symmetry-advantage/WyckoffTransformer?nw=wrbkiq2xgjk) is a good place to find some models and their performance.
