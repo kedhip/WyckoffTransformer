@@ -32,7 +32,7 @@ python-dotenv = "^1.0.1"
 lightning = "^2.4.0"
 cython = "<3.0.0"
 pytorch-lightning = "^2.4.0"
-pyxtal = "^1.0.4"
+pyxtal = "^1.0.6"
 pytorch-triton = {path = "/mnt/hdd/torch_wheels/pytorch_triton-3.1.0+cf34004b8a-cp312-cp312-linux_x86_64.whl"}
 torch = {path = "/mnt/hdd/torch_wheels/torch-2.6.0a0+git3cbf0c0-cp312-cp312-linux_x86_64.whl"}
 torch-scatter = {path = "/mnt/hdd/torch_wheels/torch_scatter-2.1.2-cp312-cp312-linux_x86_64.whl"}
