@@ -168,7 +168,7 @@ def clasterize_harmonics(
     harmonic_engineer: FeatureEngineer,
     random_state: int = 42):
     """
-    Harmoic fetures are nice and float, but when we predict the next token, we need
+    Harmonic fetures are nice and float, but when we predict the next token, we need
     to predict a set of distinct values. Morever, we need to predict the probability
     as enumeration can genuinly take several values, especially in the beginning.
     """
