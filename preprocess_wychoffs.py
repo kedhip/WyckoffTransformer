@@ -10,7 +10,6 @@ from sklearn.cluster import KMeans
 from scipy.special import sph_harm
 
 from wyckoff_transformer.tokenization import FeatureEngineer
-from wyckoff_transformer.pyxtal_fix import SS_CORRECTIONS
 
 N_3D_SPACEGROUPS = 230
 
@@ -76,11 +75,7 @@ def enumerate_wychoffs_by_ss(
         # a comes before b, etc.
         for wp in group.Wyckoff_positions[::-1]:
             wp.get_site_symmetry()
-            # https://github.com/MaterSim/PyXtal/issues/295
-            try:
-                site_symm = SS_CORRECTIONS[spacegroup_number][wp.letter]
-            except KeyError:
-                site_symm = wp.site_symm
+            site_symm = wp.site_symm
             ss_from_letter[spacegroup_number][wp.letter] = site_symm
             enum_from_ss_letter[spacegroup_number][wp.letter] = ss_counts[site_symm]
             opres_by_ss_enum[site_symm][ss_counts[site_symm]] = \

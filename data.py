@@ -16,7 +16,6 @@ from pymatgen.core import Structure, Element
 from pyxtal import pyxtal
 from multiprocessing import Pool
 
-from wyckoff_transformer.pyxtal_fix import SS_CORRECTIONS
 
 from preprocess_wychoffs import get_augmentation_dict
 
@@ -101,13 +100,12 @@ def kick_pyxtal_until_it_works(
         try:
             pyxtal_structure = pyxtal()
             pyxtal_structure.from_seed(structure, tol=tol*tolerance, a_tol=a_tol)
-            if len(pyxtal_structure.atom_sites) == 0:
-                raise RuntimeError("pyXtal failure, no atom sites")
             return pyxtal_structure
-        except:
+        except AttributeError:
+            # AttributeError: 'NoneType' object has no attribute 'std_lattice'
             logger.exception(
                 "Attempt %i failed to convert structure %s to symmetry "
-                "sites with tolerance %s.", attempt, structure, tol)
+                "sites with tolerance %f.", attempt, structure, tol)
     raise RuntimeError("Failed to make pyxtal work.")
 
 
@@ -132,6 +130,8 @@ def structure_to_sites(
         dict
     """
     pyxtal_structure = kick_pyxtal_until_it_works(structure, tol=tol, a_tol=a_tol)
+    if len(pyxtal_structure.atom_sites) == 0:
+        raise ValueError("pyxtal failed to convert the structure to symmetry sites.")
 
     if max_wp is None:
         # Maybe soring will be a good idea, but we want to preserve backwards compatibility
@@ -146,10 +146,7 @@ def structure_to_sites(
         site.wp.get_site_symmetry()
         wyckoffs.append(site.wp)
         elements.append(Element(site.specie))
-        try:
-            site_symmetries.append(SS_CORRECTIONS[pyxtal_structure.group.number][site.wp.letter])
-        except KeyError:
-            site_symmetries.append(site.wp.site_symm)
+        site_symmetries.append(site.wp.site_symm)
     site_enumeration = [wychoffs_enumerated_by_ss[pyxtal_structure.group.number][wp.letter] for wp in wyckoffs]
     multiplicity = [wp.multiplicity for wp in wyckoffs]
     dof = [wp.get_dof() for wp in wyckoffs]

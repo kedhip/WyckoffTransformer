@@ -4,21 +4,20 @@ model:
     order:
       - site_symmetries
       - elements
-      - harmonic_site_symmetries
       - multiplicity
+      - sites_enumeration
     embedding_size:
       elements: 16
-      site_symmetries: 15
+      site_symmetries: 16
+      sites_enumeration: 7
       multiplicity: null
-      harmonic_site_symmetries:
-        pass_through_vector: 12
-    augmented:
-      - harmonic_site_symmetries
+    augmentation:
+      - sites_enumeration
   WyckoffTrainer_args:
     multiclass_next_token_with_order_permutation: false
     target: Scalar
-    target_name: formation_energy_per_atom
-    evaluation_samples: 1
+    target_name: band_gap
+    evaluation_samples: 2
     train_batch_size: 500
     compile_model: true
   CascadeTransformer_args:
@@ -29,17 +28,15 @@ model:
     concat_token_presence: false
     aggregate_after_encoder: true
     mixer_layers: 1
-    token_aggregation: sum
+    token_aggregation: mean
     # multiplicity
-    aggregation_weight: 3
+    # aggregation_weight: 2
     include_start_in_aggregation: false
     aggregation_inclsion: aggr
     outputs: 1
     num_fully_connected_layers: 3
     learned_positional_encoding_max_size: 0
     learned_positional_encoding_only_masked: true
-    prediction_perceptron_dropout: 0.01
-    emebdding_dropout: 0.01    
     TransformerEncoderLayer_args:
       nhead: 4
       dim_feedforward: 128

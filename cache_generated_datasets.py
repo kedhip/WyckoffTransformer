@@ -1,3 +1,10 @@
+#if __name__ == "__main__":
+    # We want to avoid messing with the environment variables in case we are used as a module.
+    # The code is parallelised by structure
+ #   import os
+#    os.environ["OMP_NUM_THREADS"] = "1"
+ #   os.environ["OMP_THREAD_LIMIT"] = "1"
+
 from typing import List
 from argparse import ArgumentParser
 from pathlib import Path

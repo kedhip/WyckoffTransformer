@@ -60,9 +60,9 @@ DATASET_TO_CDVAE = {
 DATA_KEYS = frozenset(("structures", "wyckoffs", "e_hull"))
 
 def load_all_from_config(
-    config_path: Path = Path(__file__).parent.parent / "generated" / "datasets.yaml",
     datasets: Optional[List[Tuple[str]]] = None,
-    dataset_name: str = "mp_20"):
+    dataset_name: str = "mp_20",
+    config_path: Path = Path(__file__).parent.parent / "generated" / "datasets.yaml"):
 
     config = OmegaConf.load(config_path)
     if datasets is None:
@@ -141,7 +141,10 @@ def load_NongWei(path: Path):
         try:
             data = pd.read_csv(path/"WyCryst_mp20_result.csv", index_col=0)
         except FileNotFoundError:
-            data = pd.DataFrame()
+            try:
+                data = pd.read_csv(path/"WyckoffTransformer_mpts52_result.csv.gz", index_col="folder_ind")
+            except FileNotFoundError:
+                data = pd.DataFrame()
     data['structure'] = pd.Series(dtype=object, index=data.index)
     with warnings.catch_warnings():
         warnings.filterwarnings(
@@ -167,7 +170,7 @@ def load_NongWei(path: Path):
 
 
 def load_Raymond(path: Path):
-    index_csv_path = list(path.glob("*.csv"))
+    index_csv_path = list(path.glob("*.csv")) + list(path.glob("*.csv.gz"))
     if len(index_csv_path) != 1:
         raise ValueError("No index CSV found")
     index_csv_path = index_csv_path[0]

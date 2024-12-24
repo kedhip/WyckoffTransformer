@@ -23,3 +23,5 @@ DiffCSP++_mp20_two_step_symmetry
 data/2023-02-07-mp-computed-structure-entries.json.gz
 poetry.lock
 pyproject.toml
+generated/jd66k0gx.csv.gz
+generated/jd66k0gx.pt

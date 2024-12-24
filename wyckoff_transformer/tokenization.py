@@ -16,7 +16,6 @@ import omegaconf
 from pandarallel import pandarallel
 from pyxtal.symmetry import Group
 
-from .pyxtal_fix import SS_CORRECTIONS
 
 # Order is important here, as we can use it to sort the tokens
 ServiceToken = Enum('ServiceToken', ['MASK', 'STOP', 'PAD'])
@@ -496,10 +495,7 @@ def get_wp_index() -> dict:
         wp_index[group_number] = defaultdict(dict)
         for wp in group.Wyckoff_positions:
             wp.get_site_symmetry()
-            try:
-                site_symm = SS_CORRECTIONS[group_number][wp.letter]
-            except KeyError:
-                site_symm = wp.site_symm
+            site_symm = wp.site_symm
             wp_index[group_number][site_symm][wp.letter] = (wp.multiplicity, wp.get_dof())
     return wp_index
 
