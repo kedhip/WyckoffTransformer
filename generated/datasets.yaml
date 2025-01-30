@@ -77,7 +77,8 @@ mp_20:
       structures:
         path: Dropbox/novel_105/id_cif_Eform_Ehull_cifs.csv.gz
         storage_type: DFT_CSV_CIF
-        storage_key: cryf
+        # cryf is the biased sample
+        storage_key: cryf2
     CHGNet_fix_release:
       structures:
         path: crystalformer_mp20_CHGNet_fix_release

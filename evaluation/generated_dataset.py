@@ -374,7 +374,7 @@ def load_letters_json(path: Path):
 def load_csv_cif_dft(path: Path, index_prefix: str):
     data = pd.read_csv(path, index_col=0)
     data.index.set_names("dft_index", inplace=True)
-    needed_indices = [x.startswith(index_prefix) for x in data.index]
+    needed_indices = [x.startswith(index_prefix+"-") for x in data.index]
     data = data[needed_indices]
     data['true_index'] = [int(x.split("-")[1]) for x in data.index]
     data.set_index("true_index", inplace=True)
