@@ -78,5 +78,17 @@ Tolerance didn't (2024) have a significant impact. Hence, for further experiment
 ## Models
 [This WanDB workspace](https://wandb.ai/symmetry-advantage/WyckoffTransformer?nw=wrbkiq2xgjk) is a good place to find some models and their performance.
 
+# Generated Data Analysis
+Generated data are stored in various formats. The first step is converting them all to a unified format. Processing all generated datasets in `generated/datasets.yaml`:
+```bash
+poetry run python cache_generated_datasets.py
+```
+It supports filtering by dataset and transformations, e. g.:
+```bash
+poetry run python cache_generated_datasets.py --dataset mp_20 --transformations DiffCSP++ DFT
+```
+Completing this step will enable loading the data in the next steps with `evaluation.generated_dataset.GeneratedDataset`
+
+
 # WanDB sweeps
 TODO (Nikita)
