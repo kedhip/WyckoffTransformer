@@ -5,6 +5,7 @@ from typing import Optional
 from functools import partial
 from collections import Counter
 from pathlib import Path
+from multiprocessing import Pool
 import gzip
 import pickle
 import warnings
@@ -14,8 +15,6 @@ import pandas as pd
 from pymatgen.io.cif import CifParser
 from pymatgen.core import Structure, Element
 from pyxtal import pyxtal
-from multiprocessing import Pool
-
 
 from preprocess_wychoffs import get_augmentation_dict
 
@@ -23,10 +22,10 @@ logger = logging.getLogger(__name__)
 
 def read_cif(cif: str) -> Structure:
     """
-    Reads a CIF file and returns the structure.
+    Reads a CIF string and returns the structure.
 
     Args:
-        cif (str): The CIF file content.
+        cif (str): The CIF string.
 
     Returns:
         Structure: The structure.

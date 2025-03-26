@@ -188,6 +188,10 @@ mp_20:
         path: ../cache/mp_20/data.pkl.gz
         storage_type: WTCache
         cache_key: val
+  SymmCD:
+    structures:
+      path: generated/Dropbox/mp_20/SymmCD/crystal_symmcd_mp20.csv.gz
+      storage_type: SymmCD_csv
 mp_20_biternary:
   WyckoffTransformer:
     wyckoffs:

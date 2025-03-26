@@ -39,7 +39,8 @@ StructureStorage = Enum("StructureStorage", [
     "PymatgenJson",
     "EhullCSVCIF",
     "FlowMM",
-    "DFT_CSV_CIF"
+    "DFT_CSV_CIF",
+    "SymmCD_csv"
     ])
 
 WyckoffStorage = Enum("WyckoffStorage", [
@@ -382,6 +383,12 @@ def load_csv_cif_dft(path: Path, index_prefix: str):
     return data
 
 
+def load_SymmCD_csv(path: Path):
+    data = pd.read_csv(path, header=None, names=["cif"])
+    data["structure"] = data.cif.apply(read_cif)
+    return data
+
+
 class GeneratedDataset():
     @classmethod
     def from_cache(
@@ -465,6 +472,8 @@ class GeneratedDataset():
             self.data = read_MP(path)
         elif storage_type == StructureStorage.DFT_CSV_CIF:
             self.data = load_csv_cif_dft(path, storage_key)
+        elif storage_type == StructureStorage.SymmCD_csv:
+            self.data = load_SymmCD_csv(path)
         else:
             raise ValueError("Unknown storage type")
         if self.data.index.duplicated().any():
