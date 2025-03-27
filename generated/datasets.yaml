@@ -190,8 +190,15 @@ mp_20:
         cache_key: val
   SymmCD:
     structures:
-      path: generated/Dropbox/mp_20/SymmCD/crystal_symmcd_mp20.csv.gz
-      storage_type: SymmCD_csv
+      # Contains invalid structures, can't be processed by the default pipeline
+      # path: Dropbox/mp_20/SymmCD/crystal_symmcd_mp20.csv.gz
+      # storage_type: SymmCD_csv
+      path: Dropbox/mp_20/SymmCD/crystal_symmcd_mp20_valid.json.gz
+      storage_type: PymatgenJson
+  WychoffTransformer-letters:
+    wyckoffs:
+      path: Dropbox/mp_20/WychoffTransformer-letters/sg_letters-uy6zg9y9.json.gz
+      storage_type: pyxtal_json
 mp_20_biternary:
   WyckoffTransformer:
     wyckoffs:
@@ -359,3 +366,10 @@ mpts_52:
         structures:
           path: Dropbox/mpts_52/WyckoffTransformer/Tformer_mpts52_structures
           storage_type: NongWei
+  SymmCD:
+    structures:
+      # Contains invalid structures, can't be processed by the default pipeline
+      # path: Dropbox/mpts_52/SymmCD/crystal_symmcd_mpts52.csv.gz
+      # storage_type: SymmCD_csv
+      path: Dropbox/mpts_52/SymmCD/crystal_symmcd_mpts52_valid.json.gz
+      storage_type: PymatgenJson

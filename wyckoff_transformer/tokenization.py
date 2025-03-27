@@ -534,7 +534,7 @@ def tensor_to_pyxtal(
     enforced_min_elements: Optional[int] = None,
     enforced_max_elements: Optional[int] = None) -> Optional[dict]:
     """
-    The functio supports two cascade modes:
+    The function supports two cascade modes:
         (elements, site_symmetries, sites_enumeration)
         (elements, wyckoff_letters)
     Args:
@@ -545,7 +545,6 @@ def tensor_to_pyxtal(
             indexed by space group, site symmetry, and enumeration TOKEN
         enforced_min_elements: The minimum number of elements in the structure
         enforced_max_elements: The maximum number of elements in the structure
-
     """
     ss_pyxtal_cascde_order = ("elements", "site_symmetries", "sites_enumeration")
     letters_pyxtal_cascade_order = ("elements", "wyckoff_letters")

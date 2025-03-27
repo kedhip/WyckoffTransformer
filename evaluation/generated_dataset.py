@@ -6,7 +6,6 @@ import gzip
 from multiprocessing import Pool
 import pickle
 from copy import deepcopy
-import numpy as np
 from functools import partial
 from pathlib import Path
 from ast import literal_eval
@@ -15,6 +14,7 @@ from operator import attrgetter
 from pymatgen.core import Composition, DummySpecies, Element
 from omegaconf import OmegaConf
 import monty.json
+import numpy as np
 import torch
 import pandas as pd
 from .novelty import record_to_augmented_fingerprint
@@ -385,6 +385,7 @@ def load_csv_cif_dft(path: Path, index_prefix: str):
 
 def load_SymmCD_csv(path: Path):
     data = pd.read_csv(path, header=None, names=["cif"])
+    print(f"Read {len(data)} CIFs")
     data["structure"] = data.cif.apply(read_cif)
     return data
 

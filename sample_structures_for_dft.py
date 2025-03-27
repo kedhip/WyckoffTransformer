@@ -81,26 +81,23 @@ def write_novel_structures(
 
 def main():
     parser = ArgumentParser(description="Sample CIFs for novel generated structurees.")
+    parser.add_argument("transformations", nargs="+", type=str,
+                        help="Transformations defining the generated dataset to use for generating structures.")
     parser.add_argument("--filter-by-elements", action="store_true",
                         help="Filter structures by top 30 elements in MP-20.")
     parser.add_argument("--novel_save_count", type=int, default=105,
                         help="Number of novel structures to save.")
     parser.add_argument("--random-seed", type=int, default=42, help="Random seed for shuffling.")
+    parser.add_argument("--dataset", type=str, default="mp_20",
+                        help="Name of the dataset to use.")
     args = parser.parse_args()
-    mp_20_transofrmations = [
-     #   ("WyckoffTransformer", "CrySPR", "CHGNet_fix"),
-     #   ("WyckoffTransformer", "DiffCSP++"),
-        ("CrystalFormer",),
-     #   ("DiffCSP++",),
-     #   ("DiffCSP", ),
-     #   ("FlowMM", ),
-    ]
-    all_datasets = load_all_from_config(datasets=mp_20_transofrmations, dataset_name="mp_20")
-    #wycryst_transformations = ("WyCryst", "CrySPR", "CHGNet_fix")
-    #all_datasets[wycryst_transformations] = GeneratedDataset.from_cache(wycryst_transformations, "mp_20_biternary")
+    mp_20_transofrmations = [tuple(args.transformations)]
+    all_datasets = load_all_from_config(datasets=mp_20_transofrmations, dataset_name=args.dataset)
+    # wycryst_transformations = ("WyCryst", "CrySPR", "CHGNet_fix")
+    # all_datasets[wycryst_transformations] = GeneratedDataset.from_cache(wycryst_transformations, "mp_20_biternary")
     novelty_reference = pd.concat([
-        GeneratedDataset.from_cache(('split', 'train'), "mp_20").data,
-        GeneratedDataset.from_cache(('split', 'val'), "mp_20").data], axis=0, verify_integrity=True)
+        GeneratedDataset.from_cache(('split', 'train'), args.dataset).data,
+        GeneratedDataset.from_cache(('split', 'val'), args.dataset).data], axis=0, verify_integrity=True)
     novelty_filter = NoveltyFilter(novelty_reference)
 
     novel_save_path = Path(__file__).parent.joinpath("generated", "Dropbox", f"novel_{args.novel_save_count}_fix")
