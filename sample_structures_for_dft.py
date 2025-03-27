@@ -100,7 +100,7 @@ def main():
         GeneratedDataset.from_cache(('split', 'val'), args.dataset).data], axis=0, verify_integrity=True)
     novelty_filter = NoveltyFilter(novelty_reference)
 
-    novel_save_path = Path(__file__).parent.joinpath("generated", "Dropbox", f"novel_{args.novel_save_count}_fix")
+    novel_save_path = Path(__file__).parent.joinpath("generated", "Dropbox", f"novel_{args.novel_save_count}")
     novel_save_path.mkdir(parents=True, exist_ok=True)
 
     for transformations in tqdm(all_datasets.keys()):

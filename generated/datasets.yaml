@@ -195,9 +195,9 @@ mp_20:
       # storage_type: SymmCD_csv
       path: Dropbox/mp_20/SymmCD/crystal_symmcd_mp20_valid.json.gz
       storage_type: PymatgenJson
-  WychoffTransformer-letters:
+  WyckoffTransformer-letters:
     wyckoffs:
-      path: Dropbox/mp_20/WychoffTransformer-letters/sg_letters-uy6zg9y9.json.gz
+      path: Dropbox/mp_20/WyckoffTransformer-letters/sg_letters-uy6zg9y9.json.gz
       storage_type: pyxtal_json
 mp_20_biternary:
   WyckoffTransformer:
