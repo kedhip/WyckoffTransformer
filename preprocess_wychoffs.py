@@ -114,7 +114,7 @@ def enumerate_wychoffs_by_ss(
     multiplicity_engineer = FeatureEngineer(
         multiplicity_from_ss_enum, ("spacegroup_number", "site_symmetries", "sites_enumeration"),
         name="multiplicity",
-        stop_token=max_multiplicity + 1, mask_token=max_multiplicity + 2, pad_token=0)
+        stop_token=max_multiplicity + 1, mask_token=max_multiplicity + 2, pad_token=0, default_value=0)
     with gzip.open(engineered_path / "multiplicity.pkl.gz", "wb") as f:
         pickle.dump(multiplicity_engineer, f)
     harmonic_size = 2 * (spherical_harmonics_degree + 1) * len(reference_vectors)
@@ -126,7 +126,9 @@ def enumerate_wychoffs_by_ss(
         # STOP does not necessarily need to be different from PAD, so OK
         stop_token=np.zeros(harmonic_size),
         # Usually, the models are not supposed to see MASK, STOP, and PAD togeher
-        mask_token=np.ones(harmonic_size))
+        mask_token=np.ones(harmonic_size),
+        # In case of making an invalid request, we need to have a default value
+        default_value=np.zeros(harmonic_size))
     with gzip.open(engineered_path / "harmonic_site_symmetries.pkl.gz", "wb") as f:
         pickle.dump(harmonic_engineer, f)
     enum_to_cluster, cluster_to_enum = clasterize_harmonics(harmonic_engineer)
@@ -141,7 +143,8 @@ def enumerate_wychoffs_by_ss(
         pickle.dump(enum_to_cluster_engineer, f)
     # We don't know yet the tokenization of enums, so we'll need to fill in the tokens later
     cluster_to_enum_engineer = FeatureEngineer(
-        cluster_to_enum, mask_token=None, stop_token=None, pad_token=None)
+        cluster_to_enum, mask_token=None, stop_token=None, pad_token=None,
+        default_value=np.zeros_like(cluster_to_enum.iloc[0]))
     with gzip.open(engineered_path / "sites_enumeration.pkl.gz", "wb") as f:
         pickle.dump(cluster_to_enum_engineer, f)
 
@@ -153,7 +156,7 @@ def assign_to_clusters(
     assert (remaining_distances.index == np.arange(remaining_distances.shape[0])).all()
     assert (remaining_distances.columns == np.arange(remaining_distances.shape[1])).all()
     mapping = np.empty(distances.shape[0], dtype=int)
-    
+
     while not remaining_distances.empty:
         row, col = np.unravel_index(np.argmin(remaining_distances.values), remaining_distances.shape)
         row_label = remaining_distances.index[row]
@@ -161,9 +164,21 @@ def assign_to_clusters(
         # enum -> cluster
         mapping[row_label] = col_label
         remaining_distances = remaining_distances.drop(row_label, axis=0).drop(col_label, axis=1)
-    inverse = pd.Series(distances.index.get_level_values(2), index=mapping)
+    # inverse = pd.Series(distances.index.get_level_values(2), index=mapping)
     return pd.Series(mapping, index=distances.index.get_level_values(2))
 
+
+def inverse_series(input_series: pd.Series) -> pd.Series:
+    """
+    Transforms a Series with a MultiIndex of 3 levels into a new Series with the last level
+    of the index as the values and the first two levels as the new index.
+    """
+    if input_series.index.nlevels != 3:
+        raise ValueError("Input series must have 3 levels in the index.")
+    inverse_index = pd.MultiIndex.from_arrays(
+        [input_series.index.get_level_values(0), input_series.index.get_level_values(1), input_series.values],
+        names=[input_series.index.names[0], input_series.index.names[1], input_series.name])
+    return pd.Series(input_series.index.get_level_values(2), index=inverse_index, name=input_series.index.names[2])
 
 def clasterize_harmonics(
     harmonic_engineer: FeatureEngineer,
@@ -182,10 +197,7 @@ def clasterize_harmonics(
     enum_to_cluster = cluster_db.groupby(
         level=["spacegroup_number", "site_symmetries"]).apply(assign_to_clusters).sort_index()
     enum_to_cluster.name = "harmonic_cluster"
-    inverse_index = pd.MultiIndex.from_arrays(
-        [enum_to_cluster.index.get_level_values(0), enum_to_cluster.index.get_level_values(1), enum_to_cluster.values],
-        names=[enum_to_cluster.index.names[0], enum_to_cluster.index.names[1], enum_to_cluster.name])
-    cluster_to_enum = pd.Series(enum_to_cluster.index.get_level_values(2), index=inverse_index, name="sites_enumeration")
+    cluster_to_enum = inverse_series(enum_to_cluster)
     return enum_to_cluster, cluster_to_enum
 
 

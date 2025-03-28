@@ -21,6 +21,8 @@ from pyxtal.symmetry import Group
 ServiceToken = Enum('ServiceToken', ['MASK', 'STOP', 'PAD'])
 logger = logging.getLogger(__name__)
 
+generation_modes = Enum('GenerationModes', ["SiteSymmetry", "WyckoffLetters", "HarmonicCluster"])
+
 class TupleDict(UserDict):
     def __getitem__(self, key):
         if isinstance(key, tuple):
@@ -120,6 +122,7 @@ class FeatureEngineer():
             stop_token: Optional[int] = None,
             pad_token: Optional[int] = None,
             mask_token: Optional[int] = None,
+            default_value = 0,
             include_stop: bool = True):
         if isinstance(data, Series):
             if inputs is not None or name is not None:
@@ -132,7 +135,7 @@ class FeatureEngineer():
         self.stop_token = stop_token
         self.pad_token = pad_token
         self.mask_token = mask_token
-        self.default_value = 0
+        self.default_value = default_value
         self.include_stop = include_stop
         if self.db.dtype == 'O':
             all_feature_shapes = self.db.apply(np.shape)
@@ -257,7 +260,7 @@ class PassThroughTokeniser():
 def tokenise_engineer(
     engineer: FeatureEngineer,
     tokenisers: EnumeratingTokeniser):
-    
+
     include_stop_all = []
     for field in engineer.db.index.names:
         if hasattr(tokenisers[field], "include_stop"):
@@ -278,7 +281,7 @@ def tokenise_engineer(
         tokenised_data[new_index] = value
     return FeatureEngineer(tokenised_data, engineer.db.index.names, name=engineer.db.name,
         stop_token=engineer.stop_token, pad_token=engineer.pad_token, mask_token=engineer.mask_token,
-        include_stop=include_stop)
+        default_value=engineer.default_value, include_stop=include_stop)
 
 
 def argsort_multiple(*tensors: torch.Tensor, dim: int) -> torch.Tensor:
@@ -352,11 +355,22 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
             token_engineers[engineered_field_name] = tokenise_engineer(raw_engineer, tokenisers)
             raw_engineers[engineered_field_name].include_stop = token_engineers[engineered_field_name].include_stop
             # The values haven't changed, only the keys, so we can reuse the stop, pad, and mask tokens
+            if token_engineers[engineered_field_name].db.dtype == 'O':
+                try:
+                    value_counts = token_engineers[engineered_field_name].db.nunique()
+                except TypeError: # unhashable type: 'numpy.ndarray', etc.
+                    value_counts = len(token_engineers[engineered_field_name].db)
+            else:
+                if token_engineers[engineered_field_name].db.min() != 0:
+                    logger.warning("The minimum value in the engineered field %s is not 0", engineered_field_name)
+                    # We still set the count to max, potentially inluding some never used values
+                value_counts = token_engineers[engineered_field_name].db.max()
+            
             tokenisers[engineered_field_name] = PassThroughTokeniser(
-                len(token_engineers[engineered_field_name].db),
-                stop_token = raw_engineer.stop_token,
-                pad_token = raw_engineer.pad_token,
-                mask_token = raw_engineer.mask_token)
+                values_count=value_counts + 3, # For service tokens
+                stop_token=raw_engineer.stop_token,
+                pad_token=raw_engineer.pad_token,
+                mask_token=raw_engineer.mask_token)
 
     # We don't check consistency among the fields here
     # The value is for the original sequences, withot service tokens
@@ -527,6 +541,7 @@ def tensor_to_pyxtal(
     space_group_tensor: torch.Tensor,
     wp_tensor: torch.Tensor,
     tokenisers: Dict[str, EnumeratingTokeniser],
+    token_engineers: Dict[str, FeatureEngineer],
     cascade_order: Tuple[str, ...],
     letter_from_ss_enum_idx,
     ss_from_letter,
@@ -548,12 +563,16 @@ def tensor_to_pyxtal(
     """
     ss_pyxtal_cascde_order = ("elements", "site_symmetries", "sites_enumeration")
     letters_pyxtal_cascade_order = ("elements", "wyckoff_letters")
+    harmonic_pyxtal_cascade_order = ("elements", "site_symmetries", "harmonic_cluster")
     if set(cascade_order) == set(ss_pyxtal_cascde_order):
         pyxtal_cascade_order = ss_pyxtal_cascde_order
-        ss_mode = True
+        mode = generation_modes.SiteSymmetry
     elif set(cascade_order) == set(letters_pyxtal_cascade_order):
         pyxtal_cascade_order = letters_pyxtal_cascade_order
-        ss_mode = False
+        mode = generation_modes.WyckoffLetters
+    elif set(cascade_order) == set(harmonic_pyxtal_cascade_order):
+        pyxtal_cascade_order = harmonic_pyxtal_cascade_order
+        mode = generation_modes.HarmonicCluster
     else:
         raise NotImplementedError("Unsupported cascade")
 
@@ -583,7 +602,7 @@ def tensor_to_pyxtal(
         if (this_token_cascade == mask_tokens).any():
             logger.info("MASK token in generated sequence")
             return
-        if ss_mode:
+        if mode == generation_modes.SiteSymmetry:
             element_idx, ss_idx, enum_idx = this_token_cascade.tolist()
             ss = tokenisers["site_symmetries"].to_token[ss_idx]
             try:
@@ -592,7 +611,7 @@ def tensor_to_pyxtal(
                 logger.info("Invalid combination: space group %i, site symmetry %s, enum token %i", space_group_real,
                             ss, enum_idx)
                 return
-        else:
+        elif mode == generation_modes.WyckoffLetters:
             element_idx, wp_letter_idx = this_token_cascade.tolist()
             wp_letter = tokenisers["wyckoff_letters"].to_token[wp_letter_idx]
             try:
@@ -600,6 +619,18 @@ def tensor_to_pyxtal(
             except KeyError:
                 logger.info("Invalid combination: space group %i, wp letter %s", space_group_real, wp_letter)
                 return
+        elif mode == generation_modes.HarmonicCluster:
+            element_idx, ss_idx, cluster_idx = this_token_cascade.tolist()
+            ss = tokenisers["site_symmetries"].to_token[ss_idx]
+            try:
+                enum = token_engineers["sites_enumeration"].db.loc[space_group_real][ss][cluster_idx]
+            except KeyError:
+                logger.info("Invalid combination: space group %i, site symmetry %s, cluster token %i", space_group_real,
+                            ss, cluster_idx)
+                return
+            wp_letter = letter_from_ss_enum_idx[space_group_real][ss][enum]
+        else:
+            raise NotImplementedError("Unsupported cascade")
         try:
             our_site = available_sites[ss][wp_letter]
         except KeyError:

@@ -273,9 +273,9 @@ class CascadeTransformer(nn.Module):
         self.cascade = tuple(cascade)
         if outputs == "token_scores":
             for output_size, embedding_dim, _, is_target in cascade:
-                logger.debug("Creating head for %i values; embedding_dim %s",
-                             output_size, str(embedding_dim))
                 if is_target:
+                    logger.debug("Creating head for %i values; embedding_dim %s",
+                                 output_size, str(embedding_dim))
                     this_head_size = prediction_head_size
                     try:
                         embedding_dim["pass_through_vector"]
@@ -291,6 +291,7 @@ class CascadeTransformer(nn.Module):
                         this_head_size, output_size, num_fully_connected_layers,
                         dropout=prediction_perceptron_dropout))
                 else:
+                    logger.debug("Not creating head for embedding_dim %s", str(embedding_dim))
                     self.prediction_heads.append(None)
         else:
             if concat_token_counts or concat_token_presence:
@@ -345,7 +346,7 @@ class CascadeTransformer(nn.Module):
             else:
                 aggregation = aggregation_input[:, aggregation_start_idx:-1].max(dim=1).values
         elif self.token_aggregation == "mean":
-            # In case of a zero-lenght sequence, we avoid division by zero
+            # In case of a zero-length sequence, we avoid division by zero
             aggregation = (
                 aggregation_input[:, aggregation_start_idx:] * (~padding_mask[:, aggregation_start_idx:])[..., None]
             ).sum(dim=1) / (demoninator_eps + (~padding_mask[:, aggregation_start_idx:]).sum(dim=1)[..., None])

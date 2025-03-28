@@ -27,7 +27,7 @@ from wyckoff_transformer.evaluation import (
 
 
 logger = logging.getLogger(__file__)
-
+preprocessed_wyckhoffs_cache_path = Path(__file__).parent.parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz"
 
 class WyckoffTrainer():
     def __init__(
@@ -441,7 +441,9 @@ class WyckoffTrainer():
         else:
             raise ValueError(f"Unknown target: {self.target}")
         # Step 3: Calculate the loss
-        #logger.debug("Target isnan: %s", target.isnan().any())
+        # logger.debug("Target isnan: %s", target.isnan().any())
+        logger.debug("Target min: %s, max: %s", target.min(), target.max())
+        logger.debug("Prediction shape: %s", prediction.shape)
         if testing:
             return self.testing_criterion(prediction, target)
         return self.criterion(prediction, target)
@@ -573,7 +575,7 @@ class WyckoffTrainer():
         wandb.log({}, commit=True)
 
 
-    def generate_structures(self, n_structures: int, calibrate: bool):
+    def generate_structures(self, n_structures: int, calibrate: bool) -> List[dict]:
         generator = WyckoffGenerator(
             self.model, self.cascade_order, self.cascade_is_target, self.token_engineers,
              self.train_dataset.masks, self.train_dataset.max_sequence_length)
@@ -591,24 +593,28 @@ class WyckoffTrainer():
             start_tensor = all_starts[torch.randint(len(all_starts), (n_structures,))]
         else:
             raise ValueError(f"Unknown start type: {self.model.start_type}")
-        generated_tensors = torch.stack(
-            generator.generate_tensors(start_tensor), dim=-1)
+        generated_tensors = generator.generate_tensors(start_tensor)
+        generated_cascade_order = self.cascade_order
+        if self.cascade_order[-1] == "harmonic_site_symmetries":
+            del generated_tensors[-1]
+            generated_cascade_order = generated_cascade_order[:-1]
+        generated_tensors = torch.stack(generated_tensors, dim=-1)
 
         if 'sites_enumeration' in self.tokenisers:
             letter_from_ss_enum_idx = get_letter_from_ss_enum_idx(self.tokenisers['sites_enumeration'])
         else:
             letter_from_ss_enum_idx = None
-        preprocessed_wyckhoffs_cache_path = Path(__file__).parent.parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz"
         with gzip.open(preprocessed_wyckhoffs_cache_path, "rb") as f:
             ss_from_letter = pickle.load(f)[2]
         to_pyxtal = partial(tensor_to_pyxtal,
                             tokenisers=self.tokenisers,
-                            cascade_order=self.cascade_order,
+                            token_engineers=self.token_engineers,
+                            cascade_order=generated_cascade_order,
                             letter_from_ss_enum_idx=letter_from_ss_enum_idx,
                             ss_from_letter=ss_from_letter,
                             wp_index=get_wp_index())
-        with Pool() as p:
-            structures = p.starmap(to_pyxtal, zip(start_tensor.detach().cpu(), generated_tensors.detach().cpu()))
+        with Pool() as pool:
+            structures = pool.starmap(to_pyxtal, zip(start_tensor.detach().cpu(), generated_tensors.detach().cpu()))
         valid_structures = [s for s in structures if s is not None]
         return valid_structures
     
@@ -618,7 +624,7 @@ class WyckoffTrainer():
         calibrate: bool,
         n_structures: int,
         evaluator: StatisticalEvaluator):
-        
+    
         generated_wp = self.generate_structures(n_structures, calibrate)
         file_name = self.run_path / f"generated_wp_{generation_name}.json.gz"
         with gzip.open(file_name, "wt") as f:

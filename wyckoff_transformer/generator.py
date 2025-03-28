@@ -3,9 +3,11 @@ from pathlib import Path
 import logging
 import torch
 from torch import nn, Tensor
+import numpy as np
 
 from cascade_transformer.dataset import AugmentedCascadeDataset, TargetClass, jagged_batch_randperm
-from wyckoff_transformer.tokenization import load_tensors_and_tokenisers
+from wyckoff_transformer.tokenization import load_tensors_and_tokenisers, FeatureEngineer
+from preprocess_wychoffs import inverse_series
 
 logger = logging.getLogger(__name__)
 
@@ -199,6 +201,7 @@ class WyckoffGenerator():
         # everything to be a mask
         generated = []
         for field in self.cascade_order:
+            # print(f"Generating {field} with mask shape {self.masks[field].shape}")
             if isinstance(self.masks[field], int) or self.masks[field].dim() == 0:
                 if isinstance(self.masks[field], int):
                     dtype = torch.int64
@@ -207,8 +210,21 @@ class WyckoffGenerator():
                 generated.append(torch.full((batch_size, self.max_sequence_len), self.masks[field],
                                             dtype=dtype, device=start.device))
             else:
-                generated.append(torch.tile(self.masks[field].unsqueeze(0), (batch_size, self.max_sequence_len)))   
-
+                unsqueezed_mask = self.masks[field].unsqueeze(0)
+                if self.masks[field].dim() == 0:
+                    generated.append(torch.tile(unsqueezed_mask, (batch_size, self.max_sequence_len)))
+                elif self.masks[field].dim() == 1:
+                    unsqueezed_mask = unsqueezed_mask.unsqueeze(0)
+                    generated.append(torch.tile(unsqueezed_mask, (batch_size, self.max_sequence_len, 1)))
+                else:
+                    raise NotImplementedError("Mask should be a scalar or a vector")
+            # print(f"Generated {field} with shape {generated[-1].shape}")
+        # We have a problem. Engeineers by default can only work with data, not output of other engineers.
+        if 'harmonic_site_symmetries' in self.cascade_order and 'sites_enumeration' not in self.cascade_order:
+            cluster_to_enum = inverse_series(self.token_engineers["harmonic_cluster"].db)
+            self.token_engineers['sites_enumeration'] = FeatureEngineer(
+                cluster_to_enum, mask_token=None, stop_token=None, pad_token=None)
+            
         cascade_index_by_name = {name: idx for idx, name in enumerate(self.cascade_order)}
         if len(start.size()) > 1:
             start_converted = list(map(tuple, start.tolist()))
@@ -217,6 +233,7 @@ class WyckoffGenerator():
         for known_seq_len in range(self.max_sequence_len):
             for known_cascade_len, cascade_name in enumerate(self.cascade_order):
                 if self.cascade_is_target[cascade_name]:
+                    # +1 for MASK
                     this_generation_input = [generated_cascade[:, :known_seq_len + 1] for generated_cascade in generated]
                     logits = self.model(start, this_generation_input, None, known_cascade_len)
                     if self.calibrators is not None:
@@ -237,14 +254,35 @@ class WyckoffGenerator():
                 else:
                     if known_cascade_len != len(self.cascade_order) - 1:
                         raise NotImplementedError("Only the last cascade field can be non-target")
-                    # If a field is not in the cascade, by exclusion it is the start token
-                    this_engineer_input = [generated[cascade_index_by_name[name]][:, known_seq_len].tolist() 
-                                            for name in self.token_engineers[cascade_name].inputs
-                                                if name in cascade_index_by_name]
+                    if self.token_engineers[cascade_name].inputs[0] != 'spacegroup_number':
+                        raise NotImplementedError("Only engineers with spacegroup_number first input are supported")
+                    this_engineer_input = []
+                    for input_field in self.token_engineers[cascade_name].inputs[1:]:
+                        if input_field in cascade_index_by_name:
+                            this_cascade_input = generated[cascade_index_by_name[input_field]][:, known_seq_len]
+                        elif cascade_name == 'harmonic_site_symmetries' and input_field == 'sites_enumeration':
+                            # Since we don't natively support either two engineers for one field or
+                            # chainging engineers, we do this hack
+                            # Next b
+                            enumerations = self.token_engineers['sites_enumeration'].get_feature_from_token_batch(
+                                start_converted, [
+                                    generated[cascade_index_by_name['site_symmetries']][:, known_seq_len].tolist(),
+                                    generated[cascade_index_by_name['harmonic_cluster']][:, known_seq_len].tolist()])
+                            this_cascade_input = enumerations
+                        else:
+                            raise NotImplementedError(
+                                f"Unknown input field {input_field} for engineer {cascade_name}")
+                        this_engineer_input.append(this_cascade_input.tolist())
                     #print(this_engineer_input)
                     #print(len(this_engineer_input))
                     #print(this_generation_input[0].shape)
+                    # print(f"Generating {cascade_name}")
+                    feature_np = self.token_engineers[cascade_name].get_feature_from_token_batch(
+                        start_converted, this_engineer_input)
+                    if feature_np.dtype == "O": # Object, in this case array of array
+                        # import pdb
+                        # pdb.set_trace()
+                        feature_np = np.stack(feature_np)
                     generated[known_cascade_len][:, known_seq_len] = \
-                        torch.from_numpy(
-                            self.token_engineers[cascade_name].get_feature_from_token_batch(start_converted, this_engineer_input))
+                        torch.from_numpy(feature_np)
         return generated

@@ -14,6 +14,7 @@ model:
     embedding_size:
       elements: 16
       site_symmetries: 16
+      # In principle, harmonic_site_symmetries should be enough
       harmonic_cluster: 0
       harmonic_site_symmetries:
         pass_through_vector: 12
@@ -70,4 +71,4 @@ optimisation:
 tokeniser:
   name: with_stop/augmented/harmonic_cluster
 evaluation:
-  n_structures_to_generate: 0
+  n_structures_to_generate: 1100
