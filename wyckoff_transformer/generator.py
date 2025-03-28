@@ -88,7 +88,7 @@ class WyckoffGenerator():
                  masks: dict,
                  max_sequence_len: int):
         self.model = model
-        self.max_sequence_len = max_sequence_len
+        self.max_sequence_len = int(max_sequence_len)
         self.cascade_order = cascade_order
         self.cascade_is_target = cascade_is_target
         self.masks = masks
@@ -202,8 +202,8 @@ class WyckoffGenerator():
         generated = []
         for field in self.cascade_order:
             # print(f"Generating {field} with mask shape {self.masks[field].shape}")
-            if isinstance(self.masks[field], int) or self.masks[field].dim() == 0:
-                if isinstance(self.masks[field], int):
+            if np.issubdtype(type(self.masks[field]), np.integer) or self.masks[field].ndim == 0:
+                if np.issubdtype(type(self.masks[field]), np.integer):
                     dtype = torch.int64
                 else:
                     dtype = self.masks[field].dtype
@@ -235,6 +235,8 @@ class WyckoffGenerator():
                 if self.cascade_is_target[cascade_name]:
                     # +1 for MASK
                     this_generation_input = [generated_cascade[:, :known_seq_len + 1] for generated_cascade in generated]
+                    import pdb
+                    pdb.set_trace()
                     logits = self.model(start, this_generation_input, None, known_cascade_len)
                     if self.calibrators is not None:
                         if known_seq_len < len(self.calibrators[known_cascade_len]):
@@ -279,6 +281,8 @@ class WyckoffGenerator():
                     # print(f"Generating {cascade_name}")
                     feature_np = self.token_engineers[cascade_name].get_feature_from_token_batch(
                         start_converted, this_engineer_input)
+                    import pdb
+                    pdb.set_trace()
                     if feature_np.dtype == "O": # Object, in this case array of array
                         # import pdb
                         # pdb.set_trace()

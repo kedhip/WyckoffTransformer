@@ -364,7 +364,8 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
                 if token_engineers[engineered_field_name].db.min() != 0:
                     logger.warning("The minimum value in the engineered field %s is not 0", engineered_field_name)
                     # We still set the count to max, potentially inluding some never used values
-                value_counts = token_engineers[engineered_field_name].db.max()
+                    # +1 for token #0
+                value_counts = token_engineers[engineered_field_name].db.max() + 1
             
             tokenisers[engineered_field_name] = PassThroughTokeniser(
                 values_count=value_counts + 3, # For service tokens

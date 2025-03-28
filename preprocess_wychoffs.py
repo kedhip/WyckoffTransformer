@@ -128,6 +128,7 @@ def enumerate_wychoffs_by_ss(
         # Usually, the models are not supposed to see MASK, STOP, and PAD togeher
         mask_token=np.ones(harmonic_size),
         # In case of making an invalid request, we need to have a default value
+        # CONSIDER using nan
         default_value=np.zeros(harmonic_size))
     with gzip.open(engineered_path / "harmonic_site_symmetries.pkl.gz", "wb") as f:
         pickle.dump(harmonic_engineer, f)

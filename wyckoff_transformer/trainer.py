@@ -1,4 +1,5 @@
 from typing import Tuple, Dict, Optional, List
+import importlib
 from random import randint
 import logging
 from functools import partial
@@ -148,11 +149,14 @@ class WyckoffTrainer():
                 samples_per_step = train_batch_size
             optimisation_config.optimiser.update(
                 {"config": {"lr": optimisation_config.optimiser.lr_per_sqrt_n_samples * samples_per_step**0.5}})
-                
-        self.optimizer = getattr(torch.optim, optimisation_config.optimiser.name)(
+        optimizer_module_obj = importlib.import_module(optimisation_config.optimiser.get("module", "torch.optim"))
+        self.optimizer = getattr(optimizer_module_obj, optimisation_config.optimiser.name)(
             model.parameters(), **optimisation_config.optimiser.config)
-        self.scheduler = getattr(torch.optim.lr_scheduler, optimisation_config.scheduler.name)(
-            self.optimizer, 'min', **optimisation_config.scheduler.config)
+        if "scheduler" in optimisation_config:
+            self.scheduler = getattr(torch.optim.lr_scheduler, optimisation_config.scheduler.name)(
+                self.optimizer, 'min', **optimisation_config.scheduler.config)
+        else:
+            self.scheduler = None
 
         self.val_dataset = AugmentedCascadeDataset(
             data=val_dataset,
@@ -451,6 +455,8 @@ class WyckoffTrainer():
 
     def train_epoch(self):
         self.model.train()
+        if hasattr(self.optimizer, "train"):
+            self.optimizer.train()
         for _ in trange(self.train_dataset.batches_per_epoch, leave=False):
             self.optimizer.zero_grad(set_to_none=True)
             if self.target == TargetClass.NextToken:
@@ -494,6 +500,8 @@ class WyckoffTrainer():
             The average loss on the dataset.
         """
         self.model.eval()
+        if hasattr(self.optimizer, "eval"):
+            self.optimizer.eval()
         if dataset.batch_size is not None and not dataset.fix_batch_size:
             raise NotImplementedError("Only fixed batch size is supported")
         if self.target == TargetClass.Scalar:
@@ -507,16 +515,16 @@ class WyckoffTrainer():
 
         loss = torch.zeros(self.cascade_len, device=self.device)
         for _ in range(self.evaluation_samples):
-            for known_seq_len in range(0, dataset.max_sequence_length):
+            for known_seq_len in range(dataset.max_sequence_length):
                 if self.target == TargetClass.NextToken:
-                    for known_cascade_len in range(0, self.cascade_target_count):
+                    for known_cascade_len in range(self.cascade_target_count):
                         loss[known_cascade_len] += self.get_loss(
                             dataset, known_seq_len, known_cascade_len, True)
                 else: # NumUniqueTokens
                     loss += self.get_loss(dataset, known_seq_len, 0, True).sum(dim=0)
             # ln(P) = ln p(t_n|t_n-1, ..., t_1) + ... + ln p(t_2|t_1)
             # We are minimising the negative log likelihood of the whole sequences
-            return loss / self.evaluation_samples / len(dataset)
+        return loss / self.evaluation_samples / len(dataset)
 
 
     def train(self):
@@ -568,7 +576,7 @@ class WyckoffTrainer():
                     break
                 # Don't step the scheduler on the tail epoch to presereve
                 # patience behaviour
-                if epoch % self.validation_period == 0:
+                if self.scheduler and epoch % self.validation_period == 0:
                     self.scheduler.step(total_val_loss)
 
         # Make sure we log the last evaluation results
@@ -576,6 +584,8 @@ class WyckoffTrainer():
 
 
     def generate_structures(self, n_structures: int, calibrate: bool) -> List[dict]:
+        import pdb
+        pdb.set_trace()
         generator = WyckoffGenerator(
             self.model, self.cascade_order, self.cascade_is_target, self.token_engineers,
              self.train_dataset.masks, self.train_dataset.max_sequence_length)
