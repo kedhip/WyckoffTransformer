@@ -199,6 +199,10 @@ mp_20:
     wyckoffs:
       path: Dropbox/mp_20/WyckoffTransformer-letters/sg_letters-uy6zg9y9.json.gz
       storage_type: pyxtal_json
+    DiffCSP++:
+      structures:
+        path: Dropbox/mp_20/WyckoffTransformer-letters/DiffCSP++/sg_letters-uy6zg9y9.diffcsp-pp.json.gz
+        storage_type: PymatgenJson
 mp_20_biternary:
   WyckoffTransformer:
     wyckoffs:
