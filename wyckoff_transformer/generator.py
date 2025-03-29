@@ -1,4 +1,4 @@
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Optional
 from pathlib import Path
 import logging
 import torch
@@ -72,12 +72,13 @@ class WyckoffGenerator():
         max_sequence_len = tensors["train"][config.model.cascade.order[0]].size(1)
 
         masks_dict = {field: tokenisers[field].mask_token for field in config.model.cascade.order}
+        stops_dict = {field: tokenisers[field].stop_token for field in config.model.cascade.order}
 
         generator = WyckoffGenerator(model,
             config.model.cascade.order,
             config.model.cascade.is_target,
             engineers,
-            masks_dict, max_sequence_len)
+            masks_dict, max_sequence_len, stops=stops_dict)
         return generator, wandb_run, tensors, tokenisers, engineers
 
 
@@ -87,12 +88,14 @@ class WyckoffGenerator():
                  cascade_is_target: Dict,
                  token_engineers: Dict,
                  masks: dict,
-                 max_sequence_len: int):
+                 max_sequence_len: int,
+                 stops: Optional[Dict] = None):
         self.model = model
         self.max_sequence_len = int(max_sequence_len)
         self.cascade_order = cascade_order
         self.cascade_is_target = cascade_is_target
         self.masks = masks
+        self.stops = stops
         self.calibrators = None
         self.tail_calibrators = None
         self.token_engineers = token_engineers
@@ -231,6 +234,7 @@ class WyckoffGenerator():
             start_converted = list(map(tuple, start.tolist()))
         else:
             start_converted = start.tolist()
+        stop_generated = np.zeros(batch_size, dtype=bool)
         for known_seq_len in range(self.max_sequence_len):
             for known_cascade_len, cascade_name in enumerate(self.cascade_order):
                 if self.cascade_is_target[cascade_name]:
@@ -254,6 +258,8 @@ class WyckoffGenerator():
                     # calibrated_probas = calibrator.predict_proba(probas.numpy())
                     generated[known_cascade_len][:, known_seq_len] = \
                         torch.multinomial(calibrated_probas, num_samples=1).squeeze()
+                    if self.stops is not None:
+                        stop_generated |= generated[known_cascade_len][:, known_seq_len] == self.stops[cascade_name]
                 else:
                     if known_cascade_len != len(self.cascade_order) - 1:
                         raise NotImplementedError("Only the last cascade field can be non-target")
@@ -292,6 +298,8 @@ class WyckoffGenerator():
             ss_validitity = []
             enum_validity = []
             for structure_index, this_start in enumerate(start_converted):
+                if stop_generated[structure_index]:
+                    continue
                 ss_validitity.append(
                     (this_start,
                      generated[cascade_index_by_name['site_symmetries']][structure_index, known_seq_len].item()

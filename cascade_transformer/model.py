@@ -190,7 +190,8 @@ class CascadeTransformer(nn.Module):
                  compile_perceptrons: bool = True,
                  aggregation_weight: Optional[int] = None,
                  emebdding_dropout: Optional[float] = None,
-                 prediction_perceptron_dropout: Optional[float] = None):
+                 prediction_perceptron_dropout: Optional[float] = None,
+                 concat_start_to_prediction_input_embedding_dim: Optional[int] = None):
         """
         Expects tokens in the following format:
         START_k -> [] -> STOP -> PAD
@@ -226,6 +227,7 @@ class CascadeTransformer(nn.Module):
             self.start_embedding = nn.Embedding(n_start, self.d_model)
         elif start_type == "one_hot":
             self.start_embedding = nn.Linear(n_start, self.d_model)
+        self.concat_start_to_prediction_input_embedding_dim = concat_start_to_prediction_input_embedding_dim
         self.learned_positional_encoding_max_size = learned_positional_encoding_max_size
         self.learned_positional_encoding_only_masked = learned_positional_encoding_only_masked
         if perceptron_shape == "pyramid":
@@ -267,6 +269,16 @@ class CascadeTransformer(nn.Module):
         self.concat_token_presence = concat_token_presence
         self.include_start_in_aggregation = include_start_in_aggregation
         prediction_head_size = 2 * self.d_model if aggregation_inclsion == "concat" else self.d_model
+        if concat_start_to_prediction_input_embedding_dim:
+            prediction_head_size += concat_start_to_prediction_input_embedding_dim
+            if self.start_type == "categorial":
+                self.start_to_prediction_input_embedding = nn.Embedding(
+                    n_start, concat_start_to_prediction_input_embedding_dim)
+            elif self.start_type == "one_hot":
+                self.start_to_prediction_input_embedding = nn.Linear(
+                    n_start, concat_start_to_prediction_input_embedding_dim)
+            else:
+                raise ValueError(f"Unknown start_type {self.start_type}")
         self.prediction_heads = torch.nn.ModuleList()
         if num_fully_connected_layers == 0:
             raise ValueError("num_fully_connected_layers must be at least 1 for dimensionality reasons.")
@@ -277,11 +289,10 @@ class CascadeTransformer(nn.Module):
                     logger.debug("Creating head for %i values; embedding_dim %s",
                                  output_size, str(embedding_dim))
                     this_head_size = prediction_head_size
-                    try:
-                        embedding_dim["pass_through_vector"]
+                    if hasattr(embedding_dim, "get") and "pass_through_vector" in embedding_dim:
                         logger.warning("Not using cascade presence for a head,"
-                                        " because the input is not categorial")
-                    except (KeyError, TypeError):
+                                       " because the input is not categorial")
+                    else:
                         if concat_token_counts:
                             this_head_size += output_size
                         if concat_token_presence:
@@ -384,7 +395,8 @@ class CascadeTransformer(nn.Module):
         else:
             logger.debug("Not concatenating token counts and presence, "
                          "because the input is not categorial")
-
+        if self.concat_start_to_prediction_input_embedding_dim:
+            prediction_inputs.append(self.start_to_prediction_input_embedding(start))
         prediction_input = torch.cat(prediction_inputs, dim=1)
         logger.debug("Prediction input size: %s", prediction_input.size())
         if prediction_head is None:
