@@ -40,7 +40,8 @@ StructureStorage = Enum("StructureStorage", [
     "EhullCSVCIF",
     "FlowMM",
     "DFT_CSV_CIF",
-    "SymmCD_csv"
+    "SymmCD_csv",
+    "NongWei_CHGNet_csv",
     ])
 
 WyckoffStorage = Enum("WyckoffStorage", [
@@ -167,6 +168,12 @@ def load_NongWei(path: Path):
     structures_pd = pd.Series(data=structures, index=structures_index)
     data["structure"] = structures_pd
     data.dropna(axis=0, subset=["structure"], inplace=True)
+    return data
+
+def load_NongWei_CHGNet_csv(path: Path) -> pd.DataFrame:
+    data = pd.read_csv(path, index_col="id")
+    data["structure"] = data.cif_generated.apply(read_cif)
+    data["corrected_chgnet_ehull"] = data["ehull_refs_to_conventional_vc-relax"]
     return data
 
 
@@ -475,6 +482,8 @@ class GeneratedDataset():
             self.data = load_csv_cif_dft(path, storage_key)
         elif storage_type == StructureStorage.SymmCD_csv:
             self.data = load_SymmCD_csv(path)
+        elif storage_type == StructureStorage.NongWei_CHGNet_csv:
+            self.data = load_NongWei_CHGNet_csv(path)
         else:
             raise ValueError("Unknown storage type")
         if self.data.index.duplicated().any():

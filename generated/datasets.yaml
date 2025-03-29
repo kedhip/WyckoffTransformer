@@ -203,6 +203,10 @@ mp_20:
       structures:
         path: Dropbox/mp_20/WyckoffTransformer-letters/DiffCSP++/sg_letters-uy6zg9y9.diffcsp-pp.json.gz
         storage_type: PymatgenJson
+      CHGNet_fix:
+        structures:
+          path: Dropbox/mp_20/WyckoffTransformer-letters/DiffCSP++/CHGNet_fix/WTFL-DCPP_mp_20_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
+          storage_type: NongWei_CHGNet_csv
 mp_20_biternary:
   WyckoffTransformer:
     wyckoffs:

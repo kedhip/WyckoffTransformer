@@ -421,8 +421,8 @@ class WyckoffTrainer():
                 # Counts are integers, as they should be, but MSE needs a float
                 target = target.float()
             else:
-                raise ValueError(f"Target {self.target} is not supported by"
-                                  " multiclass_next_token_with_order_permutation")
+                raise ValueError(f"Target {self.target} is not supported by "
+                                  "multiclass_next_token_with_order_permutation")
         else:
             if self.target == TargetClass.Scalar:
                 start_tokens, masked_data, target, padding_mask = dataset.get_augmented_data(no_batch=no_batch)
@@ -584,8 +584,6 @@ class WyckoffTrainer():
 
 
     def generate_structures(self, n_structures: int, calibrate: bool) -> List[dict]:
-        import pdb
-        pdb.set_trace()
         generator = WyckoffGenerator(
             self.model, self.cascade_order, self.cascade_is_target, self.token_engineers,
              self.train_dataset.masks, self.train_dataset.max_sequence_length)
