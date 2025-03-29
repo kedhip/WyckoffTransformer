@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Optional, List, Tuple
 from itertools import repeat
+from operator import methodcaller
 import warnings
 import gzip
 from multiprocessing import Pool
@@ -170,9 +171,14 @@ def load_NongWei(path: Path):
     data.dropna(axis=0, subset=["structure"], inplace=True)
     return data
 
+
 def load_NongWei_CHGNet_csv(path: Path) -> pd.DataFrame:
-    data = pd.read_csv(path, index_col="id")
-    data["structure"] = data.cif_generated.apply(read_cif)
+    data = pd.read_csv(path, index_col="id").dropna()
+    # cif_generated is the input cif to CHGNet
+    # cif is the output cif from CHGNet
+    # ehull_refs_to_conventional_vc-relax is the ehull from CHGNet after relaxation
+    # ...no-relax is the ehull from CHGNet before relaxation
+    data["structure"] = data.cif.apply(read_cif)
     data["corrected_chgnet_ehull"] = data["ehull_refs_to_conventional_vc-relax"]
     return data
 
