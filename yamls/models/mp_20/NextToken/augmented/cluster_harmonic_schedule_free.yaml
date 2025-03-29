@@ -25,7 +25,7 @@ model:
   WyckoffTrainer_args:
     multiclass_next_token_with_order_permutation: true
     target: NextToken
-    evaluation_samples: 100
+    evaluation_samples: 5
     train_batch_size: null
     compile_model: false
   CascadeTransformer_args:
