@@ -403,7 +403,7 @@ class WyckoffTrainer():
         Computes loss on the dataset. Advances the dataset to the next batch.
         """
         logging.debug("Known sequence length: %i", known_seq_len)
-        logging.debug("Known cascade lenght: %s", str(known_cascade_len))
+        logging.debug("Known cascade length: %s", str(known_cascade_len))
         # Step 1: Get the data
         if self.multiclass_next_token_with_order_permutation:
             if self.target == TargetClass.NextToken:
