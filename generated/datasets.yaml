@@ -195,6 +195,12 @@ mp_20:
       # storage_type: SymmCD_csv
       path: Dropbox/mp_20/SymmCD/crystal_symmcd_mp20_valid.json.gz
       storage_type: PymatgenJson
+    CHGNet_fix:
+      structures:
+        # The file was prodced before validity filtering, so the index may not match
+        # Valid records: 9580 / 10000
+        path: Dropbox/mp_20/SymmCD/SymmCD_mp_20_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
+        storage_type: NongWei_CHGNet_csv
   WyckoffTransformer-letters:
     wyckoffs:
       path: Dropbox/mp_20/WyckoffTransformer-letters/sg_letters-uy6zg9y9.json.gz
@@ -381,3 +387,8 @@ mpts_52:
       # storage_type: SymmCD_csv
       path: Dropbox/mpts_52/SymmCD/crystal_symmcd_mpts52_valid.json.gz
       storage_type: PymatgenJson
+    CHGNet_fix:
+      structures:
+        # The file was prodced before validity filtering, so the index may not match
+        path: Dropbox/mpts_52/SymmCD/SymmCD_mpts_52_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
+        storage_type: NongWei_CHGNet_csv

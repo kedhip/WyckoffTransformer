@@ -1,7 +1,6 @@
 from enum import Enum
 from typing import Optional, List, Tuple
 from itertools import repeat
-from operator import methodcaller
 import warnings
 import gzip
 from multiprocessing import Pool
@@ -12,7 +11,8 @@ from pathlib import Path
 from ast import literal_eval
 import json
 from operator import attrgetter
-from pymatgen.core import Composition, DummySpecies, Element
+from pymatgen.core import Composition, DummySpecies, Element, Structure
+from pymatgen.io.cif import CifParser
 from omegaconf import OmegaConf
 import monty.json
 import numpy as np
@@ -172,15 +172,37 @@ def load_NongWei(path: Path):
     return data
 
 
-def load_NongWei_CHGNet_csv(path: Path) -> pd.DataFrame:
-    data = pd.read_csv(path, index_col="id").dropna()
+def read_cif_or_none(cif: str) -> Structure|None:
+    try:
+        return CifParser.from_str(cif).parse_structures(primitive=False)[0]
+    except ValueError:
+        return None
+
+def load_NongWei_CHGNet_csv(path: Path) -> (pd.DataFrame, int):
+    # TODO how to accout for NaNs during metric computation?
+    data = pd.read_csv(path, index_col="id")
+    initial_size = len(data)
+    print(f"Read {len(data)} CIFs")
+    data.dropna(inplace=True)
     # cif_generated is the input cif to CHGNet
     # cif is the output cif from CHGNet
     # ehull_refs_to_conventional_vc-relax is the ehull from CHGNet after relaxation
     # ...no-relax is the ehull from CHGNet before relaxation
-    data["structure"] = data.cif.apply(read_cif)
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message=r"Issues encountered while parsing CIF: \d+"
+                " fractional coordinates rounded to ideal"
+                " values to avoid issues with finite precision.",
+            category=UserWarning,
+            module="pymatgen.io.cif"
+        )
+        print("Suppressed CIF rounding warnings.")
+        data["structure"] = data.cif.apply(read_cif_or_none)
     data["corrected_chgnet_ehull"] = data["ehull_refs_to_conventional_vc-relax"]
-    return data
+    data.dropna(inplace=True)
+    print(f"Valid records: {len(data)}")
+    return data, initial_size
 
 
 def load_Raymond(path: Path):
@@ -454,6 +476,7 @@ class GeneratedDataset():
         self.cache_location = cache_location
         self.cdvae_dataset = DATASET_TO_CDVAE[dataset_name]
         self.data = pd.DataFrame()
+        self.unfiltered_size = None
 
     def load_structures(
         self,
@@ -489,7 +512,7 @@ class GeneratedDataset():
         elif storage_type == StructureStorage.SymmCD_csv:
             self.data = load_SymmCD_csv(path)
         elif storage_type == StructureStorage.NongWei_CHGNet_csv:
-            self.data = load_NongWei_CHGNet_csv(path)
+            self.data, self.unfiltered_size = load_NongWei_CHGNet_csv(path)
         else:
             raise ValueError("Unknown storage type")
         if self.data.index.duplicated().any():
@@ -497,6 +520,8 @@ class GeneratedDataset():
         self.data.sort_index(inplace=True)
         self.data["density"] = self.data["structure"].map(attrgetter("density"))
         self.structures_file = path
+        if self.unfiltered_size is None:
+            self.unfiltered_size = len(self.data)
 
     def load_corrected_chgnet_ehull(self, path: Path|str, index_json: Optional[Path] = None):
         e_hull_data = pd.read_csv(path, index_col=False)
