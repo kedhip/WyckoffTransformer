@@ -624,7 +624,8 @@ def tensor_to_pyxtal(
             element_idx, ss_idx, cluster_idx = this_token_cascade.tolist()
             ss = tokenisers["site_symmetries"].to_token[ss_idx]
             try:
-                enum = token_engineers["sites_enumeration"].db.loc[space_group_real][ss][cluster_idx]
+                # WARNING tuple might fail for some SG encodings
+                enum = token_engineers["sites_enumeration"].db.loc[tuple(space_group_input), ss_idx, cluster_idx]
             except KeyError:
                 logger.info("Invalid combination: space group %i, site symmetry %s, cluster token %i", space_group_real,
                             ss, cluster_idx)

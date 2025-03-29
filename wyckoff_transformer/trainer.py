@@ -586,7 +586,7 @@ class WyckoffTrainer():
     def generate_structures(self, n_structures: int, calibrate: bool) -> List[dict]:
         generator = WyckoffGenerator(
             self.model, self.cascade_order, self.cascade_is_target, self.token_engineers,
-             self.train_dataset.masks, self.train_dataset.max_sequence_length)
+            self.train_dataset.masks, self.train_dataset.max_sequence_length)
         if calibrate:
             generator.calibrate(self.val_dataset)
         if self.model.start_type == "categorial":
@@ -621,9 +621,12 @@ class WyckoffTrainer():
                             letter_from_ss_enum_idx=letter_from_ss_enum_idx,
                             ss_from_letter=ss_from_letter,
                             wp_index=get_wp_index())
-        with Pool() as pool:
-            structures = pool.starmap(to_pyxtal, zip(start_tensor.detach().cpu(), generated_tensors.detach().cpu()))
+        #with Pool() as pool:
+            #structures = pool.starmap(to_pyxtal, zip(start_tensor.detach().cpu(), generated_tensors.detach().cpu()))
+        structures = list(map(to_pyxtal, start_tensor.detach().cpu(), generated_tensors.detach().cpu()))
+        print(f"Generated {len(structures)} Wyckoffs")
         valid_structures = [s for s in structures if s is not None]
+        print(f"From which {len(valid_structures)} are valid")
         return valid_structures
     
     def generate_evaluate_and_log_wp(

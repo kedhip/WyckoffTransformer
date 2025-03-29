@@ -443,7 +443,7 @@ class AugmentedCascadeDataset():
                             #    raise ValueError("PAD is not a valid target")
                 else:
                     # We need the number of unique values, as opposed to values themselves
-                    # hence, we use bincount with bool dtype, as 
+                    # hence, we use bincount with bool dtype, as
                     # true + true = true
                     present_classes = batched_bincount(
                         permuted_cascade_vector[:, :known_seq_len], 1,

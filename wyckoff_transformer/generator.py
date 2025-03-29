@@ -63,6 +63,7 @@ class WyckoffGenerator():
 
         # The start tokens will be sampled from the train+validation datasets,
         # to preserve the sanctity of the test dataset and ex nihilo generation.
+        logger.warning("Loading current tensors and tokenisers for %s, not the saved ones", config.dataset)
         tensors, tokenisers, engineers = load_tensors_and_tokenisers(config.dataset, config.tokeniser.name)
 
         model = CascadeTransformer.from_config_and_tokenisers(config, tokenisers, device)
@@ -208,7 +209,7 @@ class WyckoffGenerator():
                 else:
                     dtype = self.masks[field].dtype
                 generated.append(torch.full((batch_size, self.max_sequence_len), self.masks[field],
-                                            dtype=dtype, device=start.device))
+                                             dtype=dtype, device=start.device))
             else:
                 unsqueezed_mask = self.masks[field].unsqueeze(0)
                 if self.masks[field].dim() == 0:
@@ -235,8 +236,8 @@ class WyckoffGenerator():
                 if self.cascade_is_target[cascade_name]:
                     # +1 for MASK
                     this_generation_input = [generated_cascade[:, :known_seq_len + 1] for generated_cascade in generated]
-                    import pdb
-                    pdb.set_trace()
+                    #import pdb
+                    #pdb.set_trace()
                     logits = self.model(start, this_generation_input, None, known_cascade_len)
                     if self.calibrators is not None:
                         if known_seq_len < len(self.calibrators[known_cascade_len]):
@@ -265,12 +266,13 @@ class WyckoffGenerator():
                         elif cascade_name == 'harmonic_site_symmetries' and input_field == 'sites_enumeration':
                             # Since we don't natively support either two engineers for one field or
                             # chainging engineers, we do this hack
-                            # Next b
                             enumerations = self.token_engineers['sites_enumeration'].get_feature_from_token_batch(
                                 start_converted, [
                                     generated[cascade_index_by_name['site_symmetries']][:, known_seq_len].tolist(),
                                     generated[cascade_index_by_name['harmonic_cluster']][:, known_seq_len].tolist()])
                             this_cascade_input = enumerations
+                            #import pdb
+                            #pdb.set_trace()
                         else:
                             raise NotImplementedError(
                                 f"Unknown input field {input_field} for engineer {cascade_name}")
@@ -281,12 +283,34 @@ class WyckoffGenerator():
                     # print(f"Generating {cascade_name}")
                     feature_np = self.token_engineers[cascade_name].get_feature_from_token_batch(
                         start_converted, this_engineer_input)
-                    import pdb
-                    pdb.set_trace()
                     if feature_np.dtype == "O": # Object, in this case array of array
                         # import pdb
                         # pdb.set_trace()
                         feature_np = np.stack(feature_np)
                     generated[known_cascade_len][:, known_seq_len] = \
                         torch.from_numpy(feature_np)
+            ss_validitity = []
+            enum_validity = []
+            for structure_index, this_start in enumerate(start_converted):
+                ss_validitity.append(
+                    (this_start,
+                     generated[cascade_index_by_name['site_symmetries']][structure_index, known_seq_len].item()
+                     ) in self.token_engineers["multiplicity"].db)
+                if 'sites_enumeration' in cascade_index_by_name:
+                    enum_validity.append(
+                        (this_start,
+                            generated[cascade_index_by_name['site_symmetries']][structure_index, known_seq_len].item(),
+                            generated[cascade_index_by_name['sites_enumeration']][structure_index, known_seq_len].item()
+                        ) in self.token_engineers["multiplicity"].db)
+                elif "harmonic_cluster" in cascade_index_by_name:
+                    enum_validity.append(
+                        (this_start,
+                            generated[cascade_index_by_name['site_symmetries']][structure_index, known_seq_len].item(),
+                            generated[cascade_index_by_name['harmonic_cluster']][structure_index, known_seq_len].item()
+                        ) in self.token_engineers["sites_enumeration"].db)
+            print(f"Known sequence length: {known_seq_len}")
+            print(f"SS validity: {sum(ss_validitity) / len(ss_validitity)}")
+            print(f"ENUM validity: {sum(enum_validity) / len(enum_validity)}")
+            #import pdb
+            #pdb.set_trace()
         return generated

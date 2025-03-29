@@ -50,14 +50,16 @@ def main():
     # to preserve the sanctity of the test dataset and ex nihilo generation.
     #tensors, tokenisers, engineers = load_tensors_and_tokenisers(config.dataset, config.tokeniser.name)
     generation_start_time = time.time()
-    trainer = WyckoffTrainer.from_config(config, device=args.device)
+    trainer = WyckoffTrainer.from_config(
+        config, device=args.device, run_path=Path(__file__).parent / "runs" / args.wandb_run)
+    trainer.model.load_state_dict(torch.load(trainer.run_path / "best_model_params.pt", weights_only=True))
     generated_wp = trainer.generate_structures(args.initial_n_samples, args.calibrate)
     generation_end_time = time.time()
     print(f"Generation in total took {generation_end_time - generation_start_time} seconds")
-    #print(f"Tensor generation took {tensor_generated_time - generation_start_time} seconds")
-    #print(f"Detokenizing took {generation_end_time - tensor_generated_time} seconds")
-    #wp_formal_validity = len(generated_wp) / generation_size
-    #print(f"Wyckchoffs formal validity: {wp_formal_validity}")
+    # print(f"Tensor generation took {tensor_generated_time - generation_start_time} seconds")
+    # print(f"Detokenizing took {generation_end_time - tensor_generated_time} seconds")
+    # wp_formal_validity = len(generated_wp) / generation_size
+    # print(f"Wyckchoffs formal validity: {wp_formal_validity}")
     if args.firm_n_samples is not None:
         if len(generated_wp) >= args.firm_n_samples:
             generated_wp = generated_wp[:args.firm_n_samples]
