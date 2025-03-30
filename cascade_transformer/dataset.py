@@ -132,7 +132,7 @@ class AugmentedCascadeDataset():
         A class for contaning augmented cascade datasets.
         Cascade means that a dataset is a list of tensors, where each tensor is a different field, with
         each subsequent field depending on the previous one. For use in the Wyckoff transformer. Augmented
-        means that for up to one field we have multiple possible values, and we want to sample from them.
+        means that fields have multiple possible values, and we want to sample from them.
 
         Arguments:
             data: A dictionary of tensors (for normal fields) or lists of tensors (for augmented fields),
@@ -177,7 +177,7 @@ class AugmentedCascadeDataset():
         if augmented_fields:
             # Ideally, we would like a nested tensor, but it doesn't support indexing we need
             # So we use a custom data store, and indices to it
-            #self.augmented_field_indices = [cascade_order.index(augmented_field) for augmented_field in augmented_fields]
+            # self.augmented_field_indices = [cascade_order.index(augmented_field) for augmented_field in augmented_fields]
             all_augmentation_variants = [torch.tensor(
                 list(map(len, data[f"{augmented_field}_augmented"])),
                 dtype=dtype, device=self.augmented_storage_device) for augmented_field in augmented_fields]

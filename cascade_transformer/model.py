@@ -136,6 +136,7 @@ class CascadeTransformer(nn.Module):
     def from_config_and_tokenisers(cls, config: OmegaConf,
         tokenisers: dict, device: torch.device):
 
+        # TODO hasn't it been relaxed, and field renamed?
         if len(config.tokeniser.get("augmented_token_fields", [])) > 1:
             raise ValueError("Only one augmented field is supported")
 
