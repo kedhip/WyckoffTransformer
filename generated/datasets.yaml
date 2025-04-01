@@ -7,6 +7,15 @@ mp_20:
       structures:
         path: Dropbox/mp_20/WyckoffLLM/naive/parsed_materials_10000_pyxtal.json_structures.json.gz
         storage_type: PymatgenJson
+      CHGNet_fix:
+        structures:
+          path: Dropbox/mp_20/WyckoffLLM/naive/WyLM-naive_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
+          storage_type: NongWei_CHGNet_csv
+      DFT:
+        structures:
+          path: Dropbox/novel_105/relax_results/ICML2025/id_cif_Eform_Ehull_cifs.csv
+          storage_type: DFT_CSV_CIF
+          storage_key: wylm
   WyckoffLLM-site-symmetry:
     wyckoffs:
       path: Dropbox/mp_20/WyckoffLLM/site-symmetry/parsed_materials_augmented_10000.json.gz
@@ -201,6 +210,11 @@ mp_20:
         # Valid records: 9580 / 10000
         path: Dropbox/mp_20/SymmCD/SymmCD_mp_20_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
         storage_type: NongWei_CHGNet_csv
+    DFT:
+      structures:
+        path: Dropbox/novel_105/relax_results/ICML2025/id_cif_Eform_Ehull_cifs.csv
+        storage_type: DFT_CSV_CIF
+        storage_key: symc
   WyckoffTransformer-letters:
     wyckoffs:
       path: Dropbox/mp_20/WyckoffTransformer-letters/sg_letters-uy6zg9y9.json.gz
@@ -213,6 +227,19 @@ mp_20:
         structures:
           path: Dropbox/mp_20/WyckoffTransformer-letters/DiffCSP++/CHGNet_fix/WTFL-DCPP_mp_20_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
           storage_type: NongWei_CHGNet_csv
+      DFT:
+        structures:
+          path: Dropbox/novel_105/relax_results/ICML2025/id_cif_Eform_Ehull_cifs.csv
+          storage_type: DFT_CSV_CIF
+          storage_key: wtfl
+  WyckoffTransformer-harmonic:
+    wyckoffs:
+      path: Dropbox/mp_20/WyckoffTransformer-harmonic/cluster_harmonic_token_presence-fqmm8o4z.json.gz
+      storage_type: pyxtal_json
+    DiffCSP++:
+      structures:
+        path: Dropbox/mp_20/WyckoffTransformer-harmonic/DiffCSP++/cluster_harmonic_token_presence-fqmm8o4z.diffcsp-pp.json.gz
+        storage_type: PymatgenJson
 mp_20_biternary:
   WyckoffTransformer:
     wyckoffs:
