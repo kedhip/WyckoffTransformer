@@ -240,6 +240,15 @@ mp_20:
       structures:
         path: Dropbox/mp_20/WyckoffTransformer-harmonic/DiffCSP++/cluster_harmonic_token_presence-fqmm8o4z.diffcsp-pp.json.gz
         storage_type: PymatgenJson
+      CHGNet_fix:
+        structures:
+          path: Dropbox/mp_20/WyckoffTransformer-harmonic/DiffCSP++/wtfh_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
+          storage_type: NongWei_CHGNet_csv
+      DFT:
+        structures:
+          path: Dropbox/novel_105/relax_results/ICML2025/id_cif_Eform_Ehull_cifs.csv
+          storage_type: DFT_CSV_CIF
+          storage_key: wtfh
 mp_20_biternary:
   WyckoffTransformer:
     wyckoffs:
