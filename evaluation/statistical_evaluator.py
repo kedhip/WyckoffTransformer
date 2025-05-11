@@ -47,6 +47,7 @@ class StatisticalEvaluator():
 
         self.test_num_sites = self.test_dataset['site_symmetries'].map(len)
         self.test_num_elements = self.test_dataset['elements'].map(count_unique)
+        self.test_num_atoms = self.test_dataset['structure'].map(len)
         self.dof_counter = DoFCounter()
         self.test_dof = self.test_dataset['dof'].apply(sum)
 
@@ -80,6 +81,18 @@ class StatisticalEvaluator():
             return wasserstein_distance(self.test_num_sites, generated_num_sites), generated_num_sites
         else:
             return wasserstein_distance(self.test_num_sites, generated_num_sites)
+
+
+    def get_num_atoms_emd(self, generated_structures: pd.DataFrame) -> float:
+        """
+        Computes the EMD between the numbers of atoms in the generated structures and the test dataset.
+        Args:
+            generated_structures
+        Returns:
+            EMD value
+        """
+        generated_num_atoms = generated_structures.structure.map(len)
+        return wasserstein_distance(self.test_num_atoms, generated_num_atoms)
 
 
     def get_num_elements_ks(self, generated_structures: pd.DataFrame, return_counts:bool=False):
