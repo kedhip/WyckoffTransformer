@@ -25,3 +25,5 @@ poetry.lock
 pyproject.toml
 generated/jd66k0gx.csv.gz
 generated/jd66k0gx.pt
+generated/CIF-FMT-10000_miad-s333-mp20.csv
+generated/CIF-FMT-10000_miad-s333-no-prerelax-mp20.csv

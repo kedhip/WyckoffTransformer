@@ -60,6 +60,10 @@ mp_20:
         structures:
           path: WyckoffTransformer_mp_20_CHGNet_relax_fix-symmetry_vs_removal/remove_symmetry
           storage_type: NongWei
+    DiffCSP++10k:
+      structures:
+        path: WyckoffTransformer_mp_20.diffcsp-pp-10k.json.gz
+        storage_type: PymatgenJson
     DiffCSP++:
       structures:
         path: WyckoffTransformer_mp_20_DiffCSP++_tol=0.1.json.gz
@@ -249,6 +253,14 @@ mp_20:
           path: Dropbox/novel_105/relax_results/ICML2025/id_cif_Eform_Ehull_cifs.csv
           storage_type: DFT_CSV_CIF
           storage_key: wtfh
+  MiAD:
+    structures:
+      path: CIF-FMT-10000_miad-s333-no-prerelax-mp20.csv
+      storage_type: CDVAE_csv_cif
+    CHGNet_free:
+      structures:
+        path: CIF-FMT-10000_miad-s333-mp20.csv
+        storage_type: CDVAE_csv_cif
 mp_20_biternary:
   WyckoffTransformer:
     wyckoffs:
