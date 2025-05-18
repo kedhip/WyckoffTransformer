@@ -133,6 +133,25 @@ def filter_by_unique_structure(data: pd.DataFrame) -> pd.DataFrame:
     return data.loc[unique_indices]
 
 
+def filter_by_unique_structure_chem_sys_index(data: pd.DataFrame) -> pd.DataFrame:
+    present = defaultdict(list)
+    unique_indices = []
+    for index, structure in data.structure.items():
+        # Strutures consisiting of different sets of elements
+        # can't match in any way
+        chem_system = frozenset(structure.composition)
+        if chem_system not in present:
+            unique_indices.append(index)
+        else:
+            for present_structure in present[chem_system]:
+                if StructureMatcher().fit(structure, present_structure):
+                    break
+            else:
+                unique_indices.append(index)
+        present[chem_system].append(structure)
+    return data.loc[unique_indices]
+
+
 class NoveltyFilter():
     """
     Uses fingerprints and StructureMatcher to filter for novel structures.
