@@ -1,11 +1,11 @@
-#if __name__ == "__main__":
+if __name__ == "__main__":
     # We want to avoid messing with the environment variables in case we are used as a module.
     # The code is parallelised by structure
- #   import os
-#    os.environ["OMP_NUM_THREADS"] = "1"
- #   os.environ["OMP_THREAD_LIMIT"] = "1"
+    import os
+    os.environ["OMP_NUM_THREADS"] = "1"
+    os.environ["OMP_THREAD_LIMIT"] = "1"
 
-from typing import List
+from typing import List, Optional
 from argparse import ArgumentParser
 from pathlib import Path
 from omegaconf import OmegaConf
@@ -29,9 +29,12 @@ def dive_and_cache(
     this_config: OmegaConf,
     transformations: List[str],
     dataset_name: str,
-    config_file: Path):
+    config_file: Path,
+    last_transformation: Optional[str] = None) -> None:
 
-    if DATA_KEYS.intersection(this_config.keys()):
+    if DATA_KEYS.intersection(this_config.keys()) and (
+        not last_transformation or last_transformation == transformations[-1]):
+        
         print(f"From {dataset_name} loading ({', '.join(transformations)})")
         data = GeneratedDataset.from_transformations(
             transformations, dataset=dataset_name)
@@ -40,13 +43,15 @@ def dive_and_cache(
     for new_transformation, new_config in this_config.items():
         if new_transformation in DATA_KEYS:
             continue
-        dive_and_cache(new_config, transformations + [new_transformation], dataset_name, config_file)
+        dive_and_cache(new_config, transformations + [new_transformation], dataset_name, config_file, last_transformation)
 
 def main():
     parser = ArgumentParser()
     parser.add_argument("--config-file", type=Path, default=Path(__file__).parent / "generated" / "datasets.yaml")
     parser.add_argument("--dataset", type=str)
     parser.add_argument("--transformations", type=str, nargs="+")
+    parser.add_argument("--last-transformation", type=str,
+                        help="Only process the datasets with this transformation as the last one")
     args = parser.parse_args()
     if args.transformations:
         data = GeneratedDataset.from_transformations(
@@ -59,8 +64,8 @@ def main():
         for dataset_name, dataset_config in config.items():
             if args.dataset and args.dataset != dataset_name:
                 continue
-            dive_and_cache(dataset_config, [], dataset_name, args.config_file)
-           
+            dive_and_cache(dataset_config, [], dataset_name, args.config_file, args.last_transformation)
+
 
 if __name__ == "__main__":
     main()
