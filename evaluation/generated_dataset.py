@@ -43,6 +43,9 @@ StructureStorage = Enum("StructureStorage", [
     "DFT_CSV_CIF",
     "SymmCD_csv",
     "NongWei_CHGNet_csv",
+    "old_atomated_csv",
+    "atomated_csv",
+    "invalid_cifs"
     ])
 
 WyckoffStorage = Enum("WyckoffStorage", [
@@ -250,6 +253,21 @@ def load_ehull_csv_cif(path: Path):
     data["structure"] = data.relxed_structure.apply(read_cif)
     return data
 
+
+def load_old_atomated_csv(path: Path) -> pd.DataFrame:
+    structure_from_dict_str = lambda x: Structure.from_dict(literal_eval(x))
+    return pd.read_csv(path, index_col="material_id", converters={"structure": structure_from_dict_str})
+
+def load_atomated_csv(path: Path) -> pd.DataFrame:
+    return pd.read_csv(path, index_col="material_id", converters={
+        "structure": partial(Structure.from_str, fmt="json")})
+
+
+def load_invalid_cifs(path: Path):
+    data = pd.read_csv(path, index_col=0)
+    data["structure"] = data.cif.apply(read_cif_or_none)
+    data.dropna(inplace=True)
+    return data
 
 class LetterDictToSitesConverter:
     def __init__(self, 
@@ -513,6 +531,12 @@ class GeneratedDataset():
             self.data = load_SymmCD_csv(path)
         elif storage_type == StructureStorage.NongWei_CHGNet_csv:
             self.data, self.unfiltered_size = load_NongWei_CHGNet_csv(path)
+        elif storage_type == StructureStorage.old_atomated_csv:
+            self.data = load_old_atomated_csv(path)
+        elif storage_type == StructureStorage.invalid_cifs:
+            self.data = load_invalid_cifs(path)
+        elif storage_type == StructureStorage.atomated_csv:
+            self.data = load_atomated_csv(path)
         else:
             raise ValueError("Unknown storage type")
         if self.data.index.duplicated().any():
