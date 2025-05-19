@@ -2,7 +2,7 @@ from typing import List, Tuple, Optional
 from enum import Enum
 import logging
 import torch
-from torch import Tensor
+from torch import Tensor, LongTensor
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ def randint_tensor(high: torch.Tensor) -> Tensor:
         device=high.device, dtype=dtype) % high
 
 
-def jagged_batch_randperm_naive(permutation_lengths: Tensor, max_sequence_length: int):
+def jagged_batch_randperm_naive(permutation_lengths: LongTensor, max_sequence_length: int):
     """
     Generates a random permutation of the integers from 0 to max_sequence_length
     for each batch in the batch_size. It's a random permutation of the first
@@ -51,7 +51,7 @@ def jagged_batch_randperm_naive(permutation_lengths: Tensor, max_sequence_length
     return result
 
 
-def jagged_batch_randperm(permutation_lengths: Tensor, max_sequence_length: int):
+def jagged_batch_randperm(permutation_lengths: LongTensor, max_sequence_length: int):
     """
     Generates a random permutation of the integers from 0 to max_sequence_length
     for each batch in the batch_size. It's a random permutation of the first
@@ -86,7 +86,19 @@ def jagged_batch_randperm(permutation_lengths: Tensor, max_sequence_length: int)
     return result
 
 
-def batched_bincount(x, dim, max_value, dtype=None):
+def batched_bincount(x: Tensor, dim: int, max_value, dtype=None) -> Tensor:
+    """
+    Counts the number of occurrences of each value in a tensor along a given dimension.
+
+    Arguments:
+        x: The input tensor.
+        dim: The dimension along which to count.
+        max_value: The maximum value in the input tensor.
+        dtype: The dtype of the output tensor.
+    
+    Returns:
+        A tensor containing the counts of each value.
+    """
     if dtype is None:
         dtype = x.dtype
     target = torch.zeros(x.shape[0], max_value, dtype=dtype, device=x.device)
@@ -99,7 +111,19 @@ def gather_var_dim(
     input_: torch.Tensor,
     dim: int,
     index: torch.Tensor) -> torch.Tensor:
+    """
+    Gathers values along an axis specified by dim.
+    A simple wrapper around torch.gather that handles 2D and 3D tensors.
+    For 3D tensors, the index is expanded to match the third dimension of the input.
 
+    Arguments:
+        input_: The source tensor.
+        dim: The axis along which to index.
+        index: The indices of elements to gather.
+
+    Returns:
+        A new tensor with the same type as self.
+    """
     if input_.dim() == 2:
         return input_.gather(dim, index)
     if input_.dim() == 3:
@@ -111,9 +135,25 @@ def gather_var_dim(
 TargetClass = Enum("TargetClass", ['NextToken', 'NumUniqueTokens', 'Scalar'])
 
 class AugmentedCascadeDataset():
+    """
+    A class for contaning augmented cascade datasets.
+    Cascade means that a dataset is a list of tensors, where each tensor is a different field, with
+    each subsequent field depending on the previous one. For use in the Wyckoff transformer. Augmented
+    means that some fields can have multiple possible values, and we want to sample from them.
+
+    The principle methods for getting the data are:
+    - get_augmented_data: returns the full sequences, using a random augmentation for the augmented field.
+    - get_masked_cascade_data: returns sequences up to known sequence length, and for the next token up to
+        known cascade length. The rest is masked.
+    - get_masked_multiclass_cascade_data: the main workhorse of WyFormer. Applies a random permutation
+        to the data, and returns the sequences up to known sequence length, and for the next token up to
+        known cascade length. The rest is masked. If the target is the first cascade element, the target value
+        is returned as as a multiclass target (since any token can be next in a random permutation), otherwise
+        firm value.
+    """
     def __init__(
         self,
-        data: dict[Tensor|List[Tensor]],
+        data: dict[str, Tensor|List[Tensor]],
         cascade_order: Tuple[str, ...],
         masks: dict[str, int|Tensor],
         pads: dict[str, int|Tensor],
@@ -129,23 +169,68 @@ class AugmentedCascadeDataset():
         augmented_storage_device: Optional[str] = None,
         target_name = None):
         """
-        A class for contaning augmented cascade datasets.
-        Cascade means that a dataset is a list of tensors, where each tensor is a different field, with
-        each subsequent field depending on the previous one. For use in the Wyckoff transformer. Augmented
-        means that fields have multiple possible values, and we want to sample from them.
-
-        Arguments:
-            data: A dictionary of tensors (for normal fields) or lists of tensors (for augmented fields),
-                with keys being the field names.
-            cascade_order: A tuple of field names, in the order they should be passed to the model.
-            masks: A dictionary of mask values for each field
-            start_field: The name of the field that should be used as the start token.
-            augmented_fields: The names of the fields that should be augmented. They are sampled at the
-                same indices.
-            batch_size: The batch size of the dataset. It is applied before cutting the PAD targets,
-                and there will be the end of the dataset, so the actual batches might be smaller.
-            dtype: The dtype of the tensors.
-            device: The device of the tensors.
+        Args:
+            data (dict[str, Tensor | List[Tensor]]):
+            A dictionary containing the raw data.
+            - Keys are field names. For an augmented field, say `my_field` (which
+              must be listed in `augmented_fields`), the dictionary is expected
+              to also contain a key `f"my_field_augmented"`.
+            - Values for regular fields (elements of `cascade_order` not in
+              `augmented_fields`, and the `start_field`) are typically `torch.Tensor`.
+            - For an augmented field `my_field`, the value `data[f"my_field_augmented"]`
+              must be a `List[List[torch.Tensor]]`. The outer list has a length equal
+              to the number of examples. Each inner list contains Tensors, where each
+              Tensor represents one augmentation for the corresponding original example.
+              All original examples must have the same number of augmentations.
+            cascade_order (Tuple[str, ...]):
+            A tuple of field names defining the order in which elements of a
+            sequence are processed or generated. These names refer to base fields.
+            If a field in `cascade_order` is also in `augmented_fields`, its
+            non-augmented version is expected in `data[name]` (if not augmented)
+            and its augmented versions under `data[f"{name}_augmented"]`.
+            masks (dict[str, int | Tensor]):
+            A dictionary mapping field names in `cascade_order` to their
+            corresponding mask token ID(s). Values can be integers or Tensors.
+            pads (dict[str, int | Tensor]):
+            A dictionary mapping field names in `cascade_order` to their
+            corresponding padding token ID(s). Values can be integers or Tensors.
+            stops (dict[str, int | Tensor]):
+            A dictionary mapping field names in `cascade_order` to their
+            corresponding stop token ID(s). Values can be integers or Tensors.
+            num_classes (dict[str, int]):
+            A dictionary mapping field names in `cascade_order` to the number
+            of unique classes (vocabulary size) for that field.
+            start_field (str):
+            The key in `data` that provides the start tokens for sequences.
+            The corresponding value `data[start_field]` should be a `torch.Tensor`.
+            augmented_fields (List[str] | None, optional):
+            A list of field names (from `cascade_order`) that have augmented versions.
+            For each `field_name` in this list, `data` must contain a key
+            `f"{field_name}_augmented"` with the augmented data structured as
+            described under the `data` parameter. Defaults to an empty list if None,
+            meaning no fields are augmented.
+            batch_size (Optional[int], optional):
+            The number of examples per batch. If None, the entire dataset is
+            treated as a single batch. Defaults to None.
+            fix_batch_size (bool, optional):
+            If True and `batch_size` is set, the last batch will be dropped if
+            it's smaller than `batch_size`. If False, the last batch may be smaller.
+            Defaults to True.
+            dtype (torch.dtype, optional):
+            The desired data type for most tensors in the dataset (e.g., main data,
+            pads, masks, stops, augmented data). Defaults to `torch.int64`.
+            start_dtype (torch.dtype, optional):
+            The desired data type for start tokens. Defaults to `torch.int64`.
+            device (str, optional):
+            The device to store the main dataset tensors on (e.g., "cpu", "cuda").
+            Defaults to "cpu".
+            augmented_storage_device (Optional[str], optional):
+            The device to store augmented data. If None, uses the same `device`
+            as the main data. This is useful for storing large augmented datasets
+            on CPU RAM while main data and computations are on GPU. Defaults to None.
+            target_name (Optional[str], optional):
+            The key in `data` for the target variable, if any. The corresponding
+            value `data[target_name]` should be a `torch.Tensor`. Defaults to None.
         """
         if augmented_fields is None:
             augmented_fields = []
@@ -231,7 +316,20 @@ class AugmentedCascadeDataset():
     @torch.compile(fullgraph=True)
     @torch.no_grad()
     def get_augmentation(
-        self, batch_selection = slice(None)) -> dict[int, Tensor]:
+        self, batch_selection: Tensor|slice = slice(None)) -> dict[int, Tensor]:
+        """
+        Retrieves a random augmentation for the selected batch.
+
+        Args:
+            batch_selection (Tensor | slice, optional):
+                Indices or slice specifying which examples to retrieve augmentations for.
+                Defaults to slice(None), meaning all examples.
+
+        Returns:
+            dict[int, Tensor]: A dictionary where keys are cascade indices of augmented
+            fields and values are tensors containing the selected augmentations for
+            the specified batch. Returns an empty dictionary if no fields are augmented.
+        """
         if not self.augmentation_data_store:
             return {}
         augnementation_selection = randint_tensor(self.augmentation_variants[batch_selection])
@@ -305,7 +403,7 @@ class AugmentedCascadeDataset():
 
     def get_augmented_data(self, no_batch: bool) -> Tuple[Tensor, List[Tensor], Tensor, Tensor]:
         """
-        Returns the full sequences, using a randon augmentation for the augmented field.
+        Returns the full sequences, using a random augmentation for the augmented field.
         """
         if self.batch_size is not None and not no_batch:
             batch_selection = self.get_next_batch()
@@ -335,6 +433,24 @@ class AugmentedCascadeDataset():
         apply_permutation: bool = True,
         truncate_invalid_targets: bool = True,
         return_chosen_indices: bool = False):
+        """
+        Args:
+            known_seq_len (int): The length of the fully known sequence.
+            known_cascade_len (int): The length of the known cascade for the last token
+            target_type (TargetClass): The type of the target. Can be either NextToken or NumUniqueTokens.
+                For everything else it doesn't make sense to use masked data.
+            multiclass_target (bool): If True, return multiclass target for the first cascade element.
+            no_batch (bool): If True, don't use batching.
+            full_permutation (Optional[Tensor], optional): The full permutation to use. If None, a new one is generated.
+            apply_permutation (bool): If True, apply a permutation to the data, either a random one or the one
+                provided in full_permutation. If False, the data are not permuted.
+            truncate_invalid_targets (bool): If True, truncate the invalid targets, the retured dataset will
+                have the same or smaller size than the batch size, and all targets will be valid, i. e. not PAD
+            return_chosen_indices (bool): If True, return the indices of the chosen examples.
+        Returns:
+            Tuple[Tensor, List[Tensor], Tensor, Tensor]: A tuple containing the start tokens, the cascade data,
+            the target, and the padding mask.
+        """
 
         if target_type == TargetClass.NumUniqueTokens:
             if multiclass_target:
@@ -441,7 +557,7 @@ class AugmentedCascadeDataset():
                             # Debug:
                             # if (target == self.pads[self.cascade_order[known_cascade_len]]).any():
                             #    raise ValueError("PAD is not a valid target")
-                else:
+                elif target_type == TargetClass.NumUniqueTokens:
                     # We need the number of unique values, as opposed to values themselves
                     # hence, we use bincount with bool dtype, as
                     # true + true = true
@@ -454,6 +570,8 @@ class AugmentedCascadeDataset():
                     # logger.debug("Unique tokens mean: %f", cascade_targets[-1].float().mean())
                     # logger.debug("Unique tokens var aka std**2: %f", cascade_targets[-1].float().var())
                     # logger.debug("No. of unique tokens in %s for #0: %i", name, cascade_targets[-1][0])
+                else:
+                    raise NotImplementedError("Only NextToken and NumUniqueTokens targets are supported")
         
         if target_type == TargetClass.NumUniqueTokens:
             target = torch.stack(cascade_targets, dim=1)
