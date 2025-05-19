@@ -108,6 +108,7 @@ mp_20:
     structures:
       path: mp_20/DiffCSP/DiffCSP_mp_20.pt
       storage_type: DiffCSP_pt
+      comment: "Structures were provided by DiffCSP first author, Rui Jiao, released with permission"
     DFT:
       structures:
         path: mp_20/DiffCSP/DFT/DiffCSP-105.csv.gz
@@ -125,6 +126,7 @@ mp_20:
     structures:
       path: mp_20/DiffCSP++/DiffCSP++_mp_20.pt
       storage_type: DiffCSP_pt
+      comment: "Structures were provided by DiffCSP first author, Rui Jiao, released with permission"
     DFT:
       structures:
         path: mp_20/DiffCSP++/DFT/DiffCSP++-105.csv.gz
