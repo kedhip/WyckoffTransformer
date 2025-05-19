@@ -1,7 +1,7 @@
-from typing import Optional, Tuple, Iterable, Dict, List
+from typing import Optional, Tuple, Dict, List
 from collections import Counter
 import logging
-from scipy.stats import kstest, chi2_contingency, wasserstein_distance, chisquare
+from scipy.stats import kstest, wasserstein_distance, chisquare
 from operator import attrgetter
 import pandas as pd
 import numpy as np
