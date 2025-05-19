@@ -11,14 +11,14 @@ echo "WANDB_ENTITY=symmetry-advantage" > .env
 ```
 5. Preprocess the data on Wychoff positions:
 ```bash
-python preprocess_wychoffs.py
+python scripts/preprocess_wychoffs.py
 ```
 # Running a pilot model
 To veryfy that the installation is working, run a pilot model. Next token prediction:
 ```bash
-python cache_a_dataset.py mp_20
-python tokenise_a_dataset.py mp_20 yamls/tokenisers/mp_20_sg_multiplicity.yaml --new-tokenizer
-python train.py yamls/models/NextToken/v6/base_sg.yaml mp_20 cuda --pilot
+python scripts/cache_a_dataset.py mp_20
+python scripts/tokenise_a_dataset.py mp_20 yamls/tokenisers/mp_20_sg_multiplicity.yaml --new-tokenizer
+python scripts/train.py yamls/models/NextToken/v6/base_sg.yaml mp_20 cuda --pilot
 ```
 Scalar prediction: TOOD
 # Training Data Preprocessing
@@ -26,23 +26,23 @@ The available datasets correspond to the folders in `data` and `cdvae/data`. Dat
 Available datasets (in GitHub): `mp_20`, `mp_20_biternary` (binary and ternary structures from MP-20), `mpts_52`, `carbon_24`, `perov_5`. It is also possible to download and use `matbench_discovery_mp_2022` ([notebook(scripts/data_preprocesssing/mp_2022.ipynb)]) and `matbench_discovery_mp_trj_full` ([notebook](scripts/data_preprocesssing/mptrj_extract_all.ipynb)). For data to be used for training, we need to do two preprocessing steps.
 ## Compute and cache symmetry information
 ```bash
-python cache_a_dataset.py <dataset-name>
+python scripts/cache_a_dataset.py <dataset-name>
 ```
 This will create a pickled representaiton of the dataset in `cache/<dataset-name>/data.pkl.gz`. The script supports setting symmetry tolerance. _this is not done automatically_, the datasets which include tolerance in their name were obtained by manually using the command-line option.
 ## Tokenization
 The tokenization script serves two purposes: it produces the mapping from the real data to token ids, and saves the resulting tensors. To produce a new tokenizer:
 ```bash
-python tokenise_a_dataset.py <dataset-name> <path-to-tokenizer-yaml> --new-tokenizer
+python scripts/tokenise_a_dataset.py <dataset-name> <path-to-tokenizer-yaml> --new-tokenizer
 ```
 Tokenizer configs are stored in `yamls/tokenisers`. The tokeniser is saved to `cache/<dataset-names>/tokenisers/**.pkl.gz`, preserving the folder structure of the config.
 
 Alternatively, you can use a cached tokeniser. This is important when a model that was trained on one dataset is  applied to a different dataset.
 ```bash
-python tokenise_a_dataset.py <dataset-name> <path-to-tokenizer-yaml> --tokenizer-path cache/<dataset-names>/tokenisers/<tokenizer-name>.pkl.gz
+python scripts/tokenise_a_dataset.py <dataset-name> <path-to-tokenizer-yaml> --tokenizer-path cache/<dataset-names>/tokenisers/<tokenizer-name>.pkl.gz
 ```
 # Training
 ```bash
-python train.py <path-to-model-yaml> <dataset-name> <device>
+python scripts/train.py <path-to-model-yaml> <dataset-name> <device>
 ```
 The model weights are saved to `runs/<run-id>`, and to WanDB, along with the tokenizer.
 1. If running on CRP, add `--torch-num-thread ${ROLOS_AVAILABLE_CPU%.*}`
@@ -90,11 +90,11 @@ rclone copy "NUS_Dropbox:/Nikita Kazeev/Wyckoff Transformer data/generated" gene
 ```
 The first step is converting them all to a unified format. Processing all generated datasets in `generated/datasets.yaml`:
 ```bash
-poetry run python cache_generated_datasets.py
+poetry run python scripts/cache_generated_datasets.py
 ```
 It supports filtering by dataset and transformations, e. g.:
 ```bash
-poetry run python cache_generated_datasets.py --dataset mp_20 --transformations DiffCSP++ DFT
+poetry run python scripts/cache_generated_datasets.py --dataset mp_20 --transformations DiffCSP++ DFT
 ```
 Completing this step will enable loading the data in the next steps with `evaluation.generated_dataset.GeneratedDataset`
 

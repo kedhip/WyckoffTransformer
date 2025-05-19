@@ -4,16 +4,21 @@ if __name__ == "__main__":
     import os
     os.environ["OMP_NUM_THREADS"] = "1"
     os.environ["OMP_THREAD_LIMIT"] = "1"
+    # Add the project root to sys.path to allow imports from the root directory
+    import sys
+    from pathlib import Path
+    sys.path.append(str(Path(__file__).parent.parent))
+
 from typing import Optional
 import argparse
 import gzip
 import pickle
 from pathlib import Path
 
-from data import read_all_MP_csv
+from .data import read_all_MP_csv  # Changed to relative import
 
 
-cache_folder = Path("cache")
+cache_folder = Path(__file__).parent.parent / "cache"  # Adjusted path
 
 def get_cache_data_file_name(dataset:str):
     return cache_folder / dataset / "data.pkl.gz"
@@ -31,13 +36,13 @@ def cache_dataset(
     """
     if dataset in ('mp_20', 'perov_5', 'carbon_24'):
         datasets_pd = read_all_MP_csv(
-            mp_path=Path(__file__).parent.resolve() / "cdvae" / "data" / dataset,
-            n_jobs=n_jobs, symmetry_precision=symmetry_precision, symmetry_a_tol=symmetry_a_tol, max_wp=max_wp) 
+            mp_path=Path(__file__).parent.parent.resolve() / "cdvae" / "data" / dataset,  # Adjusted path
+            n_jobs=n_jobs, symmetry_precision=symmetry_precision, symmetry_a_tol=symmetry_a_tol, max_wp=max_wp)
     else:
         datasets_pd = read_all_MP_csv(
-            Path(__file__).parent.resolve() / "data" / dataset,
+            Path(__file__).parent.parent.resolve() / "data" / dataset,  # Adjusted path
             file_format="csv.gz", n_jobs=n_jobs, symmetry_precision=symmetry_precision,
-                symmetry_a_tol=symmetry_a_tol, max_wp=max_wp)
+            symmetry_a_tol=symmetry_a_tol, max_wp=max_wp)
 
     cache_data_file_name = get_cache_data_file_name(dataset)
     cache_data_file_name.parent.mkdir(parents=True, exist_ok=True)

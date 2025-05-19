@@ -29,11 +29,11 @@ def main():
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
     config = omegaconf.OmegaConf.load(args.config_file)
-    tokenizer_root_path = Path(__file__).parent.resolve() / "yamls" / "tokenisers"
+    tokenizer_root_path = Path(__file__).parent.parent.resolve() / "yamls" / "tokenisers" # Adjusted path
     tokenizer_full_name = args.config_file.resolve().relative_to(tokenizer_root_path).with_suffix('')
     if config.name != str(tokenizer_full_name):
         raise ValueError(f"Config inside file {config.name} does not match the file name {tokenizer_full_name}")
-    cache_path = Path(__file__).parent.resolve() / "cache" / args.dataset
+    cache_path = Path(__file__).parent.parent.resolve() / "cache" / args.dataset # Adjusted path
     cache_path.mkdir(parents=True, exist_ok=True)
     with gzip.open(cache_path / 'data.pkl.gz', "rb") as f:
         datasets_pd = pickle.load(f)

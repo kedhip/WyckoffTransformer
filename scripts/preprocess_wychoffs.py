@@ -46,7 +46,7 @@ def convolve_vectors_with_spherical_harmonics(vectors_batch, degree):
     return res.mean(axis=-1)
 
 def enumerate_wychoffs_by_ss(
-    output_file: Path = Path("cache", "wychoffs_enumerated_by_ss.pkl.gz"),
+    output_file: Path = Path(__file__).parent.parent / "cache" / "wychoffs_enumerated_by_ss.pkl.gz", # Adjusted path
     spherical_harmonics_degree: int = 2):
     """
     Enumerates all Wyckoff positions by site symmetry.
@@ -109,7 +109,7 @@ def enumerate_wychoffs_by_ss(
     with opener(output_file, "wb") as f:
         pickle.dump((dict(enum_from_ss_letter), dict(letter_from_ss_enum),
             dict(ss_from_letter)), f)
-    engineered_path = Path("cache", "engineers")
+    engineered_path = Path(__file__).parent.parent / "cache" / "engineers" # Adjusted path
     engineered_path.mkdir(exist_ok=True)
     multiplicity_engineer = FeatureEngineer(
         multiplicity_from_ss_enum, ("spacegroup_number", "site_symmetries", "sites_enumeration"),

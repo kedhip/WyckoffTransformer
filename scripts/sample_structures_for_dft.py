@@ -16,7 +16,7 @@ from itertools import chain
 class TopElements():
     def __init__(self, dataset="mp_20"):
         self.dataset = dataset
-        self.cache_path = Path(__file__).parent.joinpath("cache", dataset, "top_elements.pkl")
+        self.cache_path = Path(__file__).parent.parent.joinpath("cache", dataset, "top_elements.pkl") # Adjusted path
         if self.cache_path.exists():
             with self.cache_path.open("rb") as f:
                 self.data = pickle.load(f)
@@ -100,7 +100,7 @@ def main():
         GeneratedDataset.from_cache(('split', 'val'), args.dataset).data], axis=0, verify_integrity=True)
     novelty_filter = NoveltyFilter(novelty_reference)
 
-    novel_save_path = Path(__file__).parent.joinpath("generated", "Dropbox", f"novel_{args.novel_save_count}")
+    novel_save_path = Path(__file__).parent.parent.joinpath("generated", "Dropbox", f"novel_{args.novel_save_count}") # Adjusted path
     novel_save_path.mkdir(parents=True, exist_ok=True)
 
     for transformations in tqdm(all_datasets.keys()):

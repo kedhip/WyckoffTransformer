@@ -30,10 +30,10 @@ def main():
     parser.add_argument("--min_elements", type=int, default=2)
     parser.add_argument("--max_elements", type=int, default=3)
     parser.add_argument("--output_dir", type=Path,
-        default=Path(__file__).parent.resolve() / "data" / "mp_20_biternary")
+        default=Path(__file__).parent.parent.resolve() / "data" / "mp_20_biternary") # Adjusted path
     args = parser.parse_args()
     datasets = ('train', 'test', 'val')
-    mp_20_path = Path(__file__).parent.resolve() / "cdvae" / "data" / "mp_20"
+    mp_20_path = Path(__file__).parent.parent.resolve() / "cdvae" / "data" / "mp_20" # Adjusted path
     for dataset_name in datasets:
         print(f"Reading mp_20/{dataset_name} dataset")
         dataset = pd.read_csv(mp_20_path / f"{dataset_name}.csv", index_col=0, converters={"elements": ast.literal_eval})

@@ -1,0 +1,1 @@
+Various codes for evaluation of the generated data. The most important is `generated_dataset.GeneratedDataset` which provides a unified interface for no less that 24 different data storage formats.

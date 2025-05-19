@@ -4,6 +4,10 @@ if __name__ == "__main__":
     import os
     os.environ["OMP_NUM_THREADS"] = "1"
     os.environ["OMP_THREAD_LIMIT"] = "1"
+    # Add the project root to sys.path to allow imports from the root directory
+    import sys
+    from pathlib import Path
+    sys.path.append(str(Path(__file__).parent.parent))
 
 from typing import List, Optional
 from argparse import ArgumentParser
@@ -32,7 +36,7 @@ def dive_and_cache(
     config_file: Path,
     last_transformation: Optional[str] = None) -> None:
 
-    if DATA_KEYS.intersection(this_config.keys()) and (
+    if DATA_KEYS.intersection(this_config.keys()) and ( # type: ignore
         not last_transformation or last_transformation == transformations[-1]):
         
         print(f"From {dataset_name} loading ({', '.join(transformations)})")
@@ -47,7 +51,7 @@ def dive_and_cache(
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument("--config-file", type=Path, default=Path(__file__).parent / "generated" / "datasets.yaml")
+    parser.add_argument("--config-file", type=Path, default=Path(__file__).parent.parent / "generated" / "datasets.yaml") # Adjusted path
     parser.add_argument("--dataset", type=str)
     parser.add_argument("--transformations", type=str, nargs="+")
     parser.add_argument("--last-transformation", type=str,
@@ -61,10 +65,10 @@ def main():
         compute_fields_and_cache(data)
     else:
         config = OmegaConf.load(args.config_file)
-        for dataset_name, dataset_config in config.items():
+        for dataset_name, dataset_config in config.items(): # type: ignore
             if args.dataset and args.dataset != dataset_name:
                 continue
-            dive_and_cache(dataset_config, [], dataset_name, args.config_file, args.last_transformation)
+            dive_and_cache(dataset_config, [], str(dataset_name), args.config_file, args.last_transformation) # Added str() cast
 
 
 if __name__ == "__main__":

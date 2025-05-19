@@ -19,11 +19,11 @@ def main():
     wandb_run = wandb.Api().run(f"WyckoffTransformer/{args.wandb_run}")
     wandb_config = OmegaConf.create(dict(wandb_run.config))
     if base_config_name := (wandb_config.get("base_config", None)):
-        base_config = OmegaConf.load(Path(__file__).parent.resolve() / "yamls" / "models" / f"{base_config_name}.yaml")
+        base_config = OmegaConf.load(Path(__file__).parent.parent / "yamls" / "models" / f"{base_config_name}.yaml")
         final_config = OmegaConf.merge(base_config, wandb_config)
     else:
         final_config = wandb_config
-    run_dir = Path("runs", args.wandb_run)
+    run_dir = Path(__file__).parent.parent / "runs" / args.wandb_run
     if not run_dir.exists():
         run_dir.mkdir(parents=True)
         wandb_run.file("best_model_params.pt").download(run_dir)
