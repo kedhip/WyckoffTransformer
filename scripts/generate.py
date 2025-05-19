@@ -1,8 +1,5 @@
-from functools import partial
 import time
-from multiprocessing import Pool
 import argparse
-import pickle
 import torch
 # torch.set_float32_matmul_precision('high')
 import json
@@ -12,13 +9,9 @@ import logging
 from pathlib import Path
 from omegaconf import OmegaConf
 
-from wyckoff_transformer.generator import WyckoffGenerator
+import sys
+sys.path.append(str(Path(__file__).parent.parent.resolve()))
 from wyckoff_transformer.trainer import WyckoffTrainer
-from cascade_transformer.model import CascadeTransformer
-from cascade_transformer.dataset import AugmentedCascadeDataset
-from wyckoff_transformer.tokenization import (
-    load_tensors_and_tokenisers, tensor_to_pyxtal,
-    get_letter_from_ss_enum_idx, get_wp_index)
 
 
 def main():
