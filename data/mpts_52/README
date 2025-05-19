@@ -1,0 +1,7 @@
+MPTS-52 is challenging extension of MP-20, consisting of 40,476 structures up to 52 atoms per cell, sorted
+according to the earliest published year in literature. It has less structures than MP-20, becuase structures
+where the year of publication is not known are excluded. This dataset, and, especially, the split are not
+particularly well-suited for de novo generations, we adopted it mostly for the sake of convinience
+of not having to download and preselect the data from the Materials Project.
+
+https://github.com/jiaor17/DiffCSP/tree/main/data/mpts_52
