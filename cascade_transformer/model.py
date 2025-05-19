@@ -1,5 +1,4 @@
 from typing import Tuple, List, Optional, Iterable
-from enum import Enum
 import logging
 import numpy as np
 import torch
@@ -29,9 +28,17 @@ class CascadeEmbedding(nn.Module):
                  **kwargs):
         """
         Arguments:
-            cascade: a tuple of tuples (N_i, d_i, pad_i), where N_i is the number of possible values for the i-th token,
-                d_i is the dimensionality of the i-th token embedding. If d_i is None, the token is not embedded.
+            cascade: a tuple of tuples (N_i, d_i, pad_i)
+                N_i is the number of possible values for the i-th token
+                d_i is the dimensionality of the i-th token embedding
+                - If d_i is None, the token is deemed to be a scalar and is passed through
+                - If d_i has the operator [], it must also have the key "pass_through_vector",
+                    and the token is deemed to be a vector and is passed through
+                - If d_i is 0, the token is not embedded and is not supplied to the model
+                - If d_i is a scalar, the token is embedded using torch.nn.Embedding
                 pad_i is padding_idx to be passed to torch.nn.Embedding
+            dropout: dropout probability to be passed to torch.nn.Dropout
+            kwargs: additional arguments to be passed to torch.nn.Embedding
         """
         super().__init__()
         self.embeddings = torch.nn.ModuleList()
@@ -42,7 +49,7 @@ class CascadeEmbedding(nn.Module):
                 logger.debug("Scalar pass-through for %i values", n)
                 self.embeddings.append(SpecialEmbedding(SpecialEmbedding.ScalarPassThrough))
                 self.total_embedding_dim += 1
-            elif isinstance(d, Iterable):
+            elif hasattr(d, "__getitem__"):
                 self.embeddings.append(SpecialEmbedding(SpecialEmbedding.VectorPassThrough))
                 logger.debug("Vector pass-through for %i values, dim %i", n, d["pass_through_vector"])
                 self.total_embedding_dim += d["pass_through_vector"]
@@ -172,7 +179,7 @@ class CascadeTransformer(nn.Module):
 
     def __init__(self,
                  start_type: str,    
-                 n_start: int|None,
+                 n_start: int,
                  cascade: Tuple[Tuple[int, int|None, int], ...],
                  token_aggregation: str|None,
                  aggregate_after_encoder: bool,
@@ -197,10 +204,10 @@ class CascadeTransformer(nn.Module):
         Expects tokens in the following format:
         START_k -> [] -> STOP -> PAD
         START_k is the start token, it can take one of the K values, will be embedded.
-            In Wychoff transformer, we store the space group here.
+            In Wyckoff transformer, we store the space group here.
         [] is the cascading token. Each element of the token can take values from 0 to N_i - 1.
-         During input, some of them are embedded, some not, as per the cascade. We predict the probability for each value, from 
-         0 to N_i. Non-embedded values are expected to be floats.
+        During input, some of them are embedded, some not, as per the cascade. We predict the
+        probability for each value, from 0 to N_i. Non-embedded values are expected to be floats.
         STOP is stop.
         PAD is padding. Not predicted.
 
@@ -214,6 +221,28 @@ class CascadeTransformer(nn.Module):
                 is_target is a boolean, if True, the model will have a separate head for predicting this token.
             token_aggregation: When predicting, concatenate to the MASK token aggregated values of all the tokens.
             aggregation_weight: casacade index of the field to be used as aggregation weight.
+            aggregate_after_encoder: If True, aggregate after the transformer encoder. If False, aggregate before.
+            include_start_in_aggregation: If True, include the start token in the aggregation.
+            aggregation_inclsion: If "concat", concatenate the aggregation to the prediction input.
+                If "add", add the aggregation to the prediction input.
+                If "aggr", use the aggregation as the prediction input.
+                If None, do not use the aggregation.
+            concat_token_counts: If True, concatenate the token counts to the prediction input.
+            concat_token_presence: If True, concatenate the token presence to the prediction input.
+            num_fully_connected_layers: Number of fully connected layers in the prediction head.
+            mixer_layers: Number of layers in the mixer.
+            outputs: Number of outputs. If "token_scores", the model will have a separate head for each token.
+                If an integer, the model will have a single head for all tokens.
+            perceptron_shape: "pyramid" or "input". If pyramid, the perceptron will have a pyramid shape.
+                If input, the perceptron will have a linear shape.
+            TransformerEncoderLayer_args: Arguments to be passed to torch.nn.TransformerEncoderLayer.
+            TransformerEncoder_args: Arguments to be passed to torch.nn.TransformerEncoder.
+            learned_positional_encoding_max_size: If not None, the maximum size of the learned positional encoding.
+                If None, no positional encoding is used.
+            learned_positional_encoding_only_masked: If True, the positional encoding is only added to the masked tokens.
+            compile_perceptrons: If True, compile the perceptrons using torch.compile.
+            emebdding_dropout: Dropout probability to be passed to torch.nn.Dropout.
+            prediction_perceptron_dropout: Dropout probability to be passed to the prediction perceptron.
         """
         super().__init__()
         self.embedding = CascadeEmbedding(cascade, dropout=emebdding_dropout)
@@ -319,6 +348,17 @@ class CascadeTransformer(nn.Module):
                 cascade: List[Tensor],
                 padding_mask: Tensor|None,
                 prediction_head: int|None) -> Tensor:
+        """
+        Arguments:
+            start: Tensor of shape ``[batch_size]`` with the start token.
+            cascade: List of tensors of shape ``[batch_size, seq_len]`` with the cascade tokens.
+            padding_mask: Tensor of shape ``[batch_size, seq_len]`` with the padding mask.
+            prediction_head: Index of the prediction head to use. If None, use the only one. The
+                model works in two stages. Firstly, a vector is prepared wih Encoder and
+                various tweaks. Then, the vector is passed to a perceptron aka prediction head.
+        Returns:
+            Tensor of shape ``[batch_size, seq_len, output_dim]`` with the predictions.
+        """
         logging.debug("Cascade len: %i", len(cascade))
         cascade_embedding = self.embedding(cascade)
         logging.debug("Cascade reported embedding dim: %i", self.embedding.total_embedding_dim)
@@ -372,7 +412,6 @@ class CascadeTransformer(nn.Module):
         else:
             raise ValueError(f"Unknown token_aggregation {self.token_aggregation}")
 
-    
         if self.aggregation_inclsion == "concat":
             prediction_inputs = [transformer_output[:, -1], aggregation]
         elif self.aggregation_inclsion == "add":
