@@ -13,9 +13,8 @@ mp_20:
           storage_type: NongWei_CHGNet_csv
       DFT:
         structures:
-          path: Dropbox/novel_105/relax_results/ICML2025/id_cif_Eform_Ehull_cifs.csv
-          storage_type: DFT_CSV_CIF
-          storage_key: wylm
+          path: Dropbox/novel_105/WyckoffLLM-naive/DiffCSP++/WyckoffLLM-naive-105.csv.gz
+          storage_type: old_atomated_csv
   WyckoffLLM-site-symmetry:
     wyckoffs:
       path: Dropbox/mp_20/WyckoffLLM/site-symmetry/parsed_materials_augmented_10000.json.gz
@@ -38,6 +37,7 @@ mp_20:
       storage_type: pyxtal_json
     DFT:
       structures:
+        # Warning: obsolete DFT
         path: Dropbox/novel_105/id_cif_Eform_Ehull_cifs.csv.gz
         storage_type: DFT_CSV_CIF
         storage_key: wtfo
@@ -49,9 +49,8 @@ mp_20:
         e_hull: WyckoffTransformer_mp_20.ehull.csv.gz
         DFT:
           structures:
-            path: Dropbox/novel_105/id_cif_Eform_Ehull_cifs.csv.gz
-            storage_type: DFT_CSV_CIF
-            storage_key: wtff
+            path: Dropbox/novel_105/WyckoffTransformer/CrySPR/CHGNet_fix/WyFormer-CrySPR-105.csv.gz
+            storage_type: old_atomated_csv
       CHGNet_free:
         structures:
           path: WyckoffTransformer_mp_20_CHGNet_relax_no_symmetry/no_symmetry
@@ -64,15 +63,27 @@ mp_20:
       structures:
         path: WyckoffTransformer_mp_20.diffcsp-pp-10k.json.gz
         storage_type: PymatgenJson
+      CHGNet_free:
+      # Warning! This CHNGet permuted the order of the structures!
+        structures:
+          path: CIF-FMT-10000_original-wyformer-mp20.csv
+          storage_type: invalid_cifs
+        DFT:
+          structures:
+            path: WyFormer-1-MP GGA static.csv.gz
+            storage_type: atomated_csv
+        DFT-GGA-realax-1:
+          structures:
+            path: WyFormer-1-MP GGA relax 1.csv.gz
+            storage_type: atomated_csv
     DiffCSP++:
       structures:
         path: WyckoffTransformer_mp_20_DiffCSP++_tol=0.1.json.gz
         storage_type: PymatgenJson
       DFT:
         structures:
-          path: Dropbox/novel_105/id_cif_Eform_Ehull_cifs.csv.gz
-          storage_type: DFT_CSV_CIF
-          storage_key: wtfp
+          path: Dropbox/novel_105/WyckoffTransformer/DiffCSP++/WyFormer-DiffCSP++-105.csv.gz
+          storage_type: old_atomated_csv
       CHGNet_fix:
         structures:
           path: WyckoffTransformer_mp_20_DiffCSPPP_tol0.1_CHGNet_fixed
@@ -88,10 +99,8 @@ mp_20:
       storage_type: CrystalFormer
     DFT:
       structures:
-        path: Dropbox/novel_105/id_cif_Eform_Ehull_cifs.csv.gz
-        storage_type: DFT_CSV_CIF
-        # cryf is the biased sample
-        storage_key: cryf2
+        path: Dropbox/novel_105/CrystalFormer/CrystalFormer-105.csv.gz
+        storage_type: old_atomated_csv
     CHGNet_fix_release:
       structures:
         path: crystalformer_mp20_CHGNet_fix_release
@@ -104,9 +113,8 @@ mp_20:
       storage_type: DiffCSP_pt
     DFT:
       structures:
-        path: Dropbox/novel_105/id_cif_Eform_Ehull_cifs.csv.gz
-        storage_type: DFT_CSV_CIF
-        storage_key: dcsp
+        path: Dropbox/novel_105/DiffCSP/DiffCSP-105.csv.gz
+        storage_type: old_atomated_csv
     CHGNet_fix:
       structures:
         path: DiffCSP_mp_20_fixed_symmetry
@@ -124,9 +132,8 @@ mp_20:
       storage_type: DiffCSP_pt
     DFT:
       structures:
-        path: Dropbox/novel_105/id_cif_Eform_Ehull_cifs.csv.gz
-        storage_type: DFT_CSV_CIF
-        storage_key: dcpp
+        path: Dropbox/novel_105/DiffCSP++/DiffCSP++-105.csv.gz
+        storage_type: old_atomated_csv
     CHGNet_fix_release:
       structures:
         path: DiffCSP++_mp20_two_step_symmetry
@@ -159,9 +166,8 @@ mp_20:
       storage_type: FlowMM
     DFT:
       structures:
-        path: Dropbox/novel_105/id_cif_Eform_Ehull_cifs.csv.gz
-        storage_type: DFT_CSV_CIF
-        storage_key: flmm
+        path: Dropbox/novel_105/FlowMM/FlowMM-105.csv.gz
+        storage_type: old_atomated_csv
     CHGNet_fix:
       structures:
         path: flowmm_mp20_all_result_filtered_withcif.csv
@@ -216,9 +222,8 @@ mp_20:
         storage_type: NongWei_CHGNet_csv
     DFT:
       structures:
-        path: Dropbox/novel_105/relax_results/ICML2025/id_cif_Eform_Ehull_cifs.csv
-        storage_type: DFT_CSV_CIF
-        storage_key: symc
+        path: Dropbox/novel_105/SymmCD/SymmCD-105.csv.gz
+        storage_type: old_atomated_csv        
   WyckoffTransformer-letters:
     wyckoffs:
       path: Dropbox/mp_20/WyckoffTransformer-letters/sg_letters-uy6zg9y9.json.gz
@@ -233,9 +238,8 @@ mp_20:
           storage_type: NongWei_CHGNet_csv
       DFT:
         structures:
-          path: Dropbox/novel_105/relax_results/ICML2025/id_cif_Eform_Ehull_cifs.csv
-          storage_type: DFT_CSV_CIF
-          storage_key: wtfl
+          path: Dropbox/novel_105/WyckoffTransformer-letters/DiffCSP++/WyckoffTransformer-letters-105.csv.gz
+          storage_type: old_atomated_csv
   WyckoffTransformer-harmonic:
     wyckoffs:
       path: Dropbox/mp_20/WyckoffTransformer-harmonic/cluster_harmonic_token_presence-fqmm8o4z.json.gz
@@ -250,9 +254,8 @@ mp_20:
           storage_type: NongWei_CHGNet_csv
       DFT:
         structures:
-          path: Dropbox/novel_105/relax_results/ICML2025/id_cif_Eform_Ehull_cifs.csv
-          storage_type: DFT_CSV_CIF
-          storage_key: wtfh
+          path: Dropbox/novel_105/WyckoffTransformer-harmonic/DiffCSP++/WyckoffTransformer-harmonic-105.csv.gz
+          storage_type: old_atomated_csv
   MiAD:
     structures:
       path: CIF-FMT-10000_miad-s333-no-prerelax-mp20.csv
@@ -286,9 +289,8 @@ mp_20_biternary:
         # e_hull: WyCryst_mp_20_biternary.ehull.csv.gz
         DFT:
           structures:
-            path: Dropbox/novel_105/id_cif_Eform_Ehull_cifs.csv.gz
-            storage_type: DFT_CSV_CIF
-            storage_key: wyff
+            path: Dropbox/novel_105/WyCryst/CHGNet_fix/WyCryst-105.csv.gz
+            storage_type: old_atomated_csv
   split:
     train:
       structures:
