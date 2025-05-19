@@ -1,0 +1,1 @@
+Assorted notebooks used for R&D. In principle, nothing should depend on them. ICML results are obtained by running the notebooks in `ICML_eval` folder, data preprocessing is done by `scripts/data_preprocesssing`.
