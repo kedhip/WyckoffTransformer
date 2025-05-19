@@ -84,7 +84,11 @@ Tolerance didn't (2024) have a significant impact. Hence, for further experiment
 [This WanDB workspace](https://wandb.ai/symmetry-advantage/WyckoffTransformer?nw=wrbkiq2xgjk) is a good place to find some models and their performance.
 
 # Generated Data Analysis
-Generated data are stored in various formats. The first step is converting them all to a unified format. Processing all generated datasets in `generated/datasets.yaml`:
+Generated data are stored in various formats. All the datasets we've used so far are stored in Dropbox (not public):
+```bash
+rclone copy "NUS_Dropbox:/Nikita Kazeev/Wyckoff Transformer data/generated" generated
+```
+The first step is converting them all to a unified format. Processing all generated datasets in `generated/datasets.yaml`:
 ```bash
 poetry run python cache_generated_datasets.py
 ```
