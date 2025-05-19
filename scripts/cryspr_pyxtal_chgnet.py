@@ -240,7 +240,7 @@ def stepwise_relax(
 
 def single_run(
         atoms_in: Atoms,
-        relax_calculator: Calculator,
+        relax_calculator: Calculator = CHGNetCalculator(use_device="cpu"),
         optimizer: Optimizer = FIRE,
         fmax: float = 0.02,
         verbose: bool = False,
