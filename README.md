@@ -81,7 +81,7 @@ rclone copy "NUS_Dropbox:/Nikita Kazeev/Wyckoff Transformer data/generated.tar.g
 tar -xvf generated.tar.gz
 ```
 
-In order to be analyzed the data must be conerted a unified format. To preprocess all generated datasets in `generated/datasets.yaml`:
+In order to be analyzed the data must be converted the unified format. To preprocess all generated datasets in `generated/datasets.yaml`:
 ```bash
 poetry run python scripts/cache_generated_datasets.py
 ```

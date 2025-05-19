@@ -6,5 +6,5 @@ Notebooks used for ICML 2025 submission, and then some more. Not intended to be 
 5. Table 7: [`MP_20_paper_eval.ipynb`](MP_20_paper_eval.ipynb)
 6. Figure 10: [`uniqueness.ipynb`](uniqueness.ipynb)
 7. Table 8 & 9: [`MP_20_biternary.ipynb`](MP_20_biternary.ipynb)
-8. Tables 11 & 12: [`DFT_eval.ipynb`](DFT_eval.ipynb), [`MP_20_paper_eval.ipynb`](MP_20_paper_eval.ipynb)
+8. Tables 11 & 12: [`LLM_vs_WT.ipynb`](MP_20_paper_eval.ipynb), [`DFT_eval.ipynb`](DFT_eval.ipynb)
 9. Figures 11, 12 & 13: `tokenization_discussion*.ipynb`
