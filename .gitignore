@@ -37,3 +37,5 @@ generated/WyFormer-GGA-relax-1.csv.gz
 research_notebooks/dft_pass_1_missing.csv.gz
 .gitignore
 research_notebooks/miad_pass_1_missing.csv.gz
+generated.bak
+generated

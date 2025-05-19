@@ -1,444 +1,419 @@
 mp_20:
   WyckoffLLM-naive:
     wyckoffs:
-      path: Dropbox/mp_20/WyckoffLLM/naive/parsed_materials_10000.json.gz
+      path: mp_20/WyckoffLLM-naive/parsed_materials_10000.json.gz
       storage_type: letters_json
     DiffCSP++:
       structures:
-        path: Dropbox/mp_20/WyckoffLLM/naive/parsed_materials_10000_pyxtal.json_structures.json.gz
+        path: mp_20/WyckoffLLM-naive/DiffCSP++/parsed_materials_10000_pyxtal.json_structures.json.gz
         storage_type: PymatgenJson
       CHGNet_fix:
         structures:
-          path: Dropbox/mp_20/WyckoffLLM/naive/WyLM-naive_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
+          path: mp_20/WyckoffLLM-naive/DiffCSP++/CHGNet_fix/WyLM-naive_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
           storage_type: NongWei_CHGNet_csv
       DFT:
         structures:
-          path: Dropbox/novel_105/WyckoffLLM-naive/DiffCSP++/WyckoffLLM-naive-105.csv.gz
+          path: mp_20/WyckoffLLM-naive/DiffCSP++/DFT/WyckoffLLM-naive-105.csv.gz
           storage_type: old_atomated_csv
   WyckoffLLM-site-symmetry:
     wyckoffs:
-      path: Dropbox/mp_20/WyckoffLLM/site-symmetry/parsed_materials_augmented_10000.json.gz
+      path: mp_20/WyckoffLLM-site-symmetry/parsed_materials_augmented_10000.json.gz
       storage_type: site_symmetry_json
     DiffCSP++:
       structures:
-        path: Dropbox/mp_20/WyckoffLLM/site-symmetry/parsed_materials_augmented_10000_pyxtal.json_structures.json.gz
+        path: mp_20/WyckoffLLM-site-symmetry/DiffCSP++/parsed_materials_augmented_10000_pyxtal.json_structures.json.gz
         storage_type: PymatgenJson
   WyckoffLLM-vanilla:
     wyckoffs:
-      path: Dropbox/mp_20/WyckoffLLM/vanilla/parsed_materials_vanilla_10000.json.gz
+      path: mp_20/WyckoffLLM-vanilla/parsed_materials_vanilla_10000.json.gz
       storage_type: letters_json
     DiffCSP++:
       structures:
-        path: Dropbox/mp_20/WyckoffLLM/vanilla/parsed_materials_vanilla_10000_pyxtal.json_structures.json.gz
+        path: mp_20/WyckoffLLM-vanilla/DiffCSP++/parsed_materials_vanilla_10000_pyxtal.json_structures.json.gz
         storage_type: PymatgenJson
   WyckoffTransformer:
     wyckoffs:
-      path: WyckoffTransformer_mp_20.json.gz
+      path: mp_20/WyckoffTransformer/WyckoffTransformer_mp_20.json.gz
       storage_type: pyxtal_json
     DFT:
       structures:
-        # Warning: obsolete DFT
-        path: Dropbox/novel_105/id_cif_Eform_Ehull_cifs.csv.gz
+        path: mp_20/WyckoffTransformer/DFT/id_cif_Eform_Ehull_cifs.csv.gz
         storage_type: DFT_CSV_CIF
         storage_key: wtfo
     CrySPR:
       CHGNet_fix:
         structures:
-          path: WyckoffTransformer_mp_20_CHGNet_relax_fix-symmetry_vs_removal/fix_symmetry
+          path: mp_20/WyckoffTransformer/CrySPR/CHGNet_fix/fix_symmetry
           storage_type: NongWei
-        e_hull: WyckoffTransformer_mp_20.ehull.csv.gz
+        e_hull: mp_20/WyckoffTransformer/CrySPR/CHGNet_fix/WyckoffTransformer_mp_20.ehull.csv.gz
         DFT:
           structures:
-            path: Dropbox/novel_105/WyckoffTransformer/CrySPR/CHGNet_fix/WyFormer-CrySPR-105.csv.gz
+            path: mp_20/WyckoffTransformer/CrySPR/CHGNet_fix/DFT/WyFormer-CrySPR-105.csv.gz
             storage_type: old_atomated_csv
       CHGNet_free:
         structures:
-          path: WyckoffTransformer_mp_20_CHGNet_relax_no_symmetry/no_symmetry
+          path: mp_20/WyckoffTransformer/CrySPR/CHGNet_free/no_symmetry
           storage_type: NongWei
       CHGNet_fix_release:
         structures:
-          path: WyckoffTransformer_mp_20_CHGNet_relax_fix-symmetry_vs_removal/remove_symmetry
+          path: mp_20/WyckoffTransformer/CrySPR/CHGNet_fix_release/remove_symmetry
           storage_type: NongWei
     DiffCSP++10k:
       structures:
-        path: WyckoffTransformer_mp_20.diffcsp-pp-10k.json.gz
+        path: mp_20/WyckoffTransformer/DiffCSP++10k/WyckoffTransformer_mp_20.diffcsp-pp-10k.json.gz
         storage_type: PymatgenJson
       CHGNet_free:
-      # Warning! This CHNGet permuted the order of the structures!
         structures:
-          path: CIF-FMT-10000_original-wyformer-mp20.csv
+          path: mp_20/WyckoffTransformer/DiffCSP++10k/CHGNet_free/CIF-FMT-10000_original-wyformer-mp20.csv
           storage_type: invalid_cifs
         DFT:
           structures:
-            path: WyFormer-1-MP GGA static.csv.gz
+            path: mp_20/WyckoffTransformer/DiffCSP++10k/CHGNet_free/DFT/WyFormer-1-MP
+              GGA static.csv.gz
             storage_type: atomated_csv
         DFT-GGA-realax-1:
           structures:
-            path: WyFormer-1-MP GGA relax 1.csv.gz
+            path: mp_20/WyckoffTransformer/DiffCSP++10k/CHGNet_free/DFT-GGA-realax-1/WyFormer-1-MP
+              GGA relax 1.csv.gz
             storage_type: atomated_csv
     DiffCSP++:
       structures:
-        path: WyckoffTransformer_mp_20_DiffCSP++_tol=0.1.json.gz
+        path: mp_20/WyckoffTransformer/DiffCSP++/WyckoffTransformer_mp_20_DiffCSP++_tol=0.1.json.gz
         storage_type: PymatgenJson
       DFT:
         structures:
-          path: Dropbox/novel_105/WyckoffTransformer/DiffCSP++/WyFormer-DiffCSP++-105.csv.gz
+          path: mp_20/WyckoffTransformer/DiffCSP++/DFT/WyFormer-DiffCSP++-105.csv.gz
           storage_type: old_atomated_csv
       CHGNet_fix:
         structures:
-          path: WyckoffTransformer_mp_20_DiffCSPPP_tol0.1_CHGNet_fixed
+          path: mp_20/WyckoffTransformer/DiffCSP++/CHGNet_fix/WyckoffTransformer_mp_20_DiffCSPPP_tol0.1_CHGNet_fixed
           storage_type: Raymond
-        #e_hull: WyckoffTransformer_mp_20_DiffCSP++_tol=0.1.ehull.csv.gz
       CHGNet_free:
         structures:
-          path: WyckoffTransformer_mp_20_DiffCSPPP_tol0.1_nosymconstrain
+          path: mp_20/WyckoffTransformer/DiffCSP++/CHGNet_free/WyckoffTransformer_mp_20_DiffCSPPP_tol0.1_nosymconstrain
           storage_type: Raymond
   CrystalFormer:
     structures:
-      path: CrystalFormer_mp_20.csv.gz
+      path: mp_20/CrystalFormer/CrystalFormer_mp_20.csv.gz
       storage_type: CrystalFormer
     DFT:
       structures:
-        path: Dropbox/novel_105/CrystalFormer/CrystalFormer-105.csv.gz
+        path: mp_20/CrystalFormer/DFT/CrystalFormer-105.csv.gz
         storage_type: old_atomated_csv
     CHGNet_fix_release:
       structures:
-        path: crystalformer_mp20_CHGNet_fix_release
+        path: mp_20/CrystalFormer/CHGNet_fix_release/crystalformer_mp20_CHGNet_fix_release
         storage_type: Raymond
-      # Included in Raymond's data
-      # CrystalFormer_mp_20.ehull.csv.gz
   DiffCSP:
     structures:
-      path: DiffCSP_mp_20.pt
+      path: mp_20/DiffCSP/DiffCSP_mp_20.pt
       storage_type: DiffCSP_pt
     DFT:
       structures:
-        path: Dropbox/novel_105/DiffCSP/DiffCSP-105.csv.gz
+        path: mp_20/DiffCSP/DFT/DiffCSP-105.csv.gz
         storage_type: old_atomated_csv
     CHGNet_fix:
       structures:
-        path: DiffCSP_mp_20_fixed_symmetry
+        path: mp_20/DiffCSP/CHGNet_fix/DiffCSP_mp_20_fixed_symmetry
         storage_type: Raymond
-      # Included in Raymond's data
-      # e_hull: DiffCSP_mp_20.ehull.csv.gz
     CHGNet_no_relax:
       structures:
-        path: DiffCSP_mp_20.pt
+        path: mp_20/DiffCSP/CHGNet_no_relax/DiffCSP_mp_20.pt
         storage_type: DiffCSP_pt
-      e_hull: DiffCSP_mp_20_NO_RELAX.ehull.csv.gz
+      e_hull: mp_20/DiffCSP/CHGNet_no_relax/DiffCSP_mp_20_NO_RELAX.ehull.csv.gz
   DiffCSP++:
     structures:
-      path: DiffCSP++_mp_20.pt
+      path: mp_20/DiffCSP++/DiffCSP++_mp_20.pt
       storage_type: DiffCSP_pt
     DFT:
       structures:
-        path: Dropbox/novel_105/DiffCSP++/DiffCSP++-105.csv.gz
+        path: mp_20/DiffCSP++/DFT/DiffCSP++-105.csv.gz
         storage_type: old_atomated_csv
     CHGNet_fix_release:
       structures:
-        path: DiffCSP++_mp20_two_step_symmetry
+        path: mp_20/DiffCSP++/CHGNet_fix_release/DiffCSP++_mp20_two_step_symmetry
         storage_type: Raymond
-      # Included in Raymond's data
-      # DiffCSP++_mp20_two_step_symmetry.ehull.csv.gz
   UN-DiffCSP++17:
     structures:
-      path: Dropbox/mp_20/UN-DiffCSP++/mp_20_train_pyxtal_s17.structures.json.gz
+      path: mp_20/UN-DiffCSP++17/mp_20_train_pyxtal_s17.structures.json.gz
       storage_type: PymatgenJson
   UN-DiffCSP++42:
     structures:
-      path: Dropbox/mp_20/UN-DiffCSP++/mp_20_train_pyxtal_s42.structures.json.gz
+      path: mp_20/UN-DiffCSP++42/mp_20_train_pyxtal_s42.structures.json.gz
       storage_type: PymatgenJson
   UN-DiffCSP++43:
     structures:
-      path: Dropbox/mp_20/UN-DiffCSP++/mp_20_train_pyxtal_s43.structures.json.gz
+      path: mp_20/UN-DiffCSP++43/mp_20_train_pyxtal_s43.structures.json.gz
       storage_type: PymatgenJson
   UN-DiffCSP++44:
     structures:
-      path: Dropbox/mp_20/UN-DiffCSP++/mp_20_train_pyxtal_s44.structures.json.gz
+      path: mp_20/UN-DiffCSP++44/mp_20_train_pyxtal_s44.structures.json.gz
       storage_type: PymatgenJson
   UN-WyckoffTransformer:
     wyckoffs:
-      path: Dropbox/mp_20/UN-WyckoffTransformer/wyckoffs.json.gz
+      path: mp_20/UN-WyckoffTransformer/wyckoffs.json.gz
       storage_type: pyxtal_json
   FlowMM:
     structures:
-      path: FlowMM
+      path: mp_20/FlowMM/FlowMM
       storage_type: FlowMM
     DFT:
       structures:
-        path: Dropbox/novel_105/FlowMM/FlowMM-105.csv.gz
+        path: mp_20/FlowMM/DFT/FlowMM-105.csv.gz
         storage_type: old_atomated_csv
     CHGNet_fix:
       structures:
-        path: flowmm_mp20_all_result_filtered_withcif.csv
+        path: mp_20/FlowMM/CHGNet_fix/flowmm_mp20_all_result_filtered_withcif.csv
         storage_type: EhullCSVCIF
   FlowMM-relaxed:
     structures:
-      path: FlowMM-relaxed
+      path: mp_20/FlowMM-relaxed/FlowMM-relaxed
       storage_type: FlowMM
   split:
     train:
       structures:
-        path: ../cdvae/data/mp_20/train.csv
+        path: mp_20/split/train/train.csv
         storage_type: CDVAE_csv_cif
       wyckoffs:
-        path: ../cache/mp_20/data.pkl.gz
+        path: mp_20/split/train/data.pkl.gz
         storage_type: WTCache
         cache_key: train
     test:
       structures:
-        path: ../cdvae/data/mp_20/test.csv
+        path: mp_20/split/test/test.csv
         storage_type: CDVAE_csv_cif
       wyckoffs:
-        path: ../cache/mp_20/data.pkl.gz
+        path: mp_20/split/test/data.pkl.gz
         storage_type: WTCache
         cache_key: test
       CHGNet_fix:
         structures:
-          path: mp20_test_CHGNnet_fixed_symmetry
-          storage_type: Raymond   
-        # Included in Raymond's data
-        # e_hull: mp20_test_1ksamle.csv.gz
+          path: mp_20/split/test/CHGNet_fix/mp20_test_CHGNnet_fixed_symmetry
+          storage_type: Raymond
     val:
       structures:
-        path: ../cdvae/data/mp_20/val.csv
+        path: mp_20/split/val/val.csv
         storage_type: CDVAE_csv_cif
       wyckoffs:
-        path: ../cache/mp_20/data.pkl.gz
+        path: mp_20/split/val/data.pkl.gz
         storage_type: WTCache
         cache_key: val
   SymmCD:
     structures:
-      # Contains invalid structures, can't be processed by the default pipeline
-      # path: Dropbox/mp_20/SymmCD/crystal_symmcd_mp20.csv.gz
-      # storage_type: SymmCD_csv
-      path: Dropbox/mp_20/SymmCD/crystal_symmcd_mp20_valid.json.gz
+      path: mp_20/SymmCD/crystal_symmcd_mp20_valid.json.gz
       storage_type: PymatgenJson
     CHGNet_fix:
       structures:
-        # The file was prodced before validity filtering, so the index may not match
-        # Valid records: 9580 / 10000
-        path: Dropbox/mp_20/SymmCD/SymmCD_mp_20_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
+        path: mp_20/SymmCD/CHGNet_fix/SymmCD_mp_20_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
         storage_type: NongWei_CHGNet_csv
     DFT:
       structures:
-        path: Dropbox/novel_105/SymmCD/SymmCD-105.csv.gz
-        storage_type: old_atomated_csv        
+        path: mp_20/SymmCD/DFT/SymmCD-105.csv.gz
+        storage_type: old_atomated_csv
   WyckoffTransformer-letters:
     wyckoffs:
-      path: Dropbox/mp_20/WyckoffTransformer-letters/sg_letters-uy6zg9y9.json.gz
+      path: mp_20/WyckoffTransformer-letters/sg_letters-uy6zg9y9.json.gz
       storage_type: pyxtal_json
     DiffCSP++:
       structures:
-        path: Dropbox/mp_20/WyckoffTransformer-letters/DiffCSP++/sg_letters-uy6zg9y9.diffcsp-pp.json.gz
+        path: mp_20/WyckoffTransformer-letters/DiffCSP++/sg_letters-uy6zg9y9.diffcsp-pp.json.gz
         storage_type: PymatgenJson
       CHGNet_fix:
         structures:
-          path: Dropbox/mp_20/WyckoffTransformer-letters/DiffCSP++/CHGNet_fix/WTFL-DCPP_mp_20_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
+          path: mp_20/WyckoffTransformer-letters/DiffCSP++/CHGNet_fix/WTFL-DCPP_mp_20_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
           storage_type: NongWei_CHGNet_csv
       DFT:
         structures:
-          path: Dropbox/novel_105/WyckoffTransformer-letters/DiffCSP++/WyckoffTransformer-letters-105.csv.gz
+          path: mp_20/WyckoffTransformer-letters/DiffCSP++/DFT/WyckoffTransformer-letters-105.csv.gz
           storage_type: old_atomated_csv
   WyckoffTransformer-harmonic:
     wyckoffs:
-      path: Dropbox/mp_20/WyckoffTransformer-harmonic/cluster_harmonic_token_presence-fqmm8o4z.json.gz
+      path: mp_20/WyckoffTransformer-harmonic/cluster_harmonic_token_presence-fqmm8o4z.json.gz
       storage_type: pyxtal_json
     DiffCSP++:
       structures:
-        path: Dropbox/mp_20/WyckoffTransformer-harmonic/DiffCSP++/cluster_harmonic_token_presence-fqmm8o4z.diffcsp-pp.json.gz
+        path: mp_20/WyckoffTransformer-harmonic/DiffCSP++/cluster_harmonic_token_presence-fqmm8o4z.diffcsp-pp.json.gz
         storage_type: PymatgenJson
       CHGNet_fix:
         structures:
-          path: Dropbox/mp_20/WyckoffTransformer-harmonic/DiffCSP++/wtfh_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
+          path: mp_20/WyckoffTransformer-harmonic/DiffCSP++/CHGNet_fix/wtfh_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
           storage_type: NongWei_CHGNet_csv
       DFT:
         structures:
-          path: Dropbox/novel_105/WyckoffTransformer-harmonic/DiffCSP++/WyckoffTransformer-harmonic-105.csv.gz
+          path: mp_20/WyckoffTransformer-harmonic/DiffCSP++/DFT/WyckoffTransformer-harmonic-105.csv.gz
           storage_type: old_atomated_csv
   MiAD:
     structures:
-      path: CIF-FMT-10000_miad-s333-no-prerelax-mp20.csv
+      path: mp_20/MiAD/CIF-FMT-10000_miad-s333-no-prerelax-mp20.csv
       storage_type: CDVAE_csv_cif
     CHGNet_free:
       structures:
-        path: CIF-FMT-10000_miad-s333-mp20.csv
+        path: mp_20/MiAD/CHGNet_free/CIF-FMT-10000_miad-s333-mp20.csv
         storage_type: CDVAE_csv_cif
 mp_20_biternary:
   WyckoffTransformer:
     wyckoffs:
-      path: WyckoffTransformer_mp_20_biternary.json.gz
+      path: mp_20_biternary/WyckoffTransformer/WyckoffTransformer_mp_20_biternary.json.gz
       storage_type: pyxtal_json
     CrySPR:
       CHGNet_fix:
         structures:
-          path: Dropbox/CHGNet_relaxation/WyckoffTransformer_novel_mp_20_biternary
+          path: mp_20_biternary/WyckoffTransformer/CrySPR/CHGNet_fix/WyckoffTransformer_novel_mp_20_biternary
           storage_type: NongWei
-        e_hull: WyckoffTransformer_mp_20_biternary_relaxed.zip
-    # TODO remove duplicate  
-    e_hull: WyckoffTransformer_mp_20_biternary_relaxed.zip
+        e_hull: mp_20_biternary/WyckoffTransformer/CrySPR/CHGNet_fix/WyckoffTransformer_mp_20_biternary_relaxed.zip
+    e_hull: mp_20_biternary/WyckoffTransformer/WyckoffTransformer_mp_20_biternary_relaxed.zip
   WyCryst:
     wyckoffs:
-      path: WyCryst_mp_20_biternary.csv
+      path: mp_20_biternary/WyCryst/WyCryst_mp_20_biternary.csv
       storage_type: WyCryst_csv
     CrySPR:
       CHGNet_fix:
         structures:
-          path: WyCryst_mp20
+          path: mp_20_biternary/WyCryst/CrySPR/CHGNet_fix/WyCryst_mp20
           storage_type: NongWei
-        # e_hull: WyCryst_mp_20_biternary.ehull.csv.gz
         DFT:
           structures:
-            path: Dropbox/novel_105/WyCryst/CHGNet_fix/WyCryst-105.csv.gz
+            path: mp_20_biternary/WyCryst/CrySPR/CHGNet_fix/DFT/WyCryst-105.csv.gz
             storage_type: old_atomated_csv
   split:
     train:
       structures:
-        path: ../data/mp_20_biternary/train.csv.gz
+        path: mp_20_biternary/split/train/train.csv.gz
         storage_type: CDVAE_csv_cif
       wyckoffs:
-        path: ../cache/mp_20_biternary/data.pkl.gz
+        path: mp_20_biternary/split/train/data.pkl.gz
         storage_type: WTCache
         cache_key: train
     test:
       structures:
-        path: ../data/mp_20_biternary/test.csv.gz
+        path: mp_20_biternary/split/test/test.csv.gz
         storage_type: CDVAE_csv_cif
       wyckoffs:
-        path: ../cache/mp_20_biternary/data.pkl.gz
+        path: mp_20_biternary/split/test/data.pkl.gz
         storage_type: WTCache
         cache_key: test
     val:
       structures:
-        path: ../data/mp_20_biternary/val.csv.gz
+        path: mp_20_biternary/split/val/val.csv.gz
         storage_type: CDVAE_csv_cif
       wyckoffs:
-        path: ../cache/mp_20_biternary/data.pkl.gz
+        path: mp_20_biternary/split/val/data.pkl.gz
         storage_type: WTCache
         cache_key: val
 perov_5:
   WyckoffTransformer:
     wyckoffs:
-      path: Dropbox/perov_5/WyckoffTransformer/ICLR_perov_5.json.gz
+      path: perov_5/WyckoffTransformer/ICLR_perov_5.json.gz
       storage_type: pyxtal_json
-    # Warning: CHGNet was trained on later DFT compared to perov_5
-    # It's ancient...
     CrySPR:
       CHGNet_fix:
         structures:
-          path: Dropbox/perov_5/WyckoffTransformer/CrySPR/CHGNet_fix/Tformer_perov5_structures
+          path: perov_5/WyckoffTransformer/CrySPR/CHGNet_fix/Tformer_perov5_structures
           storage_type: NongWei
-    # WARNING: Wrong DiffCSP++ config
     DiffCSP++:
       structures:
-        path: Dropbox/perov_5/WyckoffTransformer/DiffCSP++/ICLR_perov_5_pyxtal.json_structures.json.gz
+        path: perov_5/WyckoffTransformer/DiffCSP++/ICLR_perov_5_pyxtal.json_structures.json.gz
         storage_type: PymatgenJson
   DiffCSP:
     structures:
-      path: Dropbox/perov_5/DiffCSP/eval_gen.pt
+      path: perov_5/DiffCSP/eval_gen.pt
       storage_type: DiffCSP_pt
   split:
     train:
       structures:
-        path: ../cdvae/data/perov_5/train.csv
+        path: perov_5/split/train/train.csv
         storage_type: CDVAE_csv_cif
       wyckoffs:
-        path: ../cache/perov_5/data.pkl.gz
+        path: perov_5/split/train/data.pkl.gz
         storage_type: WTCache
         cache_key: train
     test:
       structures:
-        path: ../cdvae/data/perov_5/test.csv
+        path: perov_5/split/test/test.csv
         storage_type: CDVAE_csv_cif
       wyckoffs:
-        path: ../cache/perov_5/data.pkl.gz
+        path: perov_5/split/test/data.pkl.gz
         storage_type: WTCache
         cache_key: test
     val:
       structures:
-        path: ../cdvae/data/perov_5/val.csv
+        path: perov_5/split/val/val.csv
         storage_type: CDVAE_csv_cif
       wyckoffs:
-        path: ../cache/perov_5/data.pkl.gz
+        path: perov_5/split/val/data.pkl.gz
         storage_type: WTCache
         cache_key: val
 carbon_24:
   WyckoffTransformer:
     wyckoffs:
-      path: Dropbox/carbon_24/WyckoffTransformer/ICLR_carbon_24.json.gz
+      path: carbon_24/WyckoffTransformer/ICLR_carbon_24.json.gz
       storage_type: pyxtal_json
-    # WARNING: Wrong DiffCSP++ config
     DiffCSP++:
       structures:
-        path: Dropbox/carbon_24/WyckoffTransformer/DiffCSP++/ICLR_carbon_24_pyxtal.json_structures.json.gz
+        path: carbon_24/WyckoffTransformer/DiffCSP++/ICLR_carbon_24_pyxtal.json_structures.json.gz
         storage_type: PymatgenJson
-    # WARNING: Wrong pressure
     CrySPR:
       CHGNet_fix:
         structures:
-          path: Dropbox/carbon_24/WyckoffTransformer/CrySPR/CHGNet_fix/Tformer_carbon24_structures/
+          path: carbon_24/WyckoffTransformer/CrySPR/CHGNet_fix/Tformer_carbon24_structures
           storage_type: NongWei
   DiffCSP:
     structures:
-      path: Dropbox/carbon_24/DiffCSP/eval_gen.pt
+      path: carbon_24/DiffCSP/eval_gen.pt
       storage_type: DiffCSP_pt
   split:
     train:
       structures:
-        path: ../cdvae/data/carbon_24/train.csv
+        path: carbon_24/split/train/train.csv
         storage_type: CDVAE_csv_cif
       wyckoffs:
-        path: ../cache/carbon_24/data.pkl.gz
+        path: carbon_24/split/train/data.pkl.gz
         storage_type: WTCache
         cache_key: train
     test:
       structures:
-        path: ../cdvae/data/carbon_24/test.csv
+        path: carbon_24/split/test/test.csv
         storage_type: CDVAE_csv_cif
       wyckoffs:
-        path: ../cache/carbon_24/data.pkl.gz
+        path: carbon_24/split/test/data.pkl.gz
         storage_type: WTCache
         cache_key: test
     val:
       structures:
-        path: ../cdvae/data/carbon_24/val.csv
+        path: carbon_24/split/val/val.csv
         storage_type: CDVAE_csv_cif
       wyckoffs:
-        path: ../cache/carbon_24/data.pkl.gz
+        path: carbon_24/split/val/data.pkl.gz
         storage_type: WTCache
         cache_key: val
 mpts_52:
   split:
     train:
       structures:
-        path: ../data/mpts_52/train.csv.gz
+        path: mpts_52/split/train/train.csv.gz
         storage_type: CDVAE_csv_cif
     val:
       structures:
-        path: ../data/mpts_52/val.csv.gz
+        path: mpts_52/split/val/val.csv.gz
         storage_type: CDVAE_csv_cif
     test:
       structures:
-        path: ../data/mpts_52/test.csv.gz
+        path: mpts_52/split/test/test.csv.gz
         storage_type: CDVAE_csv_cif
   WyckoffTransformer:
     wyckoffs:
-      path: Dropbox/mpts_52/WyckoffTransformer/v6_base_sg_enums.json.gz
+      path: mpts_52/WyckoffTransformer/v6_base_sg_enums.json.gz
       storage_type: pyxtal_json
     CrySPR:
       CHGNet_fix:
         structures:
-          path: Dropbox/mpts_52/WyckoffTransformer/Tformer_mpts52_structures
+          path: mpts_52/WyckoffTransformer/CrySPR/CHGNet_fix/Tformer_mpts52_structures
           storage_type: NongWei
   SymmCD:
     structures:
-      # Contains invalid structures, can't be processed by the default pipeline
-      # path: Dropbox/mpts_52/SymmCD/crystal_symmcd_mpts52.csv.gz
-      # storage_type: SymmCD_csv
-      path: Dropbox/mpts_52/SymmCD/crystal_symmcd_mpts52_valid.json.gz
+      path: mpts_52/SymmCD/crystal_symmcd_mpts52_valid.json.gz
       storage_type: PymatgenJson
     CHGNet_fix:
       structures:
-        # The file was prodced before validity filtering, so the index may not match
-        path: Dropbox/mpts_52/SymmCD/SymmCD_mpts_52_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
+        path: mpts_52/SymmCD/CHGNet_fix/SymmCD_mpts_52_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
         storage_type: NongWei_CHGNet_csv
