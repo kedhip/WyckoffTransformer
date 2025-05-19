@@ -94,10 +94,12 @@ are the symbolic links to the one with the lowest energy out of all trials.
 ```python
 from scripts.cryspr_pyxtal_chgnet import single_run, single_pyxtal
 import json
-from chgnet.model import CHGNetCalculator
+# from chgnet.model import CHGNetCalculator
+# calculator = CHGNetCalculator(use_device="cpu")
+# you could use other calculator
 # the following codes do not take effect to set OMP_NUM_THREADS,
 # please set this env var in your terminal, like in Bash
-# by `export OMP_NUM_THREADS=1`
+# by `export OMP_NUM_THREADS=1` before running Python
 # otherwise you will get much slower CHGNet run!
 import os
 os.environ["OMP_NUM_THREADS"] = "1"
@@ -107,8 +109,7 @@ with open("./WyckoffTransformer_mp_20.json") as f:
 
 gene = data[99]
 atoms_in = single_pyxtal(gene)
-calculator = CHGNetCalculator(use_device="cpu")
-atoms_relaxed = single_run(atoms_in, calculator)
+atoms_relaxed = single_run(atoms_in)
 ```
 ### CHGNet relaxation
 The structures from all other models and by WyFormer-DiffCSP++ can be optionally relaxed with CHGNet.
