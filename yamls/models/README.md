@@ -10,3 +10,5 @@
 # General notes
 1. Configs are not maintained, so old configs might be incompatible with the current code.
 2. Configs are referenced by the WanDB runs, and are not supposed to be changed.
+# matbench-discovery
+[This WanDB workspace](https://wandb.ai/symmetry-advantage/WyckoffTransformer?nw=wrbkiq2xgjk) is a good place to find some models and their performance.

@@ -1,2 +1,16 @@
+# General notes
 See inside the folders for the description of the data files. The symlinks are used to create
 virtual copies of a dataset, to be preprocessed with different settings.
+# matbench-discovery MP-2022 & MPTrj
+As orginally desgined, models in matbench-discovery train on MPTrj and predict WBM.
+We experimented with different training datasets:
+1. `mp_2022` is MP 2022 – relaxed structures from Materials Project. Downloaded by this [notebook](../scripts/data_preprocesssing/mp_2022.ipynb).
+2. `mp_trj_full` is MPTrj – the full dataset, including both relaxed and unrelaxed structures. Downloaded by this  [notbook](../scripts/data_preprocesssing/mptrj_extract_all.ipynb). Note that
+symmetry changes only slighly during relaxation, meaning that after preprocessing the data a large number of
+structures with the same Wyckoff representation have the same energy; [analysis](../research_notebooks/mptrj_duplicates.ipynb).
+
+If you modify the training data, be extremely careful that the target is _formation energy per atom_ and it's computed with same reference energies as WBM. Train / val split is entirely our choice, and can be modified freely.
+
+The different symlinks in `data` allow to define variants of the datasets to be processed with different tolerances. The tolerance is set in the `cache_a_dataset.py` script and _is not done automatically_.
+
+Tolerance didn't (2024) have a significant impact. Hence, for further experiments, just `mp_2022` seems to be a reasonable choice.
