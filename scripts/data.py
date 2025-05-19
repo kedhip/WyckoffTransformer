@@ -241,6 +241,8 @@ def compute_symmetry_sites(
     datasets_pd: dict[str, pd.DataFrame],
     wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz",
     n_jobs: Optional[int] = None,
+    # The default values are the ones used in Materials Project
+    # https://pymatgen.org/pymatgen.symmetry.html#pymatgen.symmetry.analyzer.SpacegroupAnalyzer
     symmetry_precision: float = 0.1,
     symmetry_a_tol: float = 5.,
     max_wp: Optional[int] = None) -> dict[str, pd.DataFrame]:
@@ -270,8 +272,9 @@ def compute_symmetry_sites(
 
 
 def read_all_MP_csv(
-    mp_path: Path = Path(__file__).parent.resolve() / "cdvae"/"data"/"mp_20",
-    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz",
+    mp_path: Path = Path(__file__).parent.parent / "cdvae"/"data"/"mp_20",
+    wychoffs_enumerated_by_ss_file: Path = \
+        Path(__file__).parent.parent / "cache" / "wychoffs_enumerated_by_ss.pkl.gz",
     file_format: str = "csv",
     n_jobs: Optional[int] = None,
     symmetry_precision: float = 0.1,

@@ -4,6 +4,9 @@ import logging
 from omegaconf import OmegaConf
 import torch
 import wandb
+
+import sys
+sys.path.append(str(Path(__file__).parent.parent.resolve()))
 from wyckoff_transformer.trainer import train_from_config
 
 
@@ -12,9 +15,10 @@ def main():
     parser.add_argument("config", type=Path, help="The configuration file")
     parser.add_argument("dataset", type=str, help="Dataset to use")
     parser.add_argument("device", type=torch.device, help="Device to train on")
-    parser.add_argument("--pilot", action="store_true", help="Run a pilot run by setting epochs to 101")
+    parser.add_argument("--pilot", action="store_true", help="Run a pilot run by setting epochs to 3")
     parser.add_argument("--debug", action="store_true", help="Debug mode")
-    parser.add_argument("--run-path", type=Path, default=Path("runs"), help="Set the path for saving run data")
+    parser.add_argument("--run-path", type=Path, default=Path(__file__).parent.parent / "runs",
+                        help="Set the path for saving run data")
     parser.add_argument("--torch-num-thread", type=int, help="Number of threads for torch")
     args = parser.parse_args()
 
@@ -47,7 +51,7 @@ def main():
     config['tokeniser'] = tokeniser_config
 
     wandb_config = OmegaConf.to_container(config)
-
+    args.run_path.mkdir(parents=True, exist_ok=True)
     with wandb.init(
         project="WyckoffTransformer",
         job_type="train",

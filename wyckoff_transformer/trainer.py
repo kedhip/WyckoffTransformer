@@ -644,7 +644,11 @@ class WyckoffTrainer():
         evaluate_and_log(generated_wp, generation_name, n_structures, evaluator)
 
 
-def train_from_config(config_dict: dict, device: torch.device, run_path: Optional[Path] = Path("runs")):
+def train_from_config(
+    config_dict: dict,
+    device: torch.device,
+    run_path: Path = Path(__file__).parent.parent / "runs"):
+
     if wandb.run is None:
         raise ValueError("W&B run must be initialized")
     this_run_path = run_path / wandb.run.id
