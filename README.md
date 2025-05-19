@@ -72,7 +72,7 @@ Wyckoffs can be relaxed with modified [DiffCSP++ code](https://github.com/kazeev
 $ cp scripts/cryspr_pyxtal_chgnet.py mp_20/WyckoffTransformer/WyckoffTransformer_mp_20.json.gz /your/wokring/dir/
 $ cd /your/wokring/dir/
 $ gzip -d WyckoffTransformer_mp_20.json.gz
-$ python scripts/cryspr_pyxtal_chgnet.py 0 -1 ./WyckoffTransformer_mp_20.json model_name
+$ python ./cryspr_pyxtal_chgnet.py 0 -1 ./WyckoffTransformer_mp_20.json model_name
 # model_name is optional, default is "model_name"
 $ head -40 ${model_name}_id_formula_energy_0-1000.csv
 model,id,formula,energy
@@ -93,8 +93,8 @@ The structures from all other models and by WyFormer-DiffCSP++ can be optionally
 $ cp scripts/cryspr_chgnet.py mp_20/WyckoffLLM-naive/DiffCSP++/parsed_materials_10000_pyxtal.json_structures.json.gz /your/wokring/dir/
 $ cd /your/wokring/dir/
 $ gzip -d parsed_materials_10000_pyxtal.json_structures.json.gz
-$ python scripts/cryspr_chgnet.py 0 -1 ./parsed_materials_10000_pyxtal.json_structures.json.gz WyLM-naive
-$ head WyLM-naive_id_formula_energy.csv
+$ python ./cryspr_chgnet.py 0 -1 ./parsed_materials_10000_pyxtal.json_structures.json.gz wylm-dcpp
+$ head wylm-dcpp_id_formula_energy.csv
 model,id,formula,energy
 wylm-dcpp,0,Y4 Ho4 Ir8,-128.26178
 wylm-dcpp,1,La4 Cu4 Si8,-89.13443
