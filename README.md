@@ -3,7 +3,7 @@ If you just need the generated datasets for benchmarking, they are available at 
 
 # Installation
 1. Clone the repository
-3. Copy `pyproject.toml.CRP` to `pyproject.toml`, edit it as nesessary for your environemnt, run `poetry install`.
+3. Copy `pyproject.toml.CRP` to `pyproject.toml`, edit it as nesessary for your CUDA environment, run `poetry install`.
 4. Log into WanDB, and configure your entity; or disable WanDB. Internally, we used `symmetry-advantage`. It can be configured in poetry:
 ```bash
 poetry self add poetry-dotenv-plugin
