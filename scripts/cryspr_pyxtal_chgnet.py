@@ -318,23 +318,6 @@ import os
 import warnings
 import glob
 
-# impose single thread
-if os.environ["OMP_NUM_THREADS"] != "1":
-    warnings.warn(
-        message="Serious warning: Please set environment var \n\
-            `OMP_NUM_THREADS` to 1, otherwise you will get very slow run ... :("
-    )
-try:
-    nb_workers = int(os.environ["NP"])
-except:
-    print("Warning: NP variable unspecified, set as all CPU cores available.")
-    nb_workers = os.cpu_count()
-
-# use pandarallel for auto multi-processing
-from pandarallel import pandarallel
-
-pandarallel.initialize(progress_bar=False, nb_workers=nb_workers)
-
 # initialize calculator
 calculator = CHGNetCalculator(use_device="cpu")
 rootdir = os.getcwd()
@@ -425,6 +408,23 @@ def func_run(
 
 
 def main():
+    # impose single thread
+    if os.environ.get("OMP_NUM_THREADS", None) != "1":
+        warnings.warn(
+            message="Serious warning: Please set environment var \n\
+                `OMP_NUM_THREADS` to 1, otherwise you will get very slow run ... :("
+        )
+    try:
+        nb_workers = int(os.environ["NP"])
+    except:
+        print("Warning: NP variable unspecified, set as all CPU cores available.")
+        nb_workers = os.cpu_count()
+
+    # use pandarallel for auto multi-processing
+    from pandarallel import pandarallel
+
+    pandarallel.initialize(progress_bar=False, nb_workers=nb_workers)
+
     # arguments from command line
     if len(sys.argv) >= 4:
         index_start, index_end = int(sys.argv[1]), int(sys.argv[2])
