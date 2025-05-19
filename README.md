@@ -67,10 +67,45 @@ There are two ways to generate 3D structures from Wyckoff representations: DiffC
 ### DiffCSP++
 Wyckoffs can be relaxed with modified [DiffCSP++ code](https://github.com/kazeevn/DiffCSPNew/tree/master)
 ### CrySPR + CHGNet
-[CrySPR](https://chemrxiv.org/engage/chemrxiv/article-details/66b308a501103d79c5fd9b91) and then a MLIP.
-TODO (Nong Wei)
+[CrySPR](https://chemrxiv.org/engage/chemrxiv/article-details/66b308a501103d79c5fd9b91) scheme that combines `pyxtal` with CHGNet (or any other machine-learning interatomic potentials)
+```bash
+$ cp scripts/cryspr_pyxtal_chgnet.py mp_20/WyckoffTransformer/WyckoffTransformer_mp_20.json.gz /your/wokring/dir/
+$ cd /your/wokring/dir/
+$ gzip -d WyckoffTransformer_mp_20.json.gz
+$ python scripts/cryspr_pyxtal_chgnet.py 0 -1 ./WyckoffTransformer_mp_20.json model_name
+# model_name is optional, default is "model_name"
+$ head -40 ${model_name}_id_formula_energy_0-1000.csv
+model,id,formula,energy
+......
+model_name,35,H6O8Si2,-97.98080444335938
+model_name,36,CdDy,-6.170680522918701
+model_name,37,Ba8Sr4As4O24,-264.228572845459
+model_name,38,Co2Ni2F10O2,-81.85555267333984
+......
+$ ls 35/
+min_e_strc.cif  trial-0  trial-1  trial-2  trial-3  trial-4  trial-5  trial-lowest
+```
+There are `n_trial_each_wyckoff_gene=6` trial calculations under each id directory, `trial-lowest` and `min_e_strc.cif`
+are the symbolic links to the one with the lowest energy out of all trails.
 ### CHGNet relaxation
-The structures can be optionally relaxed with CHGNet. TODO (Nong Wei)
+The structures from all other models and by WyFormer-DiffCSP++ can be optionally relaxed with CHGNet.
+```bash
+$ cp scripts/cryspr_chgnet.py mp_20/WyckoffLLM-naive/DiffCSP++/parsed_materials_10000_pyxtal.json_structures.json.gz /your/wokring/dir/
+$ cd /your/wokring/dir/
+$ gzip -d parsed_materials_10000_pyxtal.json_structures.json.gz
+$ python scripts/cryspr_chgnet.py 0 -1 ./parsed_materials_10000_pyxtal.json_structures.json.gz WyLM-naive
+$ head WyLM-naive_id_formula_energy.csv
+model,id,formula,energy
+wylm-dcpp,0,Y4 Ho4 Ir8,-128.26178
+wylm-dcpp,1,La4 Cu4 Si8,-89.13443
+wylm-dcpp,2,Rb3 Br3,-20.12497
+wylm-dcpp,3,Gd1 Ni2,-26.83080
+wylm-dcpp,4,Pb3 O18,-96.37995
+wylm-dcpp,5,Tl2 Au2 S4 Br4,-41.40260
+wylm-dcpp,6,Ru1 As2 In3 Ce3,-49.81073
+wylm-dcpp,7,Pd4 As4 Ni4 Se4,-73.34074
+wylm-dcpp,8,Na4 Lu4 F16,-149.18192
+```
 ### DFT relaxation
 We followed the [Materials Project protocol](https://docs.materialsproject.org/methodology/materials-methodology/calculation-details), [`atomate2.vasp.flows.mp.MPGGADoubleRelaxStaticMaker`](https://materialsproject.github.io/atomate2/reference/atomate2.vasp.flows.mp.MPGGADoubleRelaxStaticMaker.html). There isn't much to add, as the rest of the details of running DFT, unfortunately, depend on the HPC setup, and VASP is not open source.
 # Generated Data Analysis
