@@ -9,6 +9,8 @@ from pyxtal import Group
 from sklearn.cluster import KMeans
 from scipy.special import sph_harm
 
+import sys
+sys.path.append(str(Path(__file__).parent.parent))
 from wyckoff_transformer.tokenization import FeatureEngineer
 
 N_3D_SPACEGROUPS = 230
