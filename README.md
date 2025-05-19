@@ -3,7 +3,7 @@ If you just need the generated datasets for benchmarking, they are available at 
 
 # Installation
 1. Clone the repository
-3. Copy `pyproject.toml.CRP` to `pyproject.toml`, edit it as nesessary for your CUDA environment, run `poetry install`.
+3. Copy `pyproject.toml.zeus` to `pyproject.toml`, edit it as nesessary for your CUDA environment, run `poetry install`. The file won't work out-of-the-box. The simplest way is to remove the local wheels from `pyproject.toml`, and then use the instructions from the pytorch website.
 4. Log into WanDB, and configure your entity; or disable WanDB. Internally, we used `symmetry-advantage`. It can be configured in poetry:
 ```bash
 poetry self add poetry-dotenv-plugin
@@ -85,9 +85,11 @@ Tolerance didn't (2024) have a significant impact. Hence, for further experiment
 # Generated Data Analysis
 Generated data are stored in various formats. All the datasets we've used so far are stored in Dropbox (not public):
 ```bash
-rclone copy "NUS_Dropbox:/Nikita Kazeev/Wyckoff Transformer data/generated" generated
+# tar is used to speed up the transfer, as we have a lot of small files
+rclone copy "NUS_Dropbox:/Nikita Kazeev/Wyckoff Transformer data/generated.tar.gz" .
+tar -xvf generated.tar.gz
 ```
-The first step is converting them all to a unified format. Processing all generated datasets in `generated/datasets.yaml`:
+The first step is converting them all to a unified format. To preprocess all generated datasets in `generated/datasets.yaml`:
 ```bash
 poetry run python scripts/cache_generated_datasets.py
 ```
@@ -96,7 +98,3 @@ It supports filtering by dataset and transformations, e. g.:
 poetry run python scripts/cache_generated_datasets.py --dataset mp_20 --transformations DiffCSP++ DFT
 ```
 Completing this step will enable loading the data in the next steps with `evaluation.generated_dataset.GeneratedDataset`
-
-
-# WanDB sweeps
-TODO (Nikita)

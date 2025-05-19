@@ -6,7 +6,7 @@
 4. AFLOW TODO (Ignat)
 ## Ablation
 1. Spheric harmonic inputs, predicting harmonic clusters: `yamls/models/mp_20/NextToken/augmented/cluster_harmonic_schedule_free.yaml`
-2. Wyckoff positions encoded with letters `NextToken/v6/sg_letters.yaml`
+2. Wyckoff positions encoded with letters: `NextToken/v6/sg_letters.yaml`
 # General notes
 1. Configs are not maintained, so old configs might be incompatible with the current code.
 2. Configs are referenced by the WanDB runs, and are not supposed to be changed.
