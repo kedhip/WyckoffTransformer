@@ -318,10 +318,7 @@ import os
 import warnings
 import glob
 
-# initialize calculator
-calculator = CHGNetCalculator(use_device="cpu")
 rootdir = os.getcwd()
-
 
 def func_run(
         id_gene,  # Wyckoff gene id: str or int
@@ -330,6 +327,7 @@ def func_run(
         n_trial_each_wyckoff_gene=6,
         cryspr_log_prefix="WyckoffTransformer",
         tmp_csv_file=f"{rootdir}/cache_id_formula_energy_energy_per_atom.csv",
+        calculator: Calculator = CHGNetCalculator(use_device="cpu"),
 ):
     # layer for each Wyckoff gene
     wdir1 = f"{id_gene}"
@@ -425,6 +423,9 @@ def main():
 
     pandarallel.initialize(progress_bar=False, nb_workers=nb_workers)
 
+    # initialize calculator
+    calculator = CHGNetCalculator(use_device="cpu")
+
     # arguments from command line
     if len(sys.argv) >= 4:
         index_start, index_end = int(sys.argv[1]), int(sys.argv[2])
@@ -465,6 +466,7 @@ def main():
             wyckoffgene=df["wyckoffgene"],
             n_trial_each_wyckoff_gene=6,
             # cryspr_log_prefix="test_code",
+            calculator=calculator,
         ),
         axis=1,
     )

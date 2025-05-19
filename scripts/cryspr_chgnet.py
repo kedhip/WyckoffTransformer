@@ -296,14 +296,10 @@ def write_cif(structure: Structure, idx: int):
 import sys
 import json
 import pandas as pd
-import numpy as np
 import os
 import warnings
 
-# initialize calculator
-calculator = CHGNetCalculator(use_device="cpu")
 rootdir = os.getcwd()
-
 
 def func_run(
         structure: Structure,
@@ -312,6 +308,7 @@ def func_run(
         model="wtf",
         cryspr_log_prefix="WyckoffTransformer",
         tmp_csv_file=f"{rootdir}/cache_id_formula_energy_energy_per_atom.csv",
+        calculator: Calculator = CHGNetCalculator(use_device="cpu"),
 ):
     if space_group_number == 0:
         with open(f"{rootdir}/error_list.out", mode='a+') as f:
@@ -391,6 +388,9 @@ def main():
     from pandarallel import pandarallel
     pandarallel.initialize(progress_bar=False, nb_workers=nb_workers)
 
+    # initialize calculator
+    calculator = CHGNetCalculator(use_device="cpu")
+
     # arguments from command line
     if len(sys.argv) >= 4:
         index_start, index_end = int(sys.argv[1]), int(sys.argv[2])
@@ -439,6 +439,7 @@ def main():
             idx=df["id"],
             model=df["model"],
             # cryspr_log_prefix="test-code",
+            calculator=calculator,
         ),
         axis=1,
     )
