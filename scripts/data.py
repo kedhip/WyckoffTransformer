@@ -16,7 +16,7 @@ from pymatgen.io.cif import CifParser
 from pymatgen.core import Structure, Element
 from pyxtal import pyxtal
 
-from preprocess_wychoffs import get_augmentation_dict
+from .preprocess_wychoffs import get_augmentation_dict
 
 logger = logging.getLogger(__name__)
 
@@ -239,7 +239,7 @@ def get_composition(structure: Structure) -> dict[Element, float]:
 
 def compute_symmetry_sites(
     datasets_pd: dict[str, pd.DataFrame],
-    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz",
+    wychoffs_enumerated_by_ss_file: Path = Path(__file__).parent.parent.resolve() / "cache" / "wychoffs_enumerated_by_ss.pkl.gz",
     n_jobs: Optional[int] = None,
     # The default values are the ones used in Materials Project
     # https://pymatgen.org/pymatgen.symmetry.html#pymatgen.symmetry.analyzer.SpacegroupAnalyzer

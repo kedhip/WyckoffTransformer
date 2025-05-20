@@ -7,7 +7,6 @@ if __name__ == "__main__":
 from typing import Dict, List
 from collections import defaultdict, Counter
 import argparse
-from functools import partial
 from pathlib import Path
 from multiprocessing import Pool
 import torch
@@ -15,11 +14,12 @@ import json
 import gzip
 import pickle
 import numpy as np
-import pandas as pd
 import logging
 from pathlib import Path
 from pymatgen.core.structure import Structure, Lattice
-from data import structure_to_sites
+import sys
+sys.path.append(str(Path(__file__).parent.parent.resolve()))
+from scripts.data import structure_to_sites
 
 logger = logging.getLogger(__name__)
 

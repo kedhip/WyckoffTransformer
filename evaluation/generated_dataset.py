@@ -20,9 +20,9 @@ import torch
 import pandas as pd
 from .novelty import record_to_augmented_fingerprint
 import sys
-sys.path.append("..")
-from data import read_cif, compute_symmetry_sites, read_MP, pyxtal_notation_to_sites
-from preprocess_wychoffs import get_augmentation_dict
+sys.path.append(str(Path(__file__).parent.parent.resolve()))
+from scripts.data import read_cif, compute_symmetry_sites, read_MP, pyxtal_notation_to_sites
+from scripts.preprocess_wychoffs import get_augmentation_dict
 from wyckoff_transformer.evaluation import wycryst_to_pyxtal_dict
 from wyckoff_transformer.tokenization import get_wp_index
 
