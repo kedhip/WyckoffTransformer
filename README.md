@@ -3,8 +3,10 @@ If you just need the generated datasets for benchmarking, they are available at 
 
 # Installation
 1. Clone the repository
-3. Copy `pyproject.toml.zeus` to `pyproject.toml`, edit it as nesessary for your CUDA environment, run `poetry install`. The file won't work out-of-the-box. The simplest way is to remove the local wheels from `pyproject.toml`, and then use the instructions from the pytorch website.
-4. Log into WanDB, and configure your entity; or disable WanDB. Internally, we used `symmetry-advantage`. It can be configured in poetry:
+3. Copy `pyproject.toml.zeus` to `pyproject.toml`
+4. Edit `pyproject.toml` as nesessary for your CUDA environment. The file won't work out-of-the-box. The simplest way is to remove the local wheels from `pyproject.toml`, and then use the instructions from the pytorch website for you CUDA version. Optionally, [pytorch-sparse](https://github.com/rusty1s/pytorch_sparse) and [pytorch-scatter](https://github.com/rusty1s/pytorch_scatter) are needed to run the CDVAE property prediction model.
+5. Run `poetry install`.
+6. Log into WanDB, and configure your entity; or disable WanDB. Internally, we used `symmetry-advantage`. It can be configured in poetry:
 ```bash
 poetry self add poetry-dotenv-plugin
 echo "WANDB_ENTITY=symmetry-advantage" > .env

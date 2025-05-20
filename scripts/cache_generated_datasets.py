@@ -26,7 +26,14 @@ def compute_fields_and_cache(data: GeneratedDataset) -> None:
     if "structure" in data.data.columns:
         data.compute_cdvae_crystals()
         data.compute_naive_validity()
-        data.compute_cdvae_e()
+        try:
+            import torch_scatter
+            import torch_sparse
+            data.compute_cdvae_e()
+        except ImportError as e:
+            print("Required libraries are not installed. Skipping cdvae_e computation.")
+            print("Error message:", e)
+
     data.dump_to_cache()
 
 def dive_and_cache(
