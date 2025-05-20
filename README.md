@@ -112,7 +112,7 @@ atoms_in = single_pyxtal(gene)
 atoms_relaxed = single_run(atoms_in)
 ```
 ### CHGNet relaxation
-The structures from all other models and by WyFormer-DiffCSP++ can be optionally relaxed with CHGNet.
+The structures from all models can be optionally relaxed with CHGNet.
 ```bash
 $ cp scripts/cryspr_chgnet.py mp_20/WyckoffLLM-naive/DiffCSP++/parsed_materials_10000_pyxtal.json_structures.json.gz /your/working/dir/
 $ cd /your/working/dir/
