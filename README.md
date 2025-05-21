@@ -1,5 +1,5 @@
 # WyFormer Generated Datasets
-If you just need the generated datasets for benchmarking, they are available at [Figshare](https://figshare.com/s/ef0640b4b0b5fa305baf)
+If you just need the generated datasets for benchmarking, they are available at [Figshare](https://figshare.com/articles/dataset/WyFormer_generated_structures/29094701)
 
 # Installation
 1. Clone the repository
