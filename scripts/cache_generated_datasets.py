@@ -16,7 +16,7 @@ from omegaconf import OmegaConf
 
 from evaluation.generated_dataset import GeneratedDataset, DATA_KEYS
 
-def compute_fields_and_cache(data: GeneratedDataset) -> None:
+def compute_fields_and_cache(data: GeneratedDataset) -> GeneratedDataset:
     if "site_symmetries" not in data.data.columns:
         data.compute_wyckoffs()
     data.compute_wyckoff_fingerprints()
@@ -35,6 +35,7 @@ def compute_fields_and_cache(data: GeneratedDataset) -> None:
             print("Error message:", e)
 
     data.dump_to_cache()
+    return data
 
 def dive_and_cache(
     this_config: OmegaConf,

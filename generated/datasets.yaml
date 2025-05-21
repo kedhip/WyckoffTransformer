@@ -71,9 +71,9 @@ mp_20:
             path: mp_20/WyckoffTransformer/DiffCSP++10k/CHGNet_free/DFT/WyFormer-1-MP
               GGA static.csv.gz
             storage_type: atomated_csv
-        DFT-GGA-realax-1:
+        DFT-GGA-relax-1:
           structures:
-            path: mp_20/WyckoffTransformer/DiffCSP++10k/CHGNet_free/DFT-GGA-realax-1/WyFormer-1-MP
+            path: mp_20/WyckoffTransformer/DiffCSP++10k/CHGNet_free/DFT-GGA-relax-1/WyFormer-1-MP
               GGA relax 1.csv.gz
             storage_type: atomated_csv
     DiffCSP++:
