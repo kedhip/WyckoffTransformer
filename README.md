@@ -30,7 +30,9 @@ This will train a model, and save the results in the `runs` folder. The files ar
 - `tokenizers.pkl.gz` - tokenizers
 # Training Data Preprocessing
 The available datasets correspond to the folders in `data` and `cdvae/data`. Dataset idetifiers are the folder names, they are used throught the project. Note that some of the folders are symlinks.
-Available datasets (in GitHub): `mp_20`, `mp_20_biternary` (binary and ternary structures from MP-20), `mpts_52`, `carbon_24`, `perov_5`. It is also possible to download and use `matbench_discovery_mp_2022` ([notebook](scripts/data_preprocesssing/mp_2022.ipynb)]) and `matbench_discovery_mp_trj_full` ([notebook](scripts/data_preprocesssing/mptrj_extract_all.ipynb)). For data to be used for training, we need to do two preprocessing steps.
+Available datasets (in GitHub): `mp_20`, `mp_20_biternary` (binary and ternary structures from MP-20), `mpts_52`, `carbon_24`, `perov_5`. It is also possible to download and use `matbench_discovery_mp_2022` [notebook](scripts/data_preprocesssing/mp_2022.ipynb) and `matbench_discovery_mp_trj_full` [notebook](scripts/data_preprocesssing/mptrj_extract_all.ipynb).
+
+For any data to be used for training, we need to do two preprocessing steps.
 ## Compute and cache symmetry information
 ```bash
 python scripts/cache_a_dataset.py <dataset-name>

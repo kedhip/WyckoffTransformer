@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "wyckofftransformer"
+name = "wyckofftransformer-test"
 version = "0.2.0"
 description = ""
 authors = ["Nikita Kazeev <kazeevn@gmail.com>"]
@@ -41,6 +41,8 @@ wheel = "^0.45.1"
 pip = "^25.0.1"
 pytorch-triton = {url = "https://download.pytorch.org/whl/nightly/pytorch_triton-3.2.0%2Bgit35c6c7c6-cp312-cp312-linux_x86_64.whl"}
 schedulefree = "^1.4.1"
+torch-scatter = {path = "/mnt/hdd/torch_wheels/torch_scatter-2.1.2-cp312-cp312-linux_x86_64.whl"}
+torch-sparse = {path = "/mnt/hdd/torch_wheels/torch_sparse-0.6.18-cp312-cp312-linux_x86_64.whl"}
 
 [build-system]
 requires = ["poetry-core"]
