@@ -137,7 +137,7 @@ wylm-dcpp,8,Na4Lu4F16,-149.18192
 - Output files are in the same format as above ([CrySPR + CHGNet](#cryspr--chgnet)).
 - `${reduced_formula}_${full_formula}_cell+pos.cif` is the CHGNet relaxed structure.
 ### DFT relaxation
-We followed the [Materials Project protocol](https://docs.materialsproject.org/methodology/materials-methodology/calculation-details), [`atomate2.vasp.flows.mp.MPGGADoubleRelaxStaticMaker`](https://materialsproject.github.io/atomate2/reference/atomate2.vasp.flows.mp.MPGGADoubleRelaxStaticMaker.html). There isn't much to add, as the rest of the details of running DFT, unfortunately, depend on the HPC setup, and VASP is not open source.
+We followed the [Materials Project protocol](https://docs.materialsproject.org/methodology/materials-methodology/calculation-details), [`atomate2.vasp.flows.mp.MPGGADoubleRelaxStaticMaker`](https://materialsproject.github.io/atomate2/reference/atomate2.vasp.flows.mp.MPGGADoubleRelaxStaticMaker.html). There isn't much to add, as the rest of the details of running DFT, unfortunately, depend on the HPC setup, and VASP is not open source. [Here](https://github.com/kazeevn/NSCC-VASP-computer) is the code to run at ASPIRE2.
 # Generated Data Analysis
 Generated data are stored in various formats. All the datasets we've used so far are stored in Dropbox (not public):
 ```bash
@@ -146,7 +146,7 @@ rclone copy "NUS_Dropbox:/Nikita Kazeev/Wyckoff Transformer data/generated.tar.g
 tar -xvf generated.tar.gz
 ```
 
-In order to be analyzed the data must be converted the unified format. To preprocess all generated datasets in `generated/datasets.yaml`:
+In order to be analyzed the data must be converted to the unified format. To preprocess all generated datasets in `generated/datasets.yaml`:
 ```bash
 poetry run python scripts/cache_generated_datasets.py
 ```
@@ -154,6 +154,6 @@ It supports filtering by dataset and transformations, e. g.:
 ```bash
 poetry run python scripts/cache_generated_datasets.py --dataset mp_20 --transformations DiffCSP++ DFT
 ```
-Completing this step will enable loading the data in the next steps with `evaluation.generated_dataset.GeneratedDataset`
+Completing this step will enable loading the data with `evaluation.generated_dataset.GeneratedDataset.from_cache`
 
 The ICML 2025 results were computed by the notebooks in [ICML_eval](ICML_eval).
