@@ -3,6 +3,7 @@ mp_20:
     wyckoffs:
       path: mp_20/WyckoffLLM-naive/parsed_materials_10000.json.gz
       storage_type: letters_json
+      generated_by: "Kazeev et al. https://doi.org/10.48550/arXiv.2503.02407"
     DiffCSP++:
       structures:
         path: mp_20/WyckoffLLM-naive/DiffCSP++/parsed_materials_10000_pyxtal.json_structures.json.gz
@@ -19,6 +20,7 @@ mp_20:
     wyckoffs:
       path: mp_20/WyckoffLLM-site-symmetry/parsed_materials_augmented_10000.json.gz
       storage_type: site_symmetry_json
+      generated_by: "Kazeev et al. https://doi.org/10.48550/arXiv.2503.02407"
     DiffCSP++:
       structures:
         path: mp_20/WyckoffLLM-site-symmetry/DiffCSP++/parsed_materials_augmented_10000_pyxtal.json_structures.json.gz
@@ -27,6 +29,7 @@ mp_20:
     wyckoffs:
       path: mp_20/WyckoffLLM-vanilla/parsed_materials_vanilla_10000.json.gz
       storage_type: letters_json
+      generated_by: "Kazeev et al. https://doi.org/10.48550/arXiv.2503.02407"
     DiffCSP++:
       structures:
         path: mp_20/WyckoffLLM-vanilla/DiffCSP++/parsed_materials_vanilla_10000_pyxtal.json_structures.json.gz
@@ -35,6 +38,7 @@ mp_20:
     wyckoffs:
       path: mp_20/WyckoffTransformer/WyckoffTransformer_mp_20.json.gz
       storage_type: pyxtal_json
+      generated_by: "Kazeev et al. https://doi.org/10.48550/arXiv.2503.02407"
     DFT:
       structures:
         path: mp_20/WyckoffTransformer/DFT/id_cif_Eform_Ehull_cifs.csv.gz
@@ -96,6 +100,7 @@ mp_20:
     structures:
       path: mp_20/CrystalFormer/CrystalFormer_mp_20.csv.gz
       storage_type: CrystalFormer
+      generated_by: "Kazeev et al. https://doi.org/10.48550/arXiv.2503.02407"
     DFT:
       structures:
         path: mp_20/CrystalFormer/DFT/CrystalFormer-105.csv.gz
@@ -108,7 +113,7 @@ mp_20:
     structures:
       path: mp_20/DiffCSP/DiffCSP_mp_20.pt
       storage_type: DiffCSP_pt
-      comment: "Provided by Rui Jiao"
+      generated_by: "Rui Jiao et al. https://proceedings.neurips.cc/paper_files/paper/2023/hash/38b787fc530d0b31825827e2cc306656-Abstract-Conference.html"
     DFT:
       structures:
         path: mp_20/DiffCSP/DFT/DiffCSP-105.csv.gz
@@ -126,7 +131,7 @@ mp_20:
     structures:
       path: mp_20/DiffCSP++/DiffCSP++_mp_20.pt
       storage_type: DiffCSP_pt
-      comment: "Provided by Rui Jiao"
+      generated_by: "Rui Jiao et al. https://proceedings.neurips.cc/paper_files/paper/2023/hash/38b787fc530d0b31825827e2cc306656-Abstract-Conference.html"
     DFT:
       structures:
         path: mp_20/DiffCSP++/DFT/DiffCSP++-105.csv.gz
@@ -139,22 +144,27 @@ mp_20:
     structures:
       path: mp_20/UN-DiffCSP++17/mp_20_train_pyxtal_s17.structures.json.gz
       storage_type: PymatgenJson
+      generated_by: "Kazeev et al. https://doi.org/10.48550/arXiv.2503.02407"
   UN-DiffCSP++42:
     structures:
       path: mp_20/UN-DiffCSP++42/mp_20_train_pyxtal_s42.structures.json.gz
       storage_type: PymatgenJson
+      generated_by: "Kazeev et al. https://doi.org/10.48550/arXiv.2503.02407"
   UN-DiffCSP++43:
     structures:
       path: mp_20/UN-DiffCSP++43/mp_20_train_pyxtal_s43.structures.json.gz
       storage_type: PymatgenJson
+      generated_by: "Kazeev et al. https://doi.org/10.48550/arXiv.2503.02407"
   UN-DiffCSP++44:
     structures:
       path: mp_20/UN-DiffCSP++44/mp_20_train_pyxtal_s44.structures.json.gz
       storage_type: PymatgenJson
+      generated_by: "Kazeev et al. https://doi.org/10.48550/arXiv.2503.02407"
   UN-WyckoffTransformer:
     wyckoffs:
       path: mp_20/UN-WyckoffTransformer/wyckoffs.json.gz
       storage_type: pyxtal_json
+      generated_by: "Kazeev et al. https://doi.org/10.48550/arXiv.2503.02407"
   FlowMM:
     structures:
       path: mp_20/FlowMM/FlowMM
@@ -176,6 +186,7 @@ mp_20:
       structures:
         path: mp_20/split/train/train.csv
         storage_type: CDVAE_csv_cif
+        generated_by: "Xie et al. https://arxiv.org/abs/2110.06197"
       wyckoffs:
         path: mp_20/split/train/data.pkl.gz
         storage_type: WTCache
@@ -184,6 +195,7 @@ mp_20:
       structures:
         path: mp_20/split/test/test.csv
         storage_type: CDVAE_csv_cif
+        generated_by: "Xie et al. https://arxiv.org/abs/2110.06197"
       wyckoffs:
         path: mp_20/split/test/data.pkl.gz
         storage_type: WTCache
@@ -196,6 +208,7 @@ mp_20:
       structures:
         path: mp_20/split/val/val.csv
         storage_type: CDVAE_csv_cif
+        generated_by: "Xie et al. https://arxiv.org/abs/2110.06197"
       wyckoffs:
         path: mp_20/split/val/data.pkl.gz
         storage_type: WTCache
@@ -204,7 +217,7 @@ mp_20:
     structures:
       path: mp_20/SymmCD/crystal_symmcd_mp20_valid.json.gz
       storage_type: PymatgenJson
-      comment: "Provided by Daniel Levy"
+      generated_by: "Levy et al. https://arxiv.org/abs/2502.03638"
     CHGNet_fix:
       structures:
         path: mp_20/SymmCD/CHGNet_fix/SymmCD_mp_20_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
@@ -217,6 +230,7 @@ mp_20:
     wyckoffs:
       path: mp_20/WyckoffTransformer-letters/sg_letters-uy6zg9y9.json.gz
       storage_type: pyxtal_json
+      generated_by: "Kazeev et al. https://doi.org/10.48550/arXiv.2503.02407"
     DiffCSP++:
       structures:
         path: mp_20/WyckoffTransformer-letters/DiffCSP++/sg_letters-uy6zg9y9.diffcsp-pp.json.gz
@@ -233,6 +247,7 @@ mp_20:
     wyckoffs:
       path: mp_20/WyckoffTransformer-harmonic/cluster_harmonic_token_presence-fqmm8o4z.json.gz
       storage_type: pyxtal_json
+      generated_by: "Kazeev et al. https://doi.org/10.48550/arXiv.2503.02407"
     DiffCSP++:
       structures:
         path: mp_20/WyckoffTransformer-harmonic/DiffCSP++/cluster_harmonic_token_presence-fqmm8o4z.diffcsp-pp.json.gz
@@ -249,20 +264,23 @@ mp_20:
     structures:
       path: mp_20/MiAD/CIF-FMT-10000_miad-s333-no-prerelax-mp20.csv
       storage_type: CDVAE_csv_cif
-      comment: "Provided by Andrey Okhotin"
+      generated_by: "Okhotin et. al"
     CHGNet_free:
       structures:
         path: mp_20/MiAD/CHGNet_free/CIF-FMT-10000_miad-s333-mp20.csv
         storage_type: CDVAE_csv_cif
+        author: "Andrey Okhotin"
       DFT:
         structures:
           path: mp_20/MiAD/CHGNet_free/DFT/MiAD-1.csv.gz
           storage_type: old_atomated_csv
+          author: "Nikita Kazeev"
 mp_20_biternary:
   WyckoffTransformer:
     wyckoffs:
       path: mp_20_biternary/WyckoffTransformer/WyckoffTransformer_mp_20_biternary.json.gz
       storage_type: pyxtal_json
+      generated_by: "Kazeev et al. https://doi.org/10.48550/arXiv.2503.02407"
     CrySPR:
       CHGNet_fix:
         structures:
@@ -274,6 +292,7 @@ mp_20_biternary:
     wyckoffs:
       path: mp_20_biternary/WyCryst/WyCryst_mp_20_biternary.csv
       storage_type: WyCryst_csv
+      generated_by: "Zhu et al. https://www.cell.com/matter/abstract/S2590-2385(24)00305-9?uuid=uuid%3A85c5a604-1712-432b-99ca-75a8d1d59632"
     CrySPR:
       CHGNet_fix:
         structures:
@@ -412,6 +431,7 @@ mpts_52:
     wyckoffs:
       path: mpts_52/WyckoffTransformer/v6_base_sg_enums.json.gz
       storage_type: pyxtal_json
+      generated_by: "Kazeev et al. https://doi.org/10.48550/arXiv.2503.02407"
     CrySPR:
       CHGNet_fix:
         structures:
@@ -421,6 +441,7 @@ mpts_52:
     structures:
       path: mpts_52/SymmCD/crystal_symmcd_mpts52_valid.json.gz
       storage_type: PymatgenJson
+      generated_by: "Levy et al. https://arxiv.org/abs/2502.03638"
     CHGNet_fix:
       structures:
         path: mpts_52/SymmCD/CHGNet_fix/SymmCD_mpts_52_id_formula_energy_cif_eform_ehull_refs_mp2023_by_chgnet_fix_symmetry.csv
