@@ -7,12 +7,11 @@ from pathlib import Path
 import gzip
 import json
 import pickle
-from multiprocessing import Pool
 import numpy as np
 import torch
 from torch import nn
 from torch import Tensor
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, DictConfig
 from tqdm import trange
 import wandb
 
@@ -212,14 +211,19 @@ class WyckoffTrainer():
 
 
     @classmethod
-    def from_config(cls, config_dict: dict, device: torch.device, run_path: Optional[Path] = Path("runs")):
+    def from_config(cls, config_dict: dict|DictConfig,
+                    device: torch.device,
+                    use_cached_tensors: bool = True,
+                    run_path: Optional[Path] = Path("runs")):
         config = OmegaConf.create(config_dict)
         if config.model.WyckoffTrainer_args.get("multiclass_next_token_with_order_permutation", False) and \
             not config.model.CascadeTransformer_args.learned_positional_encoding_only_masked:
 
             raise ValueError("Multiclass target with order permutation requires learned positional encoding only masked, ",
                             "otherwise the Transformer is not permutation invariant.")
-        tensors, tokenisers, token_engineers = load_tensors_and_tokenisers(config.dataset, config.tokeniser.name)
+        tensors, tokenisers, token_engineers = load_tensors_and_tokenisers(
+            config.dataset, config.tokeniser.name, use_cached_tensors=use_cached_tensors,
+            tokenizer_path=run_path / "tokenizers.pkl.gz" if not use_cached_tensors else None)
         model = CascadeTransformer.from_config_and_tokenisers(config, tokenisers, device)
         # Our hihgly dynamic concat-heavy workflow doesn't benefit much from compilation
         # torch._dynamo.config.cache_size_limit = 128

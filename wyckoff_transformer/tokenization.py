@@ -12,9 +12,9 @@ import pickle
 import numpy as np
 from pandas import DataFrame, Series, MultiIndex
 import torch
-import omegaconf
 from pandarallel import pandarallel
 from pyxtal.symmetry import Group
+from omegaconf import OmegaConf, DictConfig
 
 
 # Order is important here, as we can use it to sort the tokens
@@ -307,10 +307,11 @@ def argsort_multiple(*tensors: torch.Tensor, dim: int) -> torch.Tensor:
 
 
 def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
-                     config: omegaconf.OmegaConf,
+                     config: DictConfig,
                      tokenizer_path: Optional[Path|str] = None,
-                     n_jobs: int = None) -> \
-                        Tuple[Dict[str, Dict[str, torch.Tensor|List[List[torch.Tensor]]]], Dict[str, EnumeratingTokeniser]]:
+                     n_jobs: Optional[int] = None) -> \
+                        Tuple[Dict[str, Dict[str, torch.Tensor|List[List[torch.Tensor]]]],
+                              Dict[str, EnumeratingTokeniser]]:
     dtype = getattr(torch, config.dtype)
     include_stop = config.get("include_stop", True)
     if n_jobs is not None:
@@ -338,9 +339,10 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
     else:
         with gzip.open(tokenizer_path, "rb") as f:
             tokenisers = pickle.load(f)
-
+    import pdb
+    pdb.set_trace()
     raw_engineers = {}
-    token_engineers = dict()
+    token_engineers = {}
     if "engineered" in config.token_fields:
         for engineered_field_name, engineered_field_definiton in config.token_fields.engineered.items():
             if engineered_field_definiton.type != "map":
@@ -491,19 +493,32 @@ def tokenise_dataset(datasets_pd: Dict[str, DataFrame],
 def load_tensors_and_tokenisers(
     dataset: str,
     config_name: str,
-    cache_path: Path = Path(__file__).parent.parent.resolve() / "cache"):
+    use_cached_tensors: bool = True,
+    cache_path: Path = Path(__file__).parent.parent.resolve() / "cache",
+    tokenizer_path: Optional[Path] = None):
 
     this_cache_path = cache_path / dataset
-    try:
-        tensors = torch.load(this_cache_path / 'tensors' / f'{config_name}.pt', weights_only=False)
-    except FileNotFoundError:
-        logger.warning("Tensors not found, trying to load obsolete .pkl.gz")
-        with gzip.open(this_cache_path / 'tensors' / f'{config_name}.pkl.gz', "rb") as f:
-            tensors = pickle.load(f)
-    with gzip.open(this_cache_path / 'tokenisers' / f'{config_name}.pkl.gz', "rb") as f:
-        tokenisers = pickle.load(f)
-        token_engineers = pickle.load(f)
-    return tensors, tokenisers, token_engineers
+    if use_cached_tensors:
+        with gzip.open(this_cache_path / 'tokenisers' / f'{config_name}.pkl.gz', "rb") as f:
+            tokenisers = pickle.load(f)
+            token_engineers = pickle.load(f)
+        try:
+            tensors = torch.load(this_cache_path / 'tensors' / f'{config_name}.pt', weights_only=False)
+        except FileNotFoundError:
+            logger.warning("Tensors not found, trying to load obsolete .pkl.gz")
+            with gzip.open(this_cache_path / 'tensors' / f'{config_name}.pkl.gz', "rb") as f:
+                tensors = pickle.load(f)
+        return tensors, tokenisers, token_engineers
+    else:
+        cache_path = Path(__file__).parent.parent.resolve() / "cache" / dataset
+        with gzip.open(cache_path / 'data.pkl.gz', "rb") as f:
+            datasets_pd = pickle.load(f)
+        return tokenise_dataset(
+            datasets_pd=datasets_pd,
+            config=OmegaConf.load(
+                Path(__file__).parent.parent.resolve() / 'yamls' / 'tokenisers' / f'{config_name}.yaml'),
+            tokenizer_path=tokenizer_path,
+        )
 
 
 def get_wp_index() -> dict:

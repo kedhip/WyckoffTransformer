@@ -275,6 +275,10 @@ mp_20:
           path: mp_20/MiAD/CHGNet_free/DFT/MiAD-1.csv.gz
           storage_type: old_atomated_csv
           author: "Nikita Kazeev"
+  WyckoffTransformerNew:
+    wyckoffs:
+      path: mp_20/WyckoffTransformerNew/3ubr94x3.json.gz
+      storage_type: pyxtal_json
 mp_20_biternary:
   WyckoffTransformer:
     wyckoffs:
