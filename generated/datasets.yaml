@@ -186,7 +186,7 @@ mp_20:
       structures:
         path: mp_20/split/train/train.csv
         storage_type: CDVAE_csv_cif
-        generated_by: "Xie et al. https://arxiv.org/abs/2110.06197"
+        gathered_by: "Xie et al. https://arxiv.org/abs/2110.06197"
       wyckoffs:
         path: mp_20/split/train/data.pkl.gz
         storage_type: WTCache
@@ -195,7 +195,7 @@ mp_20:
       structures:
         path: mp_20/split/test/test.csv
         storage_type: CDVAE_csv_cif
-        generated_by: "Xie et al. https://arxiv.org/abs/2110.06197"
+        gathered_by: "Xie et al. https://arxiv.org/abs/2110.06197"
       wyckoffs:
         path: mp_20/split/test/data.pkl.gz
         storage_type: WTCache
@@ -208,7 +208,7 @@ mp_20:
       structures:
         path: mp_20/split/val/val.csv
         storage_type: CDVAE_csv_cif
-        generated_by: "Xie et al. https://arxiv.org/abs/2110.06197"
+        gathered_by: "Xie et al. https://arxiv.org/abs/2110.06197"
       wyckoffs:
         path: mp_20/split/val/data.pkl.gz
         storage_type: WTCache
@@ -354,6 +354,7 @@ perov_5:
       structures:
         path: perov_5/split/train/train.csv
         storage_type: CDVAE_csv_cif
+        gathered_by: "Xie et al. https://arxiv.org/abs/2110.06197"
       wyckoffs:
         path: perov_5/split/train/data.pkl.gz
         storage_type: WTCache
@@ -362,6 +363,7 @@ perov_5:
       structures:
         path: perov_5/split/test/test.csv
         storage_type: CDVAE_csv_cif
+        gathered_by: "Xie et al. https://arxiv.org/abs/2110.06197"
       wyckoffs:
         path: perov_5/split/test/data.pkl.gz
         storage_type: WTCache
@@ -370,6 +372,7 @@ perov_5:
       structures:
         path: perov_5/split/val/val.csv
         storage_type: CDVAE_csv_cif
+        gathered_by: "Xie et al. https://arxiv.org/abs/2110.06197"
       wyckoffs:
         path: perov_5/split/val/data.pkl.gz
         storage_type: WTCache
@@ -397,14 +400,16 @@ carbon_24:
       structures:
         path: carbon_24/split/train/train.csv
         storage_type: CDVAE_csv_cif
+        gathered_by: "Xie et al. https://arxiv.org/abs/2110.06197"
       wyckoffs:
         path: carbon_24/split/train/data.pkl.gz
         storage_type: WTCache
-        cache_key: train
+        cache_key: train  
     test:
       structures:
         path: carbon_24/split/test/test.csv
         storage_type: CDVAE_csv_cif
+        gathered_by: "Xie et al. https://arxiv.org/abs/2110.06197"
       wyckoffs:
         path: carbon_24/split/test/data.pkl.gz
         storage_type: WTCache
@@ -413,6 +418,7 @@ carbon_24:
       structures:
         path: carbon_24/split/val/val.csv
         storage_type: CDVAE_csv_cif
+        gathered_by: "Xie et al. https://arxiv.org/abs/2110.06197"
       wyckoffs:
         path: carbon_24/split/val/data.pkl.gz
         storage_type: WTCache
@@ -423,14 +429,17 @@ mpts_52:
       structures:
         path: mpts_52/split/train/train.csv.gz
         storage_type: CDVAE_csv_cif
+        gathered_by: "Bird et al. https://doi.org/10.21105/joss.05618"
     val:
       structures:
         path: mpts_52/split/val/val.csv.gz
         storage_type: CDVAE_csv_cif
+        gathered_by: "Bird et al. https://doi.org/10.21105/joss.05618"
     test:
       structures:
         path: mpts_52/split/test/test.csv.gz
         storage_type: CDVAE_csv_cif
+        gathered_by: "Bird et al. https://doi.org/10.21105/joss.05618"
   WyckoffTransformer:
     wyckoffs:
       path: mpts_52/WyckoffTransformer/v6_base_sg_enums.json.gz

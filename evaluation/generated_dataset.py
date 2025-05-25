@@ -209,9 +209,13 @@ def load_NongWei_CHGNet_csv(path: Path) -> (pd.DataFrame, int):
 
 
 def load_Raymond(path: Path):
-    index_csv_path = list(path.glob("*.csv")) + list(path.glob("*.csv.gz"))
-    if len(index_csv_path) != 1:
+    index_csv_path = list(path.glob("*.csv"))
+    if len(index_csv_path) == 0:
+        index_csv_path = list(path.glob("*.csv.gz"))
+    if len(index_csv_path) == 0:
         raise ValueError("No index CSV found")
+    if len(index_csv_path) > 1:
+        raise ValueError("Multiple index CSVs found, please specify the correct one")
     index_csv_path = index_csv_path[0]
     data = pd.read_csv(index_csv_path, index_col=0)
     data['structure'] = pd.Series(dtype=object, index=data.index)
@@ -352,7 +356,7 @@ class SiteSymmetryToRecordConverter:
     def __init__(self, 
         wyckoffs_db_file = Path(__file__).parent.parent / "cache" / "wychoffs_enumerated_by_ss.pkl.gz",
         multiplicity_engineer_file = Path(__file__).parent.parent / "cache" / "engineers" / "multiplicity.pkl.gz"):
-            with open(wyckoffs_db_file, "rb") as f:
+            with gzip.open(wyckoffs_db_file, "rb") as f:
                 self.wychoffs_enumerated_by_ss, self.letter_from_ss_enum, _ = pickle.load(f)
             self.letter_to_record_converter = LetterDictToSitesConverter(
                 wyckoffs_db_file, multiplicity_engineer_file)
