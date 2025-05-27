@@ -4,7 +4,7 @@ If you just need the generated datasets for benchmarking, they are available at 
 # Installation
 1. Clone the repository
 3. Copy `pyproject.toml.zeus` to `pyproject.toml`
-4. Edit `pyproject.toml` as nesessary for your CUDA environment. The file won't work out-of-the-box. The simplest way is to remove the local torch wheels from `pyproject.toml`, and then use the instructions from the [pytorch website](https://pytorch.org/get-started/locally/) for your CUDA version. [Here](https://github.com/python-poetry/poetry/issues/6409) [are](https://github.com/lucaspar/poetry-torch?tab=readme-ov-file) poetry-specific instructions. Optionally, [pytorch-sparse](https://github.com/rusty1s/pytorch_sparse) and [pytorch-scatter](https://github.com/rusty1s/pytorch_scatter) are needed to run the CDVAE property prediction model.
+4. Edit `pyproject.toml` as nesessary for your CUDA environment. The file won't work out-of-the-box. The simplest way is to remove the local torch wheels from `pyproject.toml`, and then use the instructions from the [pytorch website](https://pytorch.org/get-started/locally/) for your CUDA version. [Here](https://github.com/python-poetry/poetry/issues/6409) [are](https://github.com/lucaspar/poetry-torch?tab=readme-ov-file) poetry-specific instructions. Optionally, [pytorch-sparse](https://github.com/rusty1s/pytorch_sparse) and [pytorch-scatter](https://github.com/rusty1s/pytorch_scatter) are needed to run the CDVAE property prediction model, but otherwise can be skipped.
 5. Run `poetry install`.
 6. Log into Wandb, and configure your entity; or disable Wandb. Internally, we used `symmetry-advantage`. It can be configured in poetry:
 ```bash
@@ -53,10 +53,7 @@ python scripts/tokenise_a_dataset.py <dataset-name> <path-to-tokenizer-yaml> --t
 ```bash
 python scripts/train.py <path-to-model-yaml> <dataset-name> <device>
 ```
-The model weights are saved to `runs/<run-id>`, and to WanDB, along with the tokenizer. See [here](yamls/models/README.md) for the list of configs. Some notes:
-1. If running on CRP, add `--torch-num-thread ${ROLOS_AVAILABLE_CPU%.*}`
-2. Adding `--pilot` will run the model for a small number of epochs.
-3. A model config contains the tokenizer name.
+The model weights are saved to `runs/<run-id>`, and to WanDB, along with the tokenizer. See [here](yamls/models/README.md) for the list of configs. Adding `--pilot` will run the model for a small number of epochs.
 
 # Generating structures
 ## Wyckoff representations
