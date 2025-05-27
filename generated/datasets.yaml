@@ -272,8 +272,13 @@ mp_20:
         author: "Andrey Okhotin"
       DFT:
         structures:
-          path: mp_20/MiAD/CHGNet_free/DFT/MiAD-1.csv.gz
-          storage_type: old_atomated_csv
+          path: mp_20/MiAD/CHGNet_free/DFT/MiAD-1-MP GGA static.csv.gz
+          storage_type: atomated_csv
+          author: "Nikita Kazeev"
+      DFT-GGA-relax-1:
+        structures:
+          path: mp_20/MiAD/CHGNet_free/DFT-GGA-relax-1/MiAD-1-MP GGA relax 1.csv.gz
+          storage_type: atomated_csv
           author: "Nikita Kazeev"
   WyckoffTransformerNew:
     wyckoffs:
