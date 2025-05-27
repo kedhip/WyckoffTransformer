@@ -155,4 +155,9 @@ poetry run python scripts/cache_generated_datasets.py --dataset mp_20 --transfor
 Completing this step will enable loading the data with `evaluation.generated_dataset.GeneratedDataset.from_cache`
 
 ## Metric computation
-The ICML 2025 results were computed by the notebooks in [ICML_eval](ICML_eval).
+The ICML 2025 results were computed by the notebooks in [ICML_eval](ICML_eval). They include, but not limited to the following metrics:
+1. S.U.N. - the fraction of stable, unique, and novel structures.
+2. S.S.U.N. - the fraction of symmetric, stable, unique, and novel structures.
+3. Space Group $\chi^2$ - the $\chi^2$ statistic of the space group distribution between the generated and the test set.
+4. P1 - the fraction of generated structures that lack internal symmetries, i. e. belong to space group P1.
+5. Property similarity and naive validity from [Xie et al.](https://arxiv.org/abs/2110.06197).
