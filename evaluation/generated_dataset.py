@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Iterable
 from itertools import repeat
 import warnings
 import gzip
@@ -451,7 +451,7 @@ class GeneratedDataset():
     @classmethod
     def from_cache(
         cls,
-        transformations: List[str],
+        transformations: Iterable[str],
         dataset: str = "mp_20",
         cache_path: Path = Path(__file__).parent.parent / "cache"):
 
