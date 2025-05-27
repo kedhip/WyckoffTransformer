@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "wyckofftransformer-test"
-version = "0.2.0"
-description = ""
+name = "wyckofftransformer"
+version = "1.0.0"
+description = "Wyckoff Transformer: Generation of Symmetric Crystals; ICML 2025"
 authors = ["Nikita Kazeev <kazeevn@gmail.com>"]
 readme = "README.md"
 package-mode = false
