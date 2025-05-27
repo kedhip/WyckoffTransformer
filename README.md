@@ -160,4 +160,4 @@ The ICML 2025 results were computed by the notebooks in [ICML_eval](ICML_eval). 
 2. S.S.U.N. - the fraction of symmetric, stable, unique, and novel structures.
 3. Space Group $\chi^2$ - the $\chi^2$ statistic of the space group distribution between the generated and the test set.
 4. P1 - the fraction of generated structures that lack internal symmetries, i. e. belong to space group P1.
-5. Property similarity and naive validity from [Xie et al.](https://arxiv.org/abs/2110.06197).
+5. Property similarity and naive validity from [Xie et al.](https://arxiv.org/abs/2110.06197)
