@@ -1,44 +1,44 @@
-__pycache__
+# Python
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environment
 .env
-wandb
-checkpoints
+.venv
+env/
+venv/
+ENV/
+
+# VS Code
+.vscode/
+
+# Cache and results
+cache/
+*.pkl
 *.pkl.gz
-cache
-pytorch
-runs
-log
-catboost_info
-rolos_workflow_data
-generated/WyckoffTransformer_mp_20_CHGNet_relax_fix-symmetry_vs_removal
-generated/WyckoffTransformer_mp_20_CHGNet_relax_no_symmetry
-generated/WyckoffTransformer_mp_20_DiffCSPPP_tol0.1_nosymconstrain
-generated/WyckoffTransformer_mp_20_DiffCSPPP_tol0.1_CHGNet_fixed
-generated/crystalformer_mp20_CHGNet_fix_release
-generated/DiffCSP_mp_20_fixed_symmetry
-generated/FlowMM-relaxed
-generated/FlowMM
-generated/WyCryst_mp20
-generated/mp20_test_CHGNnet_fixed_symmetry
-DiffCSP++_mp20_two_step_symmetry
-data/2023-02-07-mp-computed-structure-entries.json.gz
-poetry.lock
-pyproject.toml
-generated/jd66k0gx.csv.gz
-generated/jd66k0gx.pt
-generated/CIF-FMT-10000_miad-s333-mp20.csv
-generated/CIF-FMT-10000_miad-s333-no-prerelax-mp20.csv
-generated/CIF-FMT-10000_original-wyformer-mp20.csv
-generated/MiAD-1_9218.csv.gz
-generated/WyckoffTransformer_mp_20.diffcsp-pp-10k.json.gz
-generated/WyFormer-1-MP GGA relax 1.csv.gz
-generated/WyFormer-1-MP GGA static.csv.gz
-generated/WyFormer-DiffCSP++-10k.csv.gz
-generated/WyFormer-GGA-relax-1.csv.gz
-research_notebooks/dft_pass_1_missing.csv.gz
-.gitignore
-research_notebooks/miad_pass_1_missing.csv.gz
-generated.bak
-generated
-generated_public
-generated.tar.gz
-generated_public.tar.gz
+*.pt
+*.pth
+
+# macOS
+.DS_Store
